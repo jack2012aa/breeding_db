@@ -35,6 +35,12 @@ class Pig:
     )
     '''All posible breeds.'''
 
+    BREED_DICT = {
+        "藍瑞斯":'L',
+        "約克夏":'Y',
+        "杜洛克":'D'
+    }
+
     GENDER = {
         '公':'M',
         '母':'F',
