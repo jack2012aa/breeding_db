@@ -1,5 +1,5 @@
-import unittest
-from factory.pig_factory import DongYingFactory, PigFactory, FactoryException
+import unittest, datetime
+from tools.pig_factory import DongYingFactory, PigFactory, FactoryException
 
 class FactoryTestCase(unittest.TestCase):
 
@@ -10,13 +10,17 @@ class FactoryTestCase(unittest.TestCase):
         self.factory = None
 
     def test_flag(self):
-        self.factory.turn_on_breed_review_flag()
-        self.assertEqual(1,self.factory.get_flag())
+        self.factory.turn_on_flag(self.factory.BIRTHDAY_FLAG)
+        self.factory.turn_on_flag(self.factory.BOAR_FLAG)
+        self.assertEqual(self.factory.BOAR_FLAG | self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
 
     def test_flag_2(self):
-        self.factory.turn_on_breed_review_flag()
-        self.factory.turn_on_id_review_flag()
-        self.assertEqual(3,self.factory.get_flag())
+        self.factory.turn_on_flag(self.factory.BIRTHDAY_FLAG)
+        self.factory.turn_on_flag(self.factory.BOAR_FLAG)
+        self.factory.turn_off_flag(self.factory.ID_FLAG)
+        self.assertEqual(self.factory.BOAR_FLAG | self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
+        self.factory.turn_off_flag(self.factory.BOAR_FLAG)
+        self.assertEqual(self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
 
     def test_abb(self):
         breed = 'landrace'
@@ -45,6 +49,21 @@ class FactoryTestCase(unittest.TestCase):
     def test_remove_dash_5(self):
         id = '1970'
         self.assertEqual('1970',self.factory.remove_dash_from_id(id))
+
+    def test_set_parent_1(self):
+        parent = 'dam'
+        parent_id = '2Y123456'
+        self.factory.set_birthday('2021-02-03')
+        self.factory.set_parent(parent, parent_id)
+        self.assertEqual('123456',self.factory.pig.get_dam()['id'])
+        self.assertEqual(datetime.date(2020,2,3),self.factory.pig.get_dam()['birthday'])
+
+    def test_set_parent_2(self):
+        parent = 'boar'
+        parent_id = '2Y123456'
+        self.factory.set_birthday('2019-02-03')
+        self.assertRaises(FactoryException, self.factory.set_parent, parent,parent_id)
+
 
 if __name__ == '__main__':
     unittest.main()

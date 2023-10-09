@@ -2,10 +2,12 @@
 
 ## Structure
 
-* `data_structure`: basic structures that represent entities of a table in the database.
+* `data_structures`: basic structures that represent entities of a table in the database.
     * `Pig`: the structure that holds the basic information of a pig.
-* `module`: operations related to reading or changing the database.
-* `factory`: classes help to convert documents from farm, either in csv or pdf or other format, to `data_structure`.
+* `models`: operations related to reading or changing the database.
+* `tools`: classes that help handling different type of inputs.
+    * `factory`: classes that produce an instance of `data_structure` based on data from different farms.
+    * `reader`: classes that read files to database.
 
 ## To Do
 * Sow ID regularize

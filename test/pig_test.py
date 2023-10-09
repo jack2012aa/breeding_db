@@ -1,5 +1,5 @@
 import unittest
-from data_structure.pig import Pig, PigSettingException
+from data_structures.pig import Pig, PigSettingException
 import datetime
 
 class PigTestCase(unittest.TestCase):
@@ -37,7 +37,7 @@ class PigTestCase(unittest.TestCase):
         self.assertRaises(PigSettingException, self.pig.set_breed, breed)
 
     def test_set_birthday(self):
-        birthday_str = '2021/2/3'
+        birthday_str = '2021-02-03'
         self.pig.set_birthday(birthday_str)
         birthday = datetime.date(2021, 2, 3)
         self.assertEqual(birthday, self.pig.get_birthday())
