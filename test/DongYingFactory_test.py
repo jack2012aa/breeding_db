@@ -11,15 +11,15 @@ class FactoryTestCase(unittest.TestCase):
 
     def test_flag(self):
         self.factory.turn_on_flag(self.factory.BIRTHDAY_FLAG)
-        self.factory.turn_on_flag(self.factory.BOAR_FLAG)
-        self.assertEqual(self.factory.BOAR_FLAG | self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
+        self.factory.turn_on_flag(self.factory.SIRE_FLAG)
+        self.assertEqual(self.factory.SIRE_FLAG | self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
 
     def test_flag_2(self):
         self.factory.turn_on_flag(self.factory.BIRTHDAY_FLAG)
-        self.factory.turn_on_flag(self.factory.BOAR_FLAG)
+        self.factory.turn_on_flag(self.factory.SIRE_FLAG)
         self.factory.turn_off_flag(self.factory.ID_FLAG)
-        self.assertEqual(self.factory.BOAR_FLAG | self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
-        self.factory.turn_off_flag(self.factory.BOAR_FLAG)
+        self.assertEqual(self.factory.SIRE_FLAG | self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
+        self.factory.turn_off_flag(self.factory.SIRE_FLAG)
         self.assertEqual(self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
 
     def test_abb(self):

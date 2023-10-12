@@ -16,8 +16,8 @@ class Pig:
     __birthday: datetime.date = datetime.datetime.today()
     '''Birthday'''
 
-    __boar = {'id':'','birthday':''}
-    '''Boar's key value.'''
+    __sire = {'id':'','birthday':''}
+    '''Sire's key value.'''
 
     __dam = {'id':'','birthday':''}
     '''Dam's key value'''
@@ -116,7 +116,7 @@ class Pig:
             raise PigSettingException("Unknown type")
 
 
-    def set_boar(self, id: str, date):
+    def set_sire(self, id: str, date):
 
         if not self.__is_valid_id(id):
             raise PigSettingException("Invalid id length. Expect 0 < len < " + str(Pig.MAX_ID_LENGTH) + " but setting " + str(len(id)))
@@ -124,15 +124,15 @@ class Pig:
         if id == None or date == None:
             raise PigSettingException("None argument.")
 
-        self.__boar['id'] = id
+        self.__sire['id'] = id
         if type(date) == str:
             try:
                 yyyy, mm, dd = date.split('/')
-                self.__boar['birthday'] = datetime.date(int(yyyy),int(mm),int(dd))
+                self.__sire['birthday'] = datetime.date(int(yyyy),int(mm),int(dd))
             except:
                 raise PigSettingException("Invalid date format. Expect yyyy/mm/dd but receive " + str(date))
         elif type(date) == datetime.date:
-            self.__boar['birthday'] = date
+            self.__sire['birthday'] = date
         else:
             raise PigSettingException("Unknown type")
 
@@ -169,7 +169,7 @@ class Pig:
         return self.__dam
     
     def get_boar(self):
-        return self.__boar
+        return self.__sire
     
     def get_naif_id(self):
         return self.__naif_id

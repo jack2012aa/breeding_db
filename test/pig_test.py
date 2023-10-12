@@ -71,12 +71,12 @@ class PigTestCase(unittest.TestCase):
 
     def test_set_boar_1(self):
         boar = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
-        self.pig.set_boar(boar['id'], boar['birthday'])
+        self.pig.set_sire(boar['id'], boar['birthday'])
         self.assertEqual(boar, self.pig.get_boar())
 
     def test_set_boar_2(self):
         boar = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
-        self.pig.set_boar(boar['id'], '2021/02/03')
+        self.pig.set_sire(boar['id'], '2021/02/03')
         self.assertEqual(boar, self.pig.get_boar())
 
     def test_set_naif_id(self):

@@ -20,13 +20,13 @@ class PigFactory:
     1: breed
     2: id
     4. birthday
-    8. boar
+    8. sire
     16. dam
     '''
     BREED_FLAG = 1
     ID_FLAG = 2
     BIRTHDAY_FLAG = 4
-    BOAR_FLAG = 8
+    SIRE_FLAG = 8
     DAM_FLAG = 16
 
     def __init__(self):
@@ -210,13 +210,13 @@ class DongYingFactory(PigFactory):
 
     def set_parent(self, parent: str, parent_id: str):  
         '''
-        :param parent: {'dam','boar'}
+        :param parent: {'dam','sire'}
         :param parent_id: breed + id + *
         1. Take the first English letter as breed.
         2. If parent does not found in database, raise `FactoryForeignKeyException`
         '''
 
-        if parent not in ['dam','boar']:
+        if parent not in ['dam','sire']:
             raise FactoryException('Parent ' + parent + ' is not defined.')
 
         '''Take the first letter as breed'''
@@ -232,7 +232,7 @@ class DongYingFactory(PigFactory):
             if parent == 'dam':
                 self.turn_on_flag(self.DAM_FLAG)
             else:
-                self.turn_on_flag(self.BOAR_FLAG)
+                self.turn_on_flag(self.SIRE_FLAG)
             raise FactoryException('Breed ' + breed + ' is not defined.')
         
         for c in id:
@@ -256,7 +256,7 @@ class DongYingFactory(PigFactory):
             if parent == 'dam':
                 self.turn_on_flag(self.DAM_FLAG)
             else:
-                self.turn_on_flag(self.BOAR_FLAG)
+                self.turn_on_flag(self.SIRE_FLAG)
             db.close()
             raise EmptyParentException()
         
@@ -266,13 +266,13 @@ class DongYingFactory(PigFactory):
                 if parent == 'dam':
                     self.turn_on_flag(self.DAM_FLAG)
                 else:
-                    self.turn_on_flag(self.BOAR_FLAG)
+                    self.turn_on_flag(self.SIRE_FLAG)
                 raise FactoryException('The birthday of parent ' + str(parent_pig.get_birthday()) + ' is behind its birthday ' + str(self.pig.get_birthday()))
         except:
             if parent == 'dam': 
                 self.turn_on_flag(self.DAM_FLAG)
             else:
-                self.turn_on_flag(self.BOAR_FLAG)
+                self.turn_on_flag(self.SIRE_FLAG)
             raise FactoryException('Must know the birthday of the big before checking its parent.')
 
 
@@ -281,6 +281,6 @@ class DongYingFactory(PigFactory):
             self.turn_off_flag(self.DAM_FLAG)
             return
         else:
-            self.pig.set_boar(parent_pig.get_id(), parent_pig.get_birthday())
-            self.turn_off_flag(self.BOAR_FLAG)
+            self.pig.set_sire(parent_pig.get_id(), parent_pig.get_birthday())
+            self.turn_off_flag(self.SIRE_FLAG)
             return
