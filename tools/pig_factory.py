@@ -111,6 +111,20 @@ class PigFactory:
                 result = ''.join([result,c])
         return result
 
+    def is_valid_naif_id(self, id:str) -> bool:
+        '''
+        A valid naif id should be a 6-digit number.
+        '''
+
+        try:
+            int(id)
+        except:
+            return False
+        
+        if len(id) == 6:
+            return True
+        return False
+
 class DongYingFactory(PigFactory):
     
     def __init__(self):
@@ -194,7 +208,7 @@ class DongYingFactory(PigFactory):
             print(ex)
             self.turn_on_flag(self.BIRTHDAY_FLAG)
 
-    def set_parent(self, parent: str, parent_id: str):
+    def set_parent(self, parent: str, parent_id: str):  
         '''
         :param parent: {'dam','boar'}
         :param parent_id: breed + id + *
