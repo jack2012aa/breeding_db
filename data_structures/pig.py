@@ -7,27 +7,6 @@ class PigSettingException(BaseException):
 
 class Pig:
 
-    __breed: str = ''
-    '''Breed: {'L', 'Y', 'D'}'''
-
-    __id: str = ''
-    '''aka "Ear tag" in some cases. 0 < Length < MAX_ID_LENGTH'''
-
-    __birthday: datetime.date = datetime.datetime.today()
-    '''Birthday'''
-
-    __sire = {'id':'','birthday':''}
-    '''Sire's key value.'''
-
-    __dam = {'id':'','birthday':''}
-    '''Dam's key value'''
-
-    __naif_id: str = ''
-    '''ID that is documented in naif's system. Necessary to be turned into int.'''
-
-    __gender: chr = ''
-    '''{'M','F'}'''
-
     BREED = (
         'L',
         'Y',
@@ -55,7 +34,27 @@ class Pig:
 
     def __init__(self):
         '''An empty entity.'''
-        pass
+
+        self.__breed: str = ''
+        '''Breed: {'L', 'Y', 'D'}'''
+
+        self.__id: str = ''
+        '''aka "Ear tag" in some cases. 0 < Length < MAX_ID_LENGTH'''
+
+        self.__birthday: datetime.date = datetime.datetime.today()
+        '''Birthday'''
+
+        self.__sire = {'id':'','birthday':''}
+        '''Sire's key value.'''
+
+        self.__dam = {'id':'','birthday':''}
+        '''Dam's key value'''
+
+        self.__naif_id: str = ''
+        '''ID that is documented in naif's system. Necessary to be turned into int.'''
+
+        self.__gender: chr = ''
+        '''{'M','F'}'''
 
     def __is_valid_id(self, id:str):
         return len(id) > 0 and len(id) < Pig.MAX_ID_LENGTH
