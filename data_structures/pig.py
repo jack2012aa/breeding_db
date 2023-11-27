@@ -56,6 +56,8 @@ class Pig:
         self.__gender: chr = ''
         '''{'M','F'}'''
 
+        self.__chinese_name: str = ''
+
     def __is_valid_id(self, id:str):
         return len(id) > 0 and len(id) < Pig.MAX_ID_LENGTH
 
@@ -136,17 +138,22 @@ class Pig:
             raise PigSettingException("Unknown type")
 
     def set_naif_id(self, id: str):
+        '''
+        naif id is a six-digit unique id.
+        '''
 
         if id == '' or id == None:
             raise PigSettingException("None argument.")
         
         try:
             int(id)
-            if str(int(id)) != str(id):
-                raise PigSettingException("Invalid naif id. ID should be an integer, but receive " + str(id) + ".")
-            self.__naif_id = str(id)
         except:
             raise PigSettingException("Invalid naif id. ID should be an integer, but receive " + str(id) + ".")
+        if str(int(id)) != str(id):
+            raise PigSettingException("Invalid naif id. ID should be an integer, but receive " + str(id) + ".")
+        if len(str(id)) != 6:
+            raise PigSettingException("Invalid naif id. ID should be 6-digit long, but receive " + str(len(id)) + ".")
+        self.__naif_id = str(id)
         
     def set_gender(self, gender: str):
 
@@ -154,6 +161,9 @@ class Pig:
             raise PigSettingException("Invalid gender format. Gender should be in\n" + str(Pig.GENDER))
         else:
             self.__gender = Pig.GENDER[gender]
+
+    def set_chinese_name(self, name):
+        self.__chinese_name = name
 
     def get_breed(self):
         return self.__breed
@@ -175,3 +185,6 @@ class Pig:
     
     def get_gender(self):
         return self.__gender
+    
+    def get_chinese_name(self):
+        return self.__chinese_name

@@ -97,6 +97,10 @@ class PigTestCase(unittest.TestCase):
         id = 14324.123
         self.assertRaises(PigSettingException, self.pig.set_naif_id, id)
 
+    def test_set_naif_id_failure_3(self):
+        id = '1234567'
+        self.assertRaises(PigSettingException, self.pig.set_naif_id, id)
+
     def test_gender_1(self):
         gender = '公'
         self.pig.set_gender(gender)

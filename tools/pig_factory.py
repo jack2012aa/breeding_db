@@ -28,6 +28,7 @@ class PigFactory:
     BIRTHDAY_FLAG = 4
     SIRE_FLAG = 8
     DAM_FLAG = 16
+    NAIF_FLAG = 32
 
     def __init__(self):
         self.pig = Pig()
@@ -110,20 +111,16 @@ class PigFactory:
             if c.isnumeric():
                 result = ''.join([result,c])
         return result
-
-    def is_valid_naif_id(self, id:str) -> bool:
+    
+    def set_naif_id(self, naif: str):
         '''
-        A valid naif id should be a 6-digit number.
+        naif id is a six-digit unique id.
         '''
-
         try:
-            int(id)
-        except:
-            return False
-        
-        if len(id) == 6:
-            return True
-        return False
+            self.pig.set_naif_id(naif)
+        except PigSettingException as ex:
+            self.turn_on_flag(self.NAIF_FLAG)
+            raise ex
 
 class DongYingFactory(PigFactory):
     
@@ -284,3 +281,4 @@ class DongYingFactory(PigFactory):
             self.pig.set_sire(parent_pig.get_id(), parent_pig.get_birthday())
             self.turn_off_flag(self.SIRE_FLAG)
             return
+        

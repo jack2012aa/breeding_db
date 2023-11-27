@@ -1,5 +1,6 @@
 import unittest, datetime
 from tools.pig_factory import DongYingFactory, PigFactory, FactoryException
+from data_structures.pig import PigSettingException
 
 class FactoryTestCase(unittest.TestCase):
 
@@ -63,6 +64,20 @@ class FactoryTestCase(unittest.TestCase):
         parent_id = '2Y123456'
         self.factory.set_birthday('2019-02-03')
         self.assertRaises(FactoryException, self.factory.set_parent, parent,parent_id)
+
+    def test_naif_id_1(self):
+        id = 123456
+        self.factory.set_naif_id(id)
+        self.assertEqual(str(id),self.factory.pig.get_naif_id())
+
+    def test_naif_id_2(self):
+        id = '123456'
+        self.factory.set_naif_id(id)
+        self.assertEqual(str(id),self.factory.pig.get_naif_id())
+
+    def test_naif_id_3(self):
+        id = "1234567"
+        self.assertRaises(PigSettingException, self.factory.set_naif_id, id)
 
 
 if __name__ == '__main__':
