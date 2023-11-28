@@ -40,7 +40,10 @@ class PigFactory:
         self.__review_flag = self.__review_flag | flag
 
     def turn_off_flag(self, flag: int):
-        self.__review_flag = self.__review_flag & ~flag 
+        self.__review_flag = self.__review_flag & ~flag
+    
+    def check_flag(self, flag: int):
+        return self.__review_flag & flag != 0
 
     def get_flag(self):
         return self.__review_flag
@@ -119,8 +122,9 @@ class PigFactory:
         
         try:
             self.pig.set_gender(gender)
-        except Exception as ex:
+        except BaseException as ex:
             self.turn_on_flag(self.GENDER_FLAG)
+            self.error_messages.append(str(ex))
             
 
 class DongYingFactory(PigFactory):
@@ -137,6 +141,7 @@ class DongYingFactory(PigFactory):
     
         if type(breed) != str:
             self.turn_on_flag(self.BREED_FLAG)
+            self.error_messages.append('品種型別錯誤')
             return
         
         if breed in Pig.BREED:
@@ -155,7 +160,8 @@ class DongYingFactory(PigFactory):
             if self.ask_change("breed", breed, n_breed):
                 self.pig.set_breed(n_breed)
                 return
-            
+
+        self.error_messages.append('品種不在常見品種名單中，或有錯誤字元')    
         self.turn_on_flag(self.ID_FLAG)
         
     def set_id(self, id: str):
@@ -168,6 +174,7 @@ class DongYingFactory(PigFactory):
 
         if type(id) != str and type(id) != int:
             self.turn_on_flag(self.ID_FLAG)
+            self.error_messages.append('耳號格式錯誤')
             return
 
         id = str(id)
@@ -176,7 +183,7 @@ class DongYingFactory(PigFactory):
                 self.pig.set_id(id)
                 return
             except PigSettingException as ex:
-                print(ex)
+                self.error_messages.append(str(ex))
                 self.turn_on_flag(self.ID_FLAG)
                 return
             
@@ -190,22 +197,23 @@ class DongYingFactory(PigFactory):
                 self.pig.set_id(n_id)
                 return
             except PigSettingException as ex:
-                print(ex)
+                self.error_messages.append(str(ex))
                 self.turn_on_flag(self.ID_FLAG)
                 return
+        self.error_messages.append('耳號格式錯誤')
         self.turn_on_flag(self.ID_FLAG)
         return
     
     def set_birthday(self, date):
         '''
-        :param date: yyyy/mm/dd or a __date__ object.
+        :param date: in ISO format or a `date` object.
         '''
 
         try:
             self.pig.set_birthday(date)
             return
         except PigSettingException as ex:
-            print(ex)
+            self.error_messages.append(str(ex))
             self.turn_on_flag(self.BIRTHDAY_FLAG)
 
     def set_parent(self, parent: str, parent_id: str):  
@@ -217,11 +225,7 @@ class DongYingFactory(PigFactory):
         '''
 
         if parent not in ['dam','sire']:
-            if parent == 'dam':
-                self.turn_on_flag(self.DAM_FLAG)
-            else:
-                self.turn_on_flag(self.SIRE_FLAG)
-            return
+            raise ValueError()
 
         '''Take the first letter as breed'''
         breed = ''
@@ -235,8 +239,10 @@ class DongYingFactory(PigFactory):
         if breed not in Pig.BREED and not breed == '':
             if parent == 'dam':
                 self.turn_on_flag(self.DAM_FLAG)
+                self.error_messages.append('母畜品種不在常見名單內')
             else:
                 self.turn_on_flag(self.SIRE_FLAG)
+                self.error_messages.append('父畜品種不在常見名單內')
             return
         
         for c in id:
@@ -250,7 +256,7 @@ class DongYingFactory(PigFactory):
         try:
             parent_pig.set_id(id)
             parent_pig.set_breed(breed)
-        except Exception as ex:
+        except BaseException as ex:
             raise ex
         
         if db.exist(parent_pig):
@@ -259,24 +265,29 @@ class DongYingFactory(PigFactory):
         else:
             if parent == 'dam':
                 self.turn_on_flag(self.DAM_FLAG)
+                self.error_messages.append('母畜不存在於資料庫中')
+                db.close()
             else:
                 self.turn_on_flag(self.SIRE_FLAG)
-            db.close()
-            return
+                self.error_messages.append('父畜不存在於資料庫中')
+                db.close()
         
         '''Check birthday'''
         try:
             if parent_pig.get_birthday() > self.pig.get_birthday():
                 if parent == 'dam':
                     self.turn_on_flag(self.DAM_FLAG)
+                    self.error_messages.append('母畜生日比後代生日晚')
                 else:
                     self.turn_on_flag(self.SIRE_FLAG)
+                    self.error_messages.append('父畜生日比後代生日晚')
                 return
-        except:
+        except BaseException as ex:
             if parent == 'dam': 
                 self.turn_on_flag(self.DAM_FLAG)
             else:
                 self.turn_on_flag(self.SIRE_FLAG)
+            self.error_messages.append(str(ex))
             return
 
         if parent == 'dam':
@@ -292,7 +303,7 @@ class DongYingFactory(PigFactory):
         '''
         naif id is a six-digit unique id.
         '''
-        if naif == '':
+        if naif == '' or naif == '無登':
             return
         
         naif = str(naif)
@@ -301,12 +312,14 @@ class DongYingFactory(PigFactory):
             n_naif = self.remove_nonnumeric(naif)
             if not self.ask_change('登錄號',naif,n_naif):
                 self.turn_on_flag(self.NAIF_FLAG)
+                self.error_messages.append('登錄號有非數字字元')
                 return
             naif = n_naif
 
         try:
             self.pig.set_naif_id(naif)
             return
-        except:
+        except BaseException as ex:
             self.turn_on_flag(self.NAIF_FLAG)
+            self.error_messages.append(str(ex))
             return

@@ -163,7 +163,7 @@ class Pig:
         if str(int(id)) != str(id):
             raise PigSettingException("登錄號不能含有非數字字元 " + str(id) + ".")
         if len(str(id)) != 6:
-            raise PigSettingException("登錄號須為六位數字，此登陸號位數為： " + str(len(id)) + ".")
+            raise PigSettingException("登錄號須為六位數字，此登錄號位數為： " + str(len(id)) + ".")
         self.__naif_id = str(id)
         
     def set_gender(self, gender: str):
