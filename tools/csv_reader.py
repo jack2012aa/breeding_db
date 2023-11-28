@@ -71,5 +71,5 @@ class DongYingCsvReader(CsvReader):
                 self.pigs.append(factory.pig)
             
             factory = None
-        
+        # If pig in pigs exists in the database, ask how to do.
         output.save('./test/output.xlsx')

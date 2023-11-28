@@ -1,3 +1,4 @@
+from tools.general import ask
 from models.pig import PigModel
 from data_structures.pig import Pig, PigSettingException
 
@@ -47,15 +48,6 @@ class PigFactory:
 
     def get_flag(self):
         return self.__review_flag
-
-    def ask_change(self, field: str, original: str, changed: str) -> bool:
-        '''Ask the user if changing from original to changed is acceptable.'''
-
-        result = ''
-        while result not in ['Y','N']:
-            result = input('Is the change of ' + str(field) + ' from ' + str(original) + ' to ' + str(changed) + ' acceptable?\nY/N\n')
-            result = result.upper()
-        return result == 'Y'
 
     def get_breed_abbrevation(self, breed: str) -> str:
         '''Return the first letter of breed in upper case as the abbrevation of the breed.'''
@@ -151,13 +143,13 @@ class DongYingFactory(PigFactory):
         '''Chinese string is recognized as alpha in the isalpha method.'''        
         if breed.encode('UTF-8').isalpha():
             n_breed = self.get_breed_abbrevation(breed)
-            if self.ask_change(breed, breed, n_breed):
+            if ask("是否可以將品種從 " + breed + " 修改為 " + n_breed + "？"):
                 self.pig.set_breed(n_breed)
                 return
         
         if breed in Pig.BREED_DICT:
             n_breed = Pig.BREED_DICT[breed]
-            if self.ask_change("breed", breed, n_breed):
+            if ask("是否可以將品種從 " + breed + " 修改為 " + n_breed + "？"):
                 self.pig.set_breed(n_breed)
                 return
 
@@ -192,7 +184,7 @@ class DongYingFactory(PigFactory):
         else:
             n_id = self.remove_nonnumeric(id)
 
-        if self.ask_change('ID', id, n_id):
+        if ask("是否可以將耳號從 " + id + " 修改為 " + n_id + "？"):
             try:
                 self.pig.set_id(n_id)
                 return
@@ -310,7 +302,7 @@ class DongYingFactory(PigFactory):
         
         if not naif.isnumeric():
             n_naif = self.remove_nonnumeric(naif)
-            if not self.ask_change('登錄號',naif,n_naif):
+            if not ask("是否可以將登錄號從 " + naif + " 修改為 " + n_naif + "？"):
                 self.turn_on_flag(self.NAIF_FLAG)
                 self.error_messages.append('登錄號有非數字字元')
                 return
