@@ -41,7 +41,7 @@ class Pig:
         self.__id: str = ''
         '''aka "Ear tag" in some cases. 0 < Length < MAX_ID_LENGTH'''
 
-        self.__birthday: datetime.date = datetime.datetime.today()
+        self.__birthday: datetime.date = datetime.datetime.today().date()
         '''Birthday'''
 
         self.__sire = {'id':'','birthday':''}
@@ -58,6 +58,16 @@ class Pig:
 
         self.__chinese_name: str = ''
 
+    def __str__(self):
+        s = {'ID':self.__id,
+             'breed': self.__breed,
+             'gender': self.__gender,
+             'dam': self.__dam,
+             'sire': self.__sire,
+             'birthday': self.__birthday}
+        return str(s)
+
+
     def __is_valid_id(self, id:str):
         return len(id) > 0 and len(id) < Pig.MAX_ID_LENGTH
 
@@ -66,14 +76,14 @@ class Pig:
         if breed in Pig.BREED:
             self.__breed = breed
         else:
-            raise PigSettingException("Invalid breed. Breed must in " + str(Pig.BREED) +", but setting " + str(breed))
+            raise PigSettingException("錯誤的品種值。品種必須定義於下表\n" + str(Pig.BREED) +"\n輸入為" + str(breed))
     
     def set_id(self, id: str):
         
         if id == None:
-            raise PigSettingException("None argument.")
+            raise PigSettingException("耳號不能為空值")
         elif not self.__is_valid_id(id):
-            raise PigSettingException("Invalid id length. Expect 0 < len < " + str(Pig.MAX_ID_LENGTH) + " but setting " + str(len(id)))
+            raise PigSettingException("耳號長度過長。須小於 " + str(Pig.MAX_ID_LENGTH) + " 但卻輸入 " + str(len(id)))
         else:
             self.__id = id
 
@@ -81,61 +91,62 @@ class Pig:
         '''Any ISO format.'''
 
         if date == None:
-            raise PigSettingException("None argument.")
+            raise PigSettingException("生日不能為空值")
 
         if (type(date) == str):
 
             try:
                 self.__birthday = datetime.date.fromisoformat(date)
             except:
-                raise PigSettingException("Not ISO format")
+                raise PigSettingException("生日日期並非使用 ISO format")
         
         elif (type(date) == datetime.date):
             self.__birthday = date
 
         else:
-            raise PigSettingException("Unknown type")
+            raise PigSettingException("生日型別錯誤")
 
     def set_dam(self, id: str, date):
 
         if not self.__is_valid_id(id):
-            raise PigSettingException("Invalid id length. Expect 0 < len < " + str(Pig.MAX_ID_LENGTH) + " but setting " + str(len(id)))
+            raise PigSettingException("母畜耳號長度過長。須小於 " + str(Pig.MAX_ID_LENGTH) + " 但卻輸入 " + str(len(id)) + " but setting " + str(len(id)))
         
         if id == None or date == None:
-            raise PigSettingException("None argument.")
+            raise PigSettingException("母畜生日型別錯誤")
 
         self.__dam['id'] = id
-        if type(date) == str:
+        if (type(date) == str):
+
             try:
-                yyyy, mm, dd = date.split('/')
-                self.__dam['birthday'] = datetime.date(int(yyyy),int(mm),int(dd))
+                self.__birthday = datetime.date.fromisoformat(date)
             except:
-                raise PigSettingException("Invalid date format. Expect yyyy/mm/dd but receive " + str(date))
+                raise PigSettingException("母畜生日日期並非使用 ISO format")
+            
         elif type(date) == datetime.date:
             self.__dam['birthday'] = date
         else:
-            raise PigSettingException("Unknown type")
+            raise PigSettingException("母畜生日型別錯誤")
 
 
     def set_sire(self, id: str, date):
 
         if not self.__is_valid_id(id):
-            raise PigSettingException("Invalid id length. Expect 0 < len < " + str(Pig.MAX_ID_LENGTH) + " but setting " + str(len(id)))
+            raise PigSettingException("父畜耳號長度過長。須小於 " + str(Pig.MAX_ID_LENGTH) + " 但卻輸入 " + str(len(id)) + " but setting " + str(len(id)))
         
         if id == None or date == None:
-            raise PigSettingException("None argument.")
+            raise PigSettingException("父畜生日型別錯誤")
 
         self.__sire['id'] = id
-        if type(date) == str:
+        if (type(date) == str):
+
             try:
-                yyyy, mm, dd = date.split('/')
-                self.__sire['birthday'] = datetime.date(int(yyyy),int(mm),int(dd))
+                self.__birthday = datetime.date.fromisoformat(date)
             except:
-                raise PigSettingException("Invalid date format. Expect yyyy/mm/dd but receive " + str(date))
+                raise PigSettingException("父畜生日日期並非使用 ISO format")
         elif type(date) == datetime.date:
             self.__sire['birthday'] = date
         else:
-            raise PigSettingException("Unknown type")
+            raise PigSettingException("父畜生日型別錯誤")
 
     def set_naif_id(self, id: str):
         '''
@@ -143,22 +154,22 @@ class Pig:
         '''
 
         if id == '' or id == None:
-            raise PigSettingException("None argument.")
+            raise PigSettingException("登錄號型別錯誤")
         
         try:
             int(id)
         except:
-            raise PigSettingException("Invalid naif id. ID should be an integer, but receive " + str(id) + ".")
+            raise PigSettingException("登錄號不能含有非數字字元 " + str(id) + ".")
         if str(int(id)) != str(id):
-            raise PigSettingException("Invalid naif id. ID should be an integer, but receive " + str(id) + ".")
+            raise PigSettingException("登錄號不能含有非數字字元 " + str(id) + ".")
         if len(str(id)) != 6:
-            raise PigSettingException("Invalid naif id. ID should be 6-digit long, but receive " + str(len(id)) + ".")
+            raise PigSettingException("登錄號須為六位數字，此登陸號位數為： " + str(len(id)) + ".")
         self.__naif_id = str(id)
         
     def set_gender(self, gender: str):
 
         if gender not in Pig.GENDER:
-            raise PigSettingException("Invalid gender format. Gender should be in\n" + str(Pig.GENDER))
+            raise PigSettingException("性別錯誤。性別需定義於下表：\n" + str(Pig.GENDER))
         else:
             self.__gender = Pig.GENDER[gender]
 

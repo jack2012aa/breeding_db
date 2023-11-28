@@ -60,10 +60,11 @@ class FactoryTestCase(unittest.TestCase):
         self.assertEqual(datetime.date(2020,2,3),self.factory.pig.get_dam()['birthday'])
 
     def test_set_parent_2(self):
-        parent = 'boar'
+        parent = 'sire'
         parent_id = '2Y123456'
         self.factory.set_birthday('2019-02-03')
-        self.assertRaises(FactoryException, self.factory.set_parent, parent,parent_id)
+        self.factory.set_parent(parent, parent_id)
+        self.assertEqual(self.factory.get_flag(), self.factory.SIRE_FLAG)
 
     def test_naif_id_1(self):
         id = 123456
@@ -77,7 +78,13 @@ class FactoryTestCase(unittest.TestCase):
 
     def test_naif_id_3(self):
         id = "1234567"
-        self.assertRaises(PigSettingException, self.factory.set_naif_id, id)
+        self.factory.set_naif_id(id)
+        self.assertEqual(self.factory.get_flag(), self.factory.NAIF_FLAG)
+
+    def test_naif_id_4(self):
+        id = 'e234567'
+        self.factory.set_naif_id(id)
+        self.assertEqual('234567',self.factory.pig.get_naif_id())
 
 
 if __name__ == '__main__':

@@ -13,8 +13,6 @@ class EmptyParentException(BaseException):
 
 class PigFactory:
 
-    pig: Pig
-    __review_flag: int = 0
     '''
     Show that which field needs to be reviewed.
     1: breed
@@ -22,6 +20,8 @@ class PigFactory:
     4. birthday
     8. sire
     16. dam
+    32. naif
+    64. gender
     '''
     BREED_FLAG = 1
     ID_FLAG = 2
@@ -29,9 +29,12 @@ class PigFactory:
     SIRE_FLAG = 8
     DAM_FLAG = 16
     NAIF_FLAG = 32
+    GENDER_FLAG = 64
 
     def __init__(self):
         self.pig = Pig()
+        self.__review_flag: int = 0
+        self.error_messages: list = []
 
     def turn_on_flag(self, flag: int):
         self.__review_flag = self.__review_flag | flag
@@ -112,15 +115,13 @@ class PigFactory:
                 result = ''.join([result,c])
         return result
     
-    def set_naif_id(self, naif: str):
-        '''
-        naif id is a six-digit unique id.
-        '''
+    def set_gender(self, gender:str):
+        
         try:
-            self.pig.set_naif_id(naif)
-        except PigSettingException as ex:
-            self.turn_on_flag(self.NAIF_FLAG)
-            raise ex
+            self.pig.set_gender(gender)
+        except Exception as ex:
+            self.turn_on_flag(self.GENDER_FLAG)
+            
 
 class DongYingFactory(PigFactory):
     
@@ -135,7 +136,8 @@ class DongYingFactory(PigFactory):
         '''
     
         if type(breed) != str:
-            raise FactoryException('Invalid input type. Require str, receive ' + str(type(breed)))
+            self.turn_on_flag(self.BREED_FLAG)
+            return
         
         if breed in Pig.BREED:
             self.pig.set_breed(breed)
@@ -165,8 +167,9 @@ class DongYingFactory(PigFactory):
 
 
         if type(id) != str and type(id) != int:
-            raise FactoryException('Invalid input type. Require str, receive ' + str(type(id)))
-        
+            self.turn_on_flag(self.ID_FLAG)
+            return
+
         id = str(id)
         if id.isnumeric():
             try:
@@ -214,7 +217,11 @@ class DongYingFactory(PigFactory):
         '''
 
         if parent not in ['dam','sire']:
-            raise FactoryException('Parent ' + parent + ' is not defined.')
+            if parent == 'dam':
+                self.turn_on_flag(self.DAM_FLAG)
+            else:
+                self.turn_on_flag(self.SIRE_FLAG)
+            return
 
         '''Take the first letter as breed'''
         breed = ''
@@ -230,7 +237,7 @@ class DongYingFactory(PigFactory):
                 self.turn_on_flag(self.DAM_FLAG)
             else:
                 self.turn_on_flag(self.SIRE_FLAG)
-            raise FactoryException('Breed ' + breed + ' is not defined.')
+            return
         
         for c in id:
             if not c.isnumeric():
@@ -255,7 +262,7 @@ class DongYingFactory(PigFactory):
             else:
                 self.turn_on_flag(self.SIRE_FLAG)
             db.close()
-            raise EmptyParentException()
+            return
         
         '''Check birthday'''
         try:
@@ -264,14 +271,13 @@ class DongYingFactory(PigFactory):
                     self.turn_on_flag(self.DAM_FLAG)
                 else:
                     self.turn_on_flag(self.SIRE_FLAG)
-                raise FactoryException('The birthday of parent ' + str(parent_pig.get_birthday()) + ' is behind its birthday ' + str(self.pig.get_birthday()))
+                return
         except:
             if parent == 'dam': 
                 self.turn_on_flag(self.DAM_FLAG)
             else:
                 self.turn_on_flag(self.SIRE_FLAG)
-            raise FactoryException('Must know the birthday of the big before checking its parent.')
-
+            return
 
         if parent == 'dam':
             self.pig.set_dam(parent_pig.get_id(), parent_pig.get_birthday())
@@ -282,3 +288,25 @@ class DongYingFactory(PigFactory):
             self.turn_off_flag(self.SIRE_FLAG)
             return
         
+    def set_naif_id(self, naif: str):
+        '''
+        naif id is a six-digit unique id.
+        '''
+        if naif == '':
+            return
+        
+        naif = str(naif)
+        
+        if not naif.isnumeric():
+            n_naif = self.remove_nonnumeric(naif)
+            if not self.ask_change('登錄號',naif,n_naif):
+                self.turn_on_flag(self.NAIF_FLAG)
+                return
+            naif = n_naif
+
+        try:
+            self.pig.set_naif_id(naif)
+            return
+        except:
+            self.turn_on_flag(self.NAIF_FLAG)
+            return
