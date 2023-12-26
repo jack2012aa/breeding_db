@@ -1,9 +1,6 @@
 import datetime
 
-class PigSettingException(BaseException):
-
-    def __init__(self, message:str):
-        super().__init__(message)
+from tools.general import transform_date
 
 class Pig:
 
@@ -73,105 +70,98 @@ class Pig:
 
     def set_breed(self, breed: str):
 
+        if not isinstance(breed, str):
+            raise TypeError("品種應該是 string，現在輸入的是 {type_} ".format(type_=str(type(breed))))
+
         if breed in Pig.BREED:
             self.__breed = breed
+        elif breed in Pig.BREED_DICT:
+            self.__breed = Pig.BREED_DICT[breed]
         else:
-            raise PigSettingException("錯誤的品種值。品種必須定義於下表\n" + str(Pig.BREED) +"\n輸入為" + str(breed))
+            raise ValueError("品種 {breed} 不在列表中，請參考下表： {list_} ".format(breed=breed, list_=str(Pig.BREED)))
     
     def set_id(self, id: str):
         
-        if id == None:
-            raise PigSettingException("耳號不能為空值")
-        elif not self.__is_valid_id(id):
-            raise PigSettingException("耳號長度過長。須小於 " + str(Pig.MAX_ID_LENGTH) + " 但卻輸入 " + str(len(id)))
+        if not isinstance(id, str):
+            raise TypeError("耳號應該是 string，現在輸入的是 {type_} ".format(type_=str(type(id))))
+
+        if not self.__is_valid_id(id):
+            raise ValueError("耳號長度異常，應介於 0 ~ {max_} 之間。輸入長度為 {length}".format(max_=Pig.MAX_ID_LENGTH, length=len(id)))
         else:
             self.__id = id
 
     def set_birthday(self, date):
-        '''Any ISO format.'''
+        '''
+        * param date: any ISO format
+        * Raise TypeError and ValueError
+        '''
 
-        if date == None:
-            raise PigSettingException("生日不能為空值")
-
-        if (type(date) == str):
-
-            try:
-                self.__birthday = datetime.date.fromisoformat(date)
-            except:
-                raise PigSettingException("生日日期並非使用 ISO format")
-        
-        elif (type(date) == datetime.date):
-            self.__birthday = date
-
-        else:
-            raise PigSettingException("生日型別錯誤")
+        try:
+            self.__birthday = transform_date(date)
+        except (TypeError, ValueError) as error:
+            raise error
 
     def set_dam(self, id: str, date):
+        '''
+        *param date: any ISO format
+        *Raise TypeError and ValueError
+        '''
 
+        if not isinstance(id, str):
+            raise TypeError("耳號應該是 string，現在輸入的是 {type_} ".format(type_=str(type(id))))
         if not self.__is_valid_id(id):
-            raise PigSettingException("母畜耳號長度過長。須小於 " + str(Pig.MAX_ID_LENGTH) + " 但卻輸入 " + str(len(id)) + " but setting " + str(len(id)))
-        
-        if id == None or date == None:
-            raise PigSettingException("母畜生日型別錯誤")
-
+            raise ValueError("耳號長度異常，應介於 0 ~ {max_} 之間。輸入長度為 {length}".format(max_=Pig.MAX_ID_LENGTH, length=len(id)))
         self.__dam['id'] = id
-        if (type(date) == str):
 
-            try:
-                self.__birthday = datetime.date.fromisoformat(date)
-            except:
-                raise PigSettingException("母畜生日日期並非使用 ISO format")
-            
-        elif type(date) == datetime.date:
-            self.__dam['birthday'] = date
-        else:
-            raise PigSettingException("母畜生日型別錯誤")
-
+        try:
+            self.__dam['birthday'] = transform_date(date)
+        except (TypeError, ValueError) as error:
+            raise error
 
     def set_sire(self, id: str, date):
+        '''
+        *param date: any ISO format
+        *Raise TypeError and ValueError
+        '''
 
+        if not isinstance(id, str):
+            raise TypeError("耳號應該是 string，現在輸入的是 {type_} ".format(type_=str(type(id))))
         if not self.__is_valid_id(id):
-            raise PigSettingException("父畜耳號長度過長。須小於 " + str(Pig.MAX_ID_LENGTH) + " 但卻輸入 " + str(len(id)) + " but setting " + str(len(id)))
-        
-        if id == None or date == None:
-            raise PigSettingException("父畜生日型別錯誤")
-
+            raise ValueError("耳號長度異常，應介於 0 ~ {max_} 之間。輸入長度為 {length}".format(max_=Pig.MAX_ID_LENGTH, length=len(id)))
         self.__sire['id'] = id
-        if (type(date) == str):
 
-            try:
-                self.__birthday = datetime.date.fromisoformat(date)
-            except:
-                raise PigSettingException("父畜生日日期並非使用 ISO format")
-        elif type(date) == datetime.date:
-            self.__sire['birthday'] = date
-        else:
-            raise PigSettingException("父畜生日型別錯誤")
+        try:
+            self.__sire['birthday'] = transform_date(date)
+        except (TypeError, ValueError) as error:
+            raise error
 
-    def set_naif_id(self, id: str):
+    def set_naif_id(self, id):
         '''
-        naif id is a six-digit unique id.
+        * param id: a six-digit unique id
+        * Raise TypeError
         '''
 
-        if id == '' or id == None:
-            raise PigSettingException("登錄號型別錯誤")
+        if not isinstance(id, str):
+            raise TypeError("id 應該是 string，現在輸入的是 {type_} ".format(type_=str(type(id))))
         
         try:
             int(id)
         except:
-            raise PigSettingException("登錄號不能含有非數字字元 " + str(id) + ".")
+            raise ValueError("登錄號不能含有非數字字元 {id}".format(id=id))
+
         if str(int(id)) != str(id):
-            raise PigSettingException("登錄號不能含有非數字字元 " + str(id) + ".")
+            raise ValueError("登錄號不能含有非數字字元 {id}".format(id=id))
+        
         if len(str(id)) != 6:
-            raise PigSettingException("登錄號須為六位數字，此登錄號位數為： " + str(len(id)) + ".")
-        self.__naif_id = str(id)
+            raise ValueError("{id} 不是六位數字".format(id=id))
+        
+        self.__naif_id = id
         
     def set_gender(self, gender: str):
 
         if gender not in Pig.GENDER:
-            raise PigSettingException("性別錯誤。性別需定義於下表：\n" + str(Pig.GENDER))
-        else:
-            self.__gender = Pig.GENDER[gender]
+            raise KeyError("性別 {gender} 錯誤。性別需定義於下表：\n{dict_}".format(gender=gender, dict_=Pig.GENDER))
+        self.__gender = Pig.GENDER[gender]
 
     def set_chinese_name(self, name):
         self.__chinese_name = name
@@ -188,7 +178,7 @@ class Pig:
     def get_dam(self):
         return self.__dam
     
-    def get_boar(self):
+    def get_sire(self):
         return self.__sire
     
     def get_naif_id(self):

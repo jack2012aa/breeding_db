@@ -1,6 +1,7 @@
 import unittest
-from data_structures.pig import Pig, PigSettingException
 import datetime
+
+from data_structures.pig import Pig
 
 class PigTestCase(unittest.TestCase):
 
@@ -18,13 +19,13 @@ class PigTestCase(unittest.TestCase):
         self.assertEqual(expect,result)
 
     def test_set_id_failure_1(self):
-        self.assertRaises(PigSettingException, self.pig.set_id, id = '')
+        self.assertRaises(ValueError, self.pig.set_id, id = '')
     
     def test_set_id_failure_2(self):
-        self.assertRaises(PigSettingException, self.pig.set_id, None)
+        self.assertRaises(TypeError, self.pig.set_id, None)
 
     def test_set_id_failure_3(self):
-        self.assertRaises(PigSettingException, self.pig.set_id, 'asduflsdfjskabdfijaslfefiudsbufbliadbf')
+        self.assertRaises(ValueError, self.pig.set_id, 'asduflsdfjskabdfijaslfefiudsbufbliadbf')
 
     def test_set_breed(self):
         breed = 'L'
@@ -34,7 +35,7 @@ class PigTestCase(unittest.TestCase):
 
     def test_set_breed_failure(self):
         breed = "Landrace"
-        self.assertRaises(PigSettingException, self.pig.set_breed, breed)
+        self.assertRaises(ValueError, self.pig.set_breed, breed)
 
     def test_set_birthday(self):
         birthday_str = '2021-02-03'
@@ -49,15 +50,15 @@ class PigTestCase(unittest.TestCase):
 
     def test_set_birthday_failure_1(self):
         birthday = '202123'
-        self.assertRaises(PigSettingException, self.pig.set_birthday, birthday)
+        self.assertRaises(ValueError, self.pig.set_birthday, birthday)
 
     def test_set_birthday_failure_2(self):
         birthday = 12343
-        self.assertRaises(PigSettingException, self.pig.set_birthday, birthday) 
+        self.assertRaises(TypeError, self.pig.set_birthday, birthday) 
     
-    def test_set_birthday_failure_1(self):
+    def test_set_birthday_failure_3(self):
         birthday = None
-        self.assertRaises(PigSettingException, self.pig.set_birthday, birthday)
+        self.assertRaises(TypeError, self.pig.set_birthday, birthday)
 
     def test_set_dam_1(self):
         dam = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
@@ -66,40 +67,35 @@ class PigTestCase(unittest.TestCase):
 
     def test_set_dam_2(self):
         dam = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
-        self.pig.set_dam(dam['id'], '2021/02/03')
+        self.pig.set_dam(dam['id'], '2021-02-03')
         self.assertEqual(dam, self.pig.get_dam())
 
-    def test_set_boar_1(self):
+    def test_set_sire_1(self):
         boar = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
         self.pig.set_sire(boar['id'], boar['birthday'])
-        self.assertEqual(boar, self.pig.get_boar())
+        self.assertEqual(boar, self.pig.get_sire())
 
-    def test_set_boar_2(self):
+    def test_set_sire_2(self):
         boar = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
-        self.pig.set_sire(boar['id'], '2021/02/03')
-        self.assertEqual(boar, self.pig.get_boar())
+        self.pig.set_sire(boar['id'], '2021-02-03')
+        self.assertEqual(boar, self.pig.get_sire())
 
-    def test_set_naif_id(self):
-        id = '1238342'
-        self.pig.set_naif_id(id)
-        self.assertEqual(str(id), self.pig.get_naif_id())
-
-    def test_set_naif_id(self):
-        id = 123424
+    def test_set_naif_id_1(self):
+        id = '123456'
         self.pig.set_naif_id(id)
         self.assertEqual(str(id), self.pig.get_naif_id())
 
     def test_set_naif_id_failure_1(self):
         id = '324dsf'
-        self.assertRaises(PigSettingException, self.pig.set_naif_id, id)
+        self.assertRaises(ValueError, self.pig.set_naif_id, id)
 
     def test_set_naif_id_failure_2(self):
         id = 14324.123
-        self.assertRaises(PigSettingException, self.pig.set_naif_id, id)
+        self.assertRaises(TypeError, self.pig.set_naif_id, id)
 
     def test_set_naif_id_failure_3(self):
         id = '1234567'
-        self.assertRaises(PigSettingException, self.pig.set_naif_id, id)
+        self.assertRaises(ValueError, self.pig.set_naif_id, id)
 
     def test_gender_1(self):
         gender = '公'
