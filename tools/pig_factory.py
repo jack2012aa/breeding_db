@@ -1,29 +1,15 @@
 from tools.general import ask
 from models.pig import PigModel
-from data_structures.pig import Pig, PigSettingException
+from data_structures.pig import Pig
 
 class FactoryException(BaseException):
 
     def __init__(self, message):
         super().__init__(message)
 
-class EmptyParentException(BaseException):
-
-    def __init__(self, message):
-        super().__init__(message)
-
 class PigFactory:
 
-    '''
-    Show that which field needs to be reviewed.
-    1: breed
-    2: id
-    4. birthday
-    8. sire
-    16. dam
-    32. naif
-    64. gender
-    '''
+    # Mask
     BREED_FLAG = 1
     ID_FLAG = 2
     BIRTHDAY_FLAG = 4
@@ -37,10 +23,10 @@ class PigFactory:
         self.__review_flag: int = 0
         self.error_messages: list = []
 
-    def turn_on_flag(self, flag: int):
+    def _turn_on_flag(self, flag: int):
         self.__review_flag = self.__review_flag | flag
 
-    def turn_off_flag(self, flag: int):
+    def _turn_off_flag(self, flag: int):
         self.__review_flag = self.__review_flag & ~flag
     
     def check_flag(self, flag: int):
@@ -71,38 +57,32 @@ class PigFactory:
         * Ex: 20Y1234-2cao -> 123402
         '''
 
-        if '-' not in id:
-            return id
-        
-        front, hind = id.split('-')[0], id.split('-')[1]
+        # Deal with the dash
+        if '-' in id:
+            front, hind = id.split('-')[0:2]
+            # Add additional 0
+            try:
+                hind = hind + "tail"
+                int(hind[0:2])
+                hind = hind[0:2]
+            except:
+                hind = '0' + hind[0]
+            id = front + hind
 
-        '''Remove English character and string before it.'''
-        c_index = -1
-        for i in range(len(front)):
-            if not front[i].isnumeric():
-                c_index = i
-
-        result = front[c_index + 1:]
-
-        n_hind = ''
-        for c in hind:
-            if c.isnumeric():
-                n_hind = ''.join([n_hind,c])
-            else:
-                break
-        
-        '''Add additional 0.'''
-        if len(n_hind) == 1:
-            result = ''.join([result, '0', n_hind])
-        else:
-            result = result + n_hind
-        
-        return result
+        # Find the index of the first and second character in id
+        first = 0
+        second = len(id)
+        for i in range(len(id)):
+            if not id[i].isnumeric():
+                if first == 0:
+                    first = i + 1
+                elif second == len(id):
+                    second = i
+                    break
+        return id[first:second]
 
     def remove_nonnumeric(self, s: str) -> str:
-        '''
-        Remove all nonnumeric characters in s.
-        '''
+        ''' Remove all nonnumeric characters in s.'''
 
         result = ''
         for c in s:
@@ -114,9 +94,27 @@ class PigFactory:
         
         try:
             self.pig.set_gender(gender)
-        except BaseException as ex:
-            self.turn_on_flag(self.GENDER_FLAG)
-            self.error_messages.append(str(ex))
+        except KeyError as error:
+            self._turn_on_flag(self.GENDER_FLAG)
+            self.error_messages.append(str(error))
+
+    def set_birthday(self, date):
+        '''
+        * param date: in ISO format or a `date` object.
+        * Raise TypeError
+        '''
+
+        try:
+            self.pig.set_birthday(date)
+            return
+        except ValueError:
+            self.error_messages.append("日期格式不是 ISO format")
+            self._turn_on_flag(self.BIRTHDAY_FLAG)
+            return
+        except TypeError as error:
+            self.error_messages.append(str(error))
+            self._turn_on_flag(self.BIRTHDAY_FLAG)
+            raise error
             
 
 class DongYingFactory(PigFactory):
@@ -129,97 +127,81 @@ class DongYingFactory(PigFactory):
         1. Does breed in {L, Y, D}?
         2. Is breed an English word?
         3. Is breed in BREED_DICT?
+        * Raise TypeError
         '''
     
-        if type(breed) != str:
-            self.turn_on_flag(self.BREED_FLAG)
-            self.error_messages.append('品種型別錯誤')
-            return
+        if not isinstance(breed, str):
+            self._turn_on_flag(self.BREED_FLAG)
+            self.error_messages.append("品種型別 {type_} 錯誤".format(type_=type(breed)))
+            raise TypeError("品種型別 {type_} 錯誤".format(type_=type(breed)))
         
         if breed in Pig.BREED:
             self.pig.set_breed(breed)
             return
 
-        '''Chinese string is recognized as alpha in the isalpha method.'''        
+        # Chinese string is recognized as alpha in the isalpha method. 
         if breed.encode('UTF-8').isalpha():
             n_breed = self.get_breed_abbrevation(breed)
-            if ask("是否可以將品種從 " + breed + " 修改為 " + n_breed + "？"):
+            if ask("是否可以將品種從 {breed} 修改為 {n_breed} ？".format(breed=breed,n_breed=n_breed)):
                 self.pig.set_breed(n_breed)
                 return
         
         if breed in Pig.BREED_DICT:
             n_breed = Pig.BREED_DICT[breed]
-            if ask("是否可以將品種從 " + breed + " 修改為 " + n_breed + "？"):
+            if ask("是否可以將品種從 {breed} 修改為 {n_breed} ？".format(breed=breed,n_breed=n_breed)):
                 self.pig.set_breed(n_breed)
                 return
 
         self.error_messages.append('品種不在常見品種名單中，或有錯誤字元')    
-        self.turn_on_flag(self.ID_FLAG)
+        self._turn_on_flag(self.ID_FLAG)
         
     def set_id(self, id: str):
         '''
         * Can be turn into an int -> valid
         * Contain a dash -> Remove the dash
         * Get the number between first two nonnumeric characters (if any)
+        * Raise TypeError
         '''
 
+        if not isinstance(id, str):
+            self._turn_on_flag(self.ID_FLAG)
+            self.error_messages.append('耳號格式 {type_} 錯誤'.format(type_=str(type(id))))
+            raise TypeError('耳號格式 {type_} 錯誤'.format(type_=str(type(id))))
 
-        if type(id) != str and type(id) != int:
-            self.turn_on_flag(self.ID_FLAG)
-            self.error_messages.append('耳號格式錯誤')
-            return
-
-        id = str(id)
-        if id.isnumeric():
-            try:
-                self.pig.set_id(id)
-                return
-            except PigSettingException as ex:
-                self.error_messages.append(str(ex))
-                self.turn_on_flag(self.ID_FLAG)
-                return
-            
-        if '-' in id:
-            n_id = self.remove_dash_from_id(id)
-        else:
-            n_id = self.remove_nonnumeric(id)
-
-        if ask("是否可以將耳號從 " + id + " 修改為 " + n_id + "？"):
+        n_id = self.remove_dash_from_id(id)
+        if (n_id != id and ask("是否可以將耳號從 {id} 修改為 {n_id} ？".format(id=id, n_id=n_id))) or n_id == id:
             try:
                 self.pig.set_id(n_id)
                 return
-            except PigSettingException as ex:
-                self.error_messages.append(str(ex))
-                self.turn_on_flag(self.ID_FLAG)
+            except ValueError as error:
+                self.error_messages.append(str(error))
+                self._turn_on_flag(self.ID_FLAG)
                 return
+            except TypeError as error: # TypeError should not happen here.
+                self.error_messages.append(str(error))
+                self._turn_on_flag(self.ID_FLAG)
+                raise error
+            
         self.error_messages.append('耳號格式錯誤')
-        self.turn_on_flag(self.ID_FLAG)
+        self._turn_on_flag(self.ID_FLAG)
         return
     
-    def set_birthday(self, date):
-        '''
-        :param date: in ISO format or a `date` object.
-        '''
-
-        try:
-            self.pig.set_birthday(date)
-            return
-        except PigSettingException as ex:
-            self.error_messages.append(str(ex))
-            self.turn_on_flag(self.BIRTHDAY_FLAG)
-
     def set_parent(self, parent: str, parent_id: str):  
         '''
-        :param parent: {'dam','sire'}
-        :param parent_id: breed + id + *
-        1. Take the first English letter as breed.
-        2. If parent does not found in database, raise `FactoryForeignKeyException`
+        * param parent: ['dam','sire']
+        * param parent_id: breed + id + *
+        * The parent should exist in the database. The query is based on breed and id.
+        * If more than one result exist, they will be shown for user to select the correct one.
+        * If the parent does not exist, two cases possible: 1. the parent is in the rest of the file; 2. the parent does not exist.
+        * To handle case 1, the method will raise a special exception `ParentError` so the csv_reader can record these pigs and re-generate them after others are done.
+        * The birthday of parent is checked to make sure it was borned before its child.
+        * Raise ValueError, KeyError and ParentError
         '''
 
-        if parent not in ['dam','sire']:
-            raise ValueError()
+        if parent not in ["dam", "sire"]:
+            raise ValueError("The argument parent should be either dam or sire. {parent} is recieved".format(parent=parent))
 
-        '''Take the first letter as breed'''
+        # Take the first letter as breed
         breed = ''
         id = ''
         for c in parent_id:
@@ -227,68 +209,49 @@ class DongYingFactory(PigFactory):
                 breed = c.upper()
                 id = parent_id.split(c)[1]
                 break
-        
         if breed not in Pig.BREED and not breed == '':
             if parent == 'dam':
-                self.turn_on_flag(self.DAM_FLAG)
+                self._turn_on_flag(self.DAM_FLAG)
                 self.error_messages.append('母畜品種不在常見名單內')
             else:
-                self.turn_on_flag(self.SIRE_FLAG)
+                self._turn_on_flag(self.SIRE_FLAG)
                 self.error_messages.append('父畜品種不在常見名單內')
             return
         
-        for c in id:
-            if not c.isnumeric():
-                id = id.split(c)[0]
-                break
-        
-        '''Find the parent in db'''
-        db = PigModel()
+        id = self.remove_dash_from_id(id)
+
+        # Find the parent in db
+        # -------------------------------------------- NOT DONE ----------------------------------------------
         parent_pig = Pig()
-        try:
-            parent_pig.set_id(id)
-            parent_pig.set_breed(breed)
-        except BaseException as ex:
-            raise ex
+        parent_pig.set_id('123456')
+        parent_pig.set_birthday('2020-02-03')
         
-        if db.exist(parent_pig):
-            parent_pig = db.find_pig(parent_pig)
-            db.close()
-        else:
-            if parent == 'dam':
-                self.turn_on_flag(self.DAM_FLAG)
-                self.error_messages.append('母畜不存在於資料庫中')
-                db.close()
-            else:
-                self.turn_on_flag(self.SIRE_FLAG)
-                self.error_messages.append('父畜不存在於資料庫中')
-                db.close()
         
         '''Check birthday'''
         try:
             if parent_pig.get_birthday() > self.pig.get_birthday():
                 if parent == 'dam':
-                    self.turn_on_flag(self.DAM_FLAG)
+                    self._turn_on_flag(self.DAM_FLAG)
                     self.error_messages.append('母畜生日比後代生日晚')
                 else:
-                    self.turn_on_flag(self.SIRE_FLAG)
+                    self._turn_on_flag(self.SIRE_FLAG)
                     self.error_messages.append('父畜生日比後代生日晚')
                 return
         except BaseException as ex:
             if parent == 'dam': 
-                self.turn_on_flag(self.DAM_FLAG)
+                self._turn_on_flag(self.DAM_FLAG)
             else:
-                self.turn_on_flag(self.SIRE_FLAG)
+                self._turn_on_flag(self.SIRE_FLAG)
             self.error_messages.append(str(ex))
             return
 
         if parent == 'dam':
             self.pig.set_dam(parent_pig.get_id(), parent_pig.get_birthday())
-            self.turn_off_flag(self.DAM_FLAG)
+            self._turn_off_flag(self.DAM_FLAG)
             return
         else:
             self.pig.set_sire(parent_pig.get_id(), parent_pig.get_birthday())
-            self.turn_off_flag(self.SIRE_FLAG)
+            self._turn_off_flag(self.SIRE_FLAG)
             return
         
     def set_naif_id(self, naif: str):
@@ -303,7 +266,7 @@ class DongYingFactory(PigFactory):
         if not naif.isnumeric():
             n_naif = self.remove_nonnumeric(naif)
             if not ask("是否可以將登錄號從 " + naif + " 修改為 " + n_naif + "？"):
-                self.turn_on_flag(self.NAIF_FLAG)
+                self._turn_on_flag(self.NAIF_FLAG)
                 self.error_messages.append('登錄號有非數字字元')
                 return
             naif = n_naif
@@ -312,6 +275,6 @@ class DongYingFactory(PigFactory):
             self.pig.set_naif_id(naif)
             return
         except BaseException as ex:
-            self.turn_on_flag(self.NAIF_FLAG)
+            self._turn_on_flag(self.NAIF_FLAG)
             self.error_messages.append(str(ex))
             return

@@ -81,6 +81,7 @@ class Pig:
             raise ValueError("品種 {breed} 不在列表中，請參考下表： {list_} ".format(breed=breed, list_=str(Pig.BREED)))
     
     def set_id(self, id: str):
+        '''* Raise TypeError and ValueError'''
         
         if not isinstance(id, str):
             raise TypeError("耳號應該是 string，現在輸入的是 {type_} ".format(type_=str(type(id))))
@@ -158,6 +159,7 @@ class Pig:
         self.__naif_id = id
         
     def set_gender(self, gender: str):
+        ''' * Raise KeyError'''
 
         if gender not in Pig.GENDER:
             raise KeyError("性別 {gender} 錯誤。性別需定義於下表：\n{dict_}".format(gender=gender, dict_=Pig.GENDER))
