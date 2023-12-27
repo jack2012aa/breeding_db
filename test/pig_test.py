@@ -61,24 +61,40 @@ class PigTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.pig.set_birthday, birthday)
 
     def test_set_dam_1(self):
-        dam = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
-        self.pig.set_dam(dam['id'], dam['birthday'])
+        dam = Pig()
+        dam.set_id("dsfisdif")
+        dam.set_birthday("2021-02-03")
+        dam.set_farm("test_farm")
+        self.pig.set_dam(dam)
         self.assertEqual(dam, self.pig.get_dam())
 
-    def test_set_dam_2(self):
-        dam = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
-        self.pig.set_dam(dam['id'], '2021-02-03')
-        self.assertEqual(dam, self.pig.get_dam())
+    def test_set_dam_failure_1(self):
+        dam = Pig()
+        dam.set_id("dsfisdif")
+        dam.set_birthday("2021-02-03")
+        self.assertRaises(ValueError, self.pig.set_dam, dam)
+
+    def test_set_dam_failure_2(self):
+        dam = None
+        self.assertRaises(TypeError, self.pig.set_dam, dam)
 
     def test_set_sire_1(self):
-        boar = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
-        self.pig.set_sire(boar['id'], boar['birthday'])
-        self.assertEqual(boar, self.pig.get_sire())
+        sire = Pig()
+        sire.set_id("dsfisdif")
+        sire.set_birthday("2021-02-03")
+        sire.set_farm("test_farm")
+        self.pig.set_sire(sire)
+        self.assertEqual(sire, self.pig.get_sire())
 
-    def test_set_sire_2(self):
-        boar = {'id':'dsfisdif','birthday':datetime.date(2021,2,3)}
-        self.pig.set_sire(boar['id'], '2021-02-03')
-        self.assertEqual(boar, self.pig.get_sire())
+    def test_set_sire_failure_2(self):
+        sire = Pig()
+        sire.set_id("dsfisdif")
+        sire.set_birthday("2021-02-03")
+        self.assertRaises(ValueError, self.pig.set_sire, sire)
+
+    def test_set_sire_failure_2(self):
+        sire = None
+        self.assertRaises(TypeError, self.pig.set_sire, sire)
 
     def test_set_naif_id_1(self):
         id = '123456'

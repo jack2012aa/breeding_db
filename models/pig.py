@@ -1,3 +1,5 @@
+import pymysql
+
 from data_structures.pig import Pig
 from . import BaseModel
 
@@ -12,7 +14,7 @@ class PigModel(BaseModel):
         Insert a pig to the database. \\
         Checking the format of pig is not `PigModel`'s responsibility. This method only confirm 
         primary keys are not None. Please use this method after you make sure the format is correct.
-        * Raise TypeError
+        * Raise TypeError, ValueError
         '''
 
         if not isinstance(pig, Pig):
@@ -21,9 +23,9 @@ class PigModel(BaseModel):
         # Check primary key.
         if pig.get_id() is None:
             raise TypeError("id can not be None")
-        if pig.get_birthday is None:
+        if pig.get_birthday() is None:
             raise TypeError("birthday can not be None")
-        if pig.get_farm is None:
+        if pig.get_farm() is None:
             raise TypeError("farm can not be None")
         
         # Pick non-empty attributes.
@@ -58,9 +60,105 @@ class PigModel(BaseModel):
 
         try:
             self.query(sql_query)
+        except pymysql.err.IntegrityError as error:
+            raise ValueError(str(error))
         # Not sure what type of error may come up.
         except Exception as error:
             raise error
+
+    def dict_to_pig(self, pig_dict: dict) -> Pig:
+        '''
+        Transform a dictionary from query to a pig instance.
+        * If the pig is not unique, return None.
+        * Raise TypeError
+        '''
+
+        if not isinstance(pig_dict, dict):
+            raise TypeError("pig_dict should be a dict. Get {type_}".format(type_=str(type(pig_dict))))
+        
+        pig = Pig()
+        if pig_dict["id"] is not None:
+            pig.set_id(pig_dict["id"])
+        if pig_dict["birthday"] is not None:
+            pig.set_birthday(pig_dict["birthday"])
+        if pig_dict["farm"] is not None:
+            pig.set_farm(pig_dict["farm"])
+        if pig_dict["breed"] is not None:
+            pig.set_breed(pig_dict["breed"])
+        if pig_dict["naif_id"] is not None:
+            pig.set_naif_id(pig_dict["naif_id"])
+        if pig_dict["gender"] is not None:
+            pig.set_gender(pig_dict["gender"])
+        if pig_dict["chinese_name"] is not None:
+            pig.set_chinese_name(pig_dict["chinese_name"])
+        if pig_dict["sire_id"] is not None:
+            sire = Pig()
+            sire.set_id(pig_dict["sire_id"])
+            sire.set_birthday(pig_dict["sire_birthday"])
+            sire.set_farm(pig_dict["sire_farm"])
+            pig.set_sire(sire)
+        if pig_dict["dam_id"] is not None:
+            dam = Pig()
+            dam.set_id(pig_dict["dam_id"])
+            dam.set_birthday(pig_dict["dam_birthday"])
+            dam.set_farm(pig_dict["dam_farm"])
+            pig.set_dam(dam)
+
+        if not pig.is_unique():
+            return None
+
+        return pig
+
+    def find_pig(self, pig: Pig) -> Pig:
+        '''
+        Find a pig in the database through primary keys.
+        * Raise TypeError, ValueError
+        '''
+
+        if not isinstance(pig, Pig):
+            raise TypeError("pig should be a Pig. Get {type_}".format(type_=str(type(pig))))
+        
+        if not pig.is_unique():
+            raise ValueError("pig {pig} should be unique".format(pig=str(pig)))
+        
+        sql_query = "SELECT * FROM Pigs WHERE id='{id}' AND birthday='{birthday}' AND farm='{farm}';".format(
+            id=pig.get_id(),
+            birthday=str(pig.get_birthday()),
+            farm=pig.get_farm()
+        )
+
+        result = self.query(sql_query)
+
+        # pig not found
+        if len(result) == 0:
+            return None
+
+        return self.dict_to_pig(result[0])
+
+    def find_pigs(self, pig_dict: dict) -> list:
+        '''
+        Find all pigs satisfy the conditions. 
+        Keys of the dictionary should be same as attributes.
+        * Different conditions will be connected by AND.
+        * Sire and Dam should be listed as sire_id, sire_birthday, ...
+        * Raise TypeError
+        '''
+
+        if not isinstance(pig_dict, dict):
+            raise TypeError("pig_dict should be a dict. Get {type_}.".format(type_=str(type(pig_dict))))
+        
+        conditions = []
+        for key, value in pig_dict.items():
+            conditions.append("{key}='{value}'".format(key=str(key),value=str(value)))
+        sql_query = "SELECT * FROM Pigs WHERE {condition}".format(
+            condition=" AND ".join(conditions)
+        )
+        results = self.query(sql_query)
+        pigs = []
+        for pig in results:
+            pigs.append(self.dict_to_pig(pig))
+        
+        return pigs
 
     def delete_all(self) -> None:
         '''Delete all data in the table. Should only be used in debugging.'''
@@ -69,10 +167,9 @@ class PigModel(BaseModel):
             self.query("DELETE FROM Pigs;")
         except Exception as error:
             raise error
+        
+    def find_all(self) -> None:
+        '''Should only be used in debugging'''
 
-    def find_pig(self, pig: Pig) -> Pig:
+        print(self.query("SELECT * FROM Pigs;"))
 
-        pig = Pig()
-        pig.set_id('123456')
-        pig.set_birthday('2020-02-03')
-        return pig

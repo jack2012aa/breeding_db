@@ -253,7 +253,7 @@ class DongYingFactory(PigFactory):
         parent_pig = Pig()
         parent_pig.set_id("123456")
         parent_pig.set_birthday("2020-02-03")
-        
+        parent_pig.set_farm("test_farm")
         
         # Check birthday
         if parent_pig.get_birthday() > self.pig.get_birthday():
@@ -268,7 +268,7 @@ class DongYingFactory(PigFactory):
         # Set parent
         if parent == "dam":
             try:
-                self.pig.set_dam(parent_pig.get_id(), parent_pig.get_birthday())
+                self.pig.set_dam(parent_pig)
                 return None
             # Error should not happen here since parent_pig comes from the database.
             except (TypeError, ValueError) as error:  
@@ -277,7 +277,7 @@ class DongYingFactory(PigFactory):
                 raise error
         else:
             try:
-                self.pig.set_sire(parent_pig.get_id(), parent_pig.get_birthday())
+                self.pig.set_sire(parent_pig)
                 return None
             # Error should not happen here since parent_pig comes from the database.
             except (TypeError, ValueError) as error:  

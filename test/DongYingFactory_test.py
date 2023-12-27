@@ -1,4 +1,7 @@
-import unittest, datetime
+import unittest
+import datetime
+
+from data_structures.pig import Pig
 from tools.pig_factory import DongYingFactory
 
 class FactoryTestCase(unittest.TestCase):
@@ -55,10 +58,14 @@ class FactoryTestCase(unittest.TestCase):
         self.assertEqual('197012',self.factory.remove_dash_from_id(id))
 
     def test_set_parent_1(self):
-        parent = 'dam'
-        parent_id = '2Y123456'
+        # --------------------------- Not Done ------------------------------
+        parent = Pig()
+        parent.set_id("123456")
+        parent.set_birthday("2020-02-03")
+        parent.set_farm("test_farm")
+
         self.factory.set_birthday('2021-02-03')
-        self.factory.set_parent(parent, parent_id)
+        self.factory.set_parent("dam", parent.get_id())
         self.assertEqual('123456',self.factory.pig.get_dam()['id'])
         self.assertEqual(datetime.date(2020,2,3),self.factory.pig.get_dam()['birthday'])
 

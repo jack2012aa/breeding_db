@@ -1,7 +1,7 @@
 import unittest
 from models import BaseModel
 
-class ReaderTest(unittest.TestCase):
+class ModelTest(unittest.TestCase):
 
     def setUp(self):
         self.model = BaseModel()

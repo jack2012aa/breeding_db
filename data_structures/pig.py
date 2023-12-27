@@ -32,28 +32,28 @@ class Pig:
     def __init__(self):
         '''An empty entity.'''
 
-        self.__breed: str = ''
+        self.__breed: str = None
         '''Breed: {'L', 'Y', 'D'}'''
 
-        self.__id: str = ''
+        self.__id: str = None
         '''aka "Ear tag" in some cases. 0 < Length < MAX_ID_LENGTH'''
 
-        self.__birthday: datetime.date = datetime.datetime.today().date()
+        self.__birthday: datetime.date = None
         '''Birthday'''
 
-        self.__sire = {'id':'','birthday':''}
-        '''Sire's key value.'''
+        self.__sire: Pig = None
 
-        self.__dam = {'id':'','birthday':''}
-        '''Dam's key value'''
+        self.__dam: Pig = None
 
-        self.__naif_id: str = ''
+        self.__naif_id: str = None
         '''ID that is documented in naif's system. Necessary to be turned into int.'''
 
-        self.__gender: chr = ''
+        self.__gender: str = None
         '''{'M','F'}'''
 
-        self.__chinese_name: str = ''
+        self.__chinese_name: str = None
+
+        self.__farm: str = None
 
     def __str__(self):
         s = {'ID':self.__id,
@@ -61,7 +61,8 @@ class Pig:
              'gender': self.__gender,
              'dam': self.__dam,
              'sire': self.__sire,
-             'birthday': self.__birthday}
+             'birthday': self.__birthday,
+             "farm": self.__farm}
         return str(s)
 
 
@@ -102,39 +103,31 @@ class Pig:
         except (TypeError, ValueError) as error:
             raise error
 
-    def set_dam(self, id: str, date):
+    def set_dam(self, parent):
         '''
-        * param date: any ISO format
+        * param parent: a pig with id, birthday and farm.
         * Raise TypeError and ValueError
         '''
 
-        if not isinstance(id, str):
-            raise TypeError("耳號應該是 string，現在輸入的是 {type_} ".format(type_=str(type(id))))
-        if not self.__is_valid_id(id):
-            raise ValueError("耳號長度異常，應介於 0 ~ {max_} 之間。輸入長度為 {length}".format(max_=Pig.MAX_ID_LENGTH, length=len(id)))
-        self.__dam['id'] = id
+        if not isinstance(parent, Pig):
+            raise TypeError("parent 應該是 Pig，現在輸入的是 {type_} ".format(type_=str(type(parent))))
+        if parent.get_id() is None or parent.get_birthday() is None or parent.get_farm() is None:
+            raise ValueError("parent 應該要有id，出生日期與所屬牧場")
+        self.__dam = parent
+        return None
 
-        try:
-            self.__dam['birthday'] = transform_date(date)
-        except (TypeError, ValueError) as error:
-            raise error
-
-    def set_sire(self, id: str, date):
+    def set_sire(self, parent):
         '''
-        * param date: any ISO format
+        * param parent: a pig with id, birthday and farm.
         * Raise TypeError and ValueError
         '''
 
-        if not isinstance(id, str):
-            raise TypeError("耳號應該是 string，現在輸入的是 {type_} ".format(type_=str(type(id))))
-        if not self.__is_valid_id(id):
-            raise ValueError("耳號長度異常，應介於 0 ~ {max_} 之間。輸入長度為 {length}".format(max_=Pig.MAX_ID_LENGTH, length=len(id)))
-        self.__sire['id'] = id
-
-        try:
-            self.__sire['birthday'] = transform_date(date)
-        except (TypeError, ValueError) as error:
-            raise error
+        if not isinstance(parent, Pig):
+            raise TypeError("parent 應該是 Pig，現在輸入的是 {type_} ".format(type_=str(type(parent))))
+        if parent.get_id() is None or parent.get_birthday() is None or parent.get_farm() is None:
+            raise ValueError("parent 應該要有id，出生日期與所屬牧場")
+        self.__sire = parent
+        return None
 
     def set_naif_id(self, id):
         '''
@@ -165,8 +158,17 @@ class Pig:
             raise KeyError("性別 {gender} 錯誤。性別需定義於下表：\n{dict_}".format(gender=gender, dict_=Pig.GENDER))
         self.__gender = Pig.GENDER[gender]
 
-    def set_chinese_name(self, name):
+    def set_chinese_name(self, name: str):
+        '''* Raise TypeError'''
+        if not isinstance(name, str):
+            raise TypeError("Chinese name should be a string. Get {type_}".format(str(type(name))))
         self.__chinese_name = name
+
+    def set_farm(self, farm: str):
+        '''* Raise TypeError'''
+        if not isinstance(farm, str):
+            raise TypeError("farm should be a string. Get {type_}".format(str((type(farm)))))
+        self.__farm = farm
 
     def get_breed(self):
         return self.__breed
@@ -191,3 +193,10 @@ class Pig:
     
     def get_chinese_name(self):
         return self.__chinese_name
+    
+    def get_farm(self):
+        return self.__farm
+    
+    def is_unique(self):
+        ''' Whether this pig has id, birthday and farm.'''
+        return self.__id is not None and self.__birthday is not None and self.__farm is not None
