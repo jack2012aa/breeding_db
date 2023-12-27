@@ -104,8 +104,8 @@ class Pig:
 
     def set_dam(self, id: str, date):
         '''
-        *param date: any ISO format
-        *Raise TypeError and ValueError
+        * param date: any ISO format
+        * Raise TypeError and ValueError
         '''
 
         if not isinstance(id, str):
@@ -121,8 +121,8 @@ class Pig:
 
     def set_sire(self, id: str, date):
         '''
-        *param date: any ISO format
-        *Raise TypeError and ValueError
+        * param date: any ISO format
+        * Raise TypeError and ValueError
         '''
 
         if not isinstance(id, str):
