@@ -2,7 +2,7 @@ from tools.general import ask
 from models.pig import PigModel
 from data_structures.pig import Pig
 
-class FactoryException(BaseException):
+class ParentError(BaseException):
 
     def __init__(self, message):
         super().__init__(message)
@@ -115,7 +115,32 @@ class PigFactory:
             self.error_messages.append(str(error))
             self._turn_on_flag(self.BIRTHDAY_FLAG)
             raise error
-            
+        
+    def set_naif_id(self, naif: str) -> None:
+        '''* Raise `TypeError`'''
+
+        if naif in [
+            "",
+            "無登",
+            ]:
+            return None
+        
+        try:
+            self.pig.set_naif_id(naif)
+        except TypeError as error:
+            self._turn_on_flag(self.NAIF_FLAG)
+            self.error_messages.append(str(error))
+            raise error
+        except ValueError as error:
+            if not naif.isnumeric():
+                n_naif = self.remove_nonnumeric(naif)
+                if ask("是否可以將登錄號從 {naif} 修改為 {n_naif} ？".format(naif=naif,n_naif=n_naif)):
+                    self.pig.set_naif_id(n_naif)
+                    return None
+            self._turn_on_flag(self.NAIF_FLAG)
+            self.error_messages.append(str(error))
+            return None
+
 
 class DongYingFactory(PigFactory):
     
@@ -186,7 +211,7 @@ class DongYingFactory(PigFactory):
         self._turn_on_flag(self.ID_FLAG)
         return
     
-    def set_parent(self, parent: str, parent_id: str):  
+    def set_parent(self, parent: str, parent_id: str) -> None:  
         '''
         * param parent: ['dam','sire']
         * param parent_id: breed + id + *
@@ -199,7 +224,10 @@ class DongYingFactory(PigFactory):
         '''
 
         if parent not in ["dam", "sire"]:
-            raise ValueError("The argument parent should be either dam or sire. {parent} is recieved".format(parent=parent))
+            raise ValueError(
+                "The argument parent should be either dam or sire. {parent} is recieved"
+                .format(parent=parent)
+            )
 
         # Take the first letter as breed
         breed = ''
@@ -209,50 +237,53 @@ class DongYingFactory(PigFactory):
                 breed = c.upper()
                 id = parent_id.split(c)[1]
                 break
-        if breed not in Pig.BREED and not breed == '':
-            if parent == 'dam':
+        if breed not in Pig.BREED and not breed == "":
+            if parent == "dam":
                 self._turn_on_flag(self.DAM_FLAG)
-                self.error_messages.append('母畜品種不在常見名單內')
+                self.error_messages.append("母畜品種不在常見名單內")
             else:
                 self._turn_on_flag(self.SIRE_FLAG)
-                self.error_messages.append('父畜品種不在常見名單內')
-            return
+                self.error_messages.append("父畜品種不在常見名單內")
+            return None
         
         id = self.remove_dash_from_id(id)
 
         # Find the parent in db
         # -------------------------------------------- NOT DONE ----------------------------------------------
         parent_pig = Pig()
-        parent_pig.set_id('123456')
-        parent_pig.set_birthday('2020-02-03')
+        parent_pig.set_id("123456")
+        parent_pig.set_birthday("2020-02-03")
         
         
-        '''Check birthday'''
-        try:
-            if parent_pig.get_birthday() > self.pig.get_birthday():
-                if parent == 'dam':
-                    self._turn_on_flag(self.DAM_FLAG)
-                    self.error_messages.append('母畜生日比後代生日晚')
-                else:
-                    self._turn_on_flag(self.SIRE_FLAG)
-                    self.error_messages.append('父畜生日比後代生日晚')
-                return
-        except BaseException as ex:
-            if parent == 'dam': 
+        # Check birthday
+        if parent_pig.get_birthday() > self.pig.get_birthday():
+            if parent == "dam":
                 self._turn_on_flag(self.DAM_FLAG)
+                self.error_messages.append("母畜生日比後代生日晚")
             else:
                 self._turn_on_flag(self.SIRE_FLAG)
-            self.error_messages.append(str(ex))
-            return
+                self.error_messages.append("父畜生日比後代生日晚")
+            return None
 
-        if parent == 'dam':
-            self.pig.set_dam(parent_pig.get_id(), parent_pig.get_birthday())
-            self._turn_off_flag(self.DAM_FLAG)
-            return
+        # Set parent
+        if parent == "dam":
+            try:
+                self.pig.set_dam(parent_pig.get_id(), parent_pig.get_birthday())
+                return None
+            # Error should not happen here since parent_pig comes from the database.
+            except (TypeError, ValueError) as error:  
+                self.error_messages.append(str(error))
+                self._turn_on_flag(self.DAM_FLAG)
+                raise error
         else:
-            self.pig.set_sire(parent_pig.get_id(), parent_pig.get_birthday())
-            self._turn_off_flag(self.SIRE_FLAG)
-            return
+            try:
+                self.pig.set_sire(parent_pig.get_id(), parent_pig.get_birthday())
+                return None
+            # Error should not happen here since parent_pig comes from the database.
+            except (TypeError, ValueError) as error:  
+                self.error_messages.append(str(error))
+                self._turn_on_flag(self.SIRE_FLAG)
+                raise error
         
     def set_naif_id(self, naif: str):
         '''

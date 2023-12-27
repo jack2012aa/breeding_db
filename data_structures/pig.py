@@ -139,7 +139,7 @@ class Pig:
     def set_naif_id(self, id):
         '''
         * param id: a six-digit unique id
-        * Raise TypeError
+        * Raise TypeError, ValueError
         '''
 
         if not isinstance(id, str):
