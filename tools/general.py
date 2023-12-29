@@ -13,6 +13,28 @@ def ask(message: str):
         result = result.upper()
     return result == 'Y'
 
+def ask_multiple(message: str, choices: list):
+    '''
+    Ask choices.\\
+    If non of above, return None.
+    '''
+
+    choice_string = ""
+    for i in range(len(choices)):
+        choice_string = choice_string + str(i) + ". " + str(choices[i]) + "\n"
+    choice_string = choice_string + str(len(choices)) + ". Non of above.\nChoose: "
+    
+    choice = None
+    while choice not in range(len(choices) + 1):
+        print(message)
+        choice = input(choice_string)
+        if choice.isnumeric():
+            choice = int(choice)
+
+    if choice == len(choices):
+        return None
+    return choice
+
 def transform_date(date) -> datetime.date:
     ''' 
     Transform ISO string to datetime.date.

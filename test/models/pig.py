@@ -1,7 +1,7 @@
 import unittest
 
 from data_structures.pig import Pig
-from models.pig import PigModel
+from models.pig_model import PigModel
 
 class ModelTest(unittest.TestCase):
 
@@ -57,10 +57,10 @@ class ModelTest(unittest.TestCase):
         pig.set_farm("test_farm")        
         self.assertEqual(None,self.model.find_pig(pig))
 
-    def test_find_pigs_1(self):
+    def test_find_pigs(self):
         pig = Pig()
         pig.set_id("123456")
-        pig.set_birthday("2022-12-27")
+        pig.set_birthday("2022-12-28")
         pig.set_farm("test_farm")
         pig.set_naif_id("654421")
         self.model.insert(pig)
@@ -71,6 +71,7 @@ class ModelTest(unittest.TestCase):
         pig.set_naif_id("654421")
         self.model.insert(pig)
         self.assertEqual(len(self.model.find_pigs({"naif_id": "654421", "farm": "test_farm"})),2)
+        self.assertEqual(len(self.model.find_pigs(equal={"farm": "test_farm"}, smaller={"birthday": "2022-12-28"})),2)
 
 if __name__ == '__main__':
     unittest.main()

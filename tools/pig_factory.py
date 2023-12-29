@@ -1,5 +1,6 @@
 from tools.general import ask
-from models.pig import PigModel
+from tools.general import ask_multiple
+from models.pig_model import PigModel
 from data_structures.pig import Pig
 
 class ParentError(BaseException):
@@ -140,7 +141,15 @@ class PigFactory:
             self._turn_on_flag(self.NAIF_FLAG)
             self.error_messages.append(str(error))
             return None
+        
+    def set_farm(self, farm: str):
+        ''' * Raise TypeError'''
 
+        try:
+            self.pig.set_farm(farm)
+        except TypeError as error:
+            raise error
+        
 
 class DongYingFactory(PigFactory):
     
@@ -211,34 +220,63 @@ class DongYingFactory(PigFactory):
         self._turn_on_flag(self.ID_FLAG)
         return
     
-    def set_parent(self, parent: str, parent_id: str) -> None:  
+    def set_parent(self, dam: bool, parent_id: str, in_farm: bool, nearest: bool) -> None:  
         '''
-        * param parent: ['dam','sire']
-        * param parent_id: breed + id + *
-        * The parent should exist in the database. The query is based on breed and id.
-        * If more than one result exist, they will be shown for user to select the correct one.
-        * If the parent does not exist, two cases possible: 1. the parent is in the rest of the file; 2. the parent does not exist.
-        * To handle case 1, the method will raise a special exception `ParentError` so the csv_reader can record these pigs and re-generate them after others are done.
-        * The birthday of parent is checked to make sure it was borned before its child.
+        Find the parent in the database using id and breed and assign the parent to iteself.
+
+
+        Parents may be pigs in Dong-Ying or pigs imported from different nations.
+        In other words, they have different `farm` attribute. 
+        You can restrict the `farm` attribute by param `in_farm`.
+
+
+        Dong-Ying reuses id (ear tag) every several years. 
+        If more than one result exist, they will be shown for user to select the correct one.
+        Or, you can automatically select the one whose birthday is the closest to the pig 
+        by param `nearest`.\\
+        When `nearest` is true, those pigs with None `birthday` attribute will be ignored.
+
+
+        If the parent does not exist, two cases possible: 
+        1. the parent is in the rest of the file; 
+        2. the parent does not exist.
+
+
+        To handle case 1, the method will raise a special exception `ParentError` 
+        so the csv_reader can record these pigs and re-generate them after others are done.
+        
+
+        The birthday and gender of parent will be checked. So the birthday of the pig can not be None.
+
+
         * Raise ValueError, KeyError and ParentError
+        * param dam: `True` if setting dam, `False` if setting sire
+        * param parent_id: breed + id + *
+        * param in_farm: `True` if the parent belongs to Dong-Ying
+        * param nearest: `True` to auto-select the pig with the nearest birthday as the parent.
         '''
 
-        if parent not in ["dam", "sire"]:
-            raise ValueError(
-                "The argument parent should be either dam or sire. {parent} is recieved"
-                .format(parent=parent)
-            )
+        if not isinstance(dam, bool):
+            raise TypeError("dam should be a bool. Get {type_}".format(type_=str(type(dam))))
+        if not isinstance(in_farm, bool):
+            raise TypeError("in_farm should be a bool. Get {type_}".format(type_=str(type(in_farm))))
+        if not isinstance(nearest, bool):
+            raise TypeError("dam should be a bool. Get {type_}".format(type_=str(type(nearest))))
+        
+        if self.pig.get_birthday() is None:
+            self.error_messages.append("需要有子代的生日才能設定親代")
+            return None
 
         # Take the first letter as breed
-        breed = ''
-        id = ''
+        breed = ""
+        id = ""
         for c in parent_id:
             if c.encode().isalpha():
                 breed = c.upper()
                 id = parent_id.split(c)[1]
                 break
         if breed not in Pig.BREED and not breed == "":
-            if parent == "dam":
+            if dam:
                 self._turn_on_flag(self.DAM_FLAG)
                 self.error_messages.append("母畜品種不在常見名單內")
             else:
@@ -248,38 +286,62 @@ class DongYingFactory(PigFactory):
         
         id = self.remove_dash_from_id(id)
 
-        # Find the parent in db
-        # -------------------------------------------- NOT DONE ----------------------------------------------
-        parent_pig = Pig()
-        parent_pig.set_id("123456")
-        parent_pig.set_birthday("2020-02-03")
-        parent_pig.set_farm("test_farm")
-        
-        # Check birthday
-        if parent_pig.get_birthday() > self.pig.get_birthday():
-            if parent == "dam":
-                self._turn_on_flag(self.DAM_FLAG)
-                self.error_messages.append("母畜生日比後代生日晚")
-            else:
-                self._turn_on_flag(self.SIRE_FLAG)
-                self.error_messages.append("父畜生日比後代生日晚")
-            return None
+        # Find the parent in the database.
+        if dam:
+            gender = 'F'
+        else:
+            gender = 'M'
+        equal = {"id": id, "gender": gender}
+        smaller = {"birthday": str(self.pig.get_birthday())}
+        if breed != "":
+            equal["breed"] = breed
+        if in_farm:
+            equal["farm"] = "Dong-Ying"
 
+        model = PigModel()
+        found_pigs = model.find_pigs(equal=equal, smaller=smaller)
+
+        if len(found_pigs) == 0:
+            raise ParentError("親代不在資料庫中")
+
+        parent: Pig = None
+        # More than one result
+        if len(found_pigs) > 1:
+            if nearest:
+                parent = found_pigs[0]
+                for pig in found_pigs:
+                    if (
+                        self.pig.get_birthday() - pig.get_birthday()
+                        < self.pig.get_birthday() - parent.get_birthday()
+                    ):
+                        parent = pig
+            else:
+                choice = ask_multiple(
+                    "請問下列何者為{id}的親代？".format(id=self.pig.get_id()),
+                    found_pigs
+                )
+                if choice is None:
+                    raise ParentError("親代不在資料庫中")
+                else:
+                    parent = found_pigs[choice]
+        else:
+            parent = found_pigs[0]
+        
         # Set parent
-        if parent == "dam":
+        if dam:
             try:
-                self.pig.set_dam(parent_pig)
+                self.pig.set_dam(parent)
                 return None
-            # Error should not happen here since parent_pig comes from the database.
+            # Error should not happen here since parent comes from the database.
             except (TypeError, ValueError) as error:  
                 self.error_messages.append(str(error))
                 self._turn_on_flag(self.DAM_FLAG)
                 raise error
         else:
             try:
-                self.pig.set_sire(parent_pig)
+                self.pig.set_sire(parent)
                 return None
-            # Error should not happen here since parent_pig comes from the database.
+            # Error should not happen here since parent comes from the database.
             except (TypeError, ValueError) as error:  
                 self.error_messages.append(str(error))
                 self._turn_on_flag(self.SIRE_FLAG)
@@ -309,3 +371,8 @@ class DongYingFactory(PigFactory):
             self._turn_on_flag(self.NAIF_FLAG)
             self.error_messages.append(str(ex))
             return
+
+    def set_farm(self, farm: str = "Dong-Ying"):
+        '''Default set Dong-Ying'''
+
+        return super().set_farm(farm)
