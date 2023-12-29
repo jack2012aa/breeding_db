@@ -143,6 +143,14 @@ class PigTestCase(unittest.TestCase):
         self.pig.set_gender(gender)
         self.assertEqual('F',self.pig.get_gender())
 
+    def test_equality(self):
+        pig1 = Pig()
+        pig1.set_id("123456")
+        pig1.set_birthday("2023-02-02")
+        pig2 = Pig()
+        pig2.set_id("123456")
+        pig2.set_birthday("2023-02-02")
+        self.assertEqual(True, pig1 == pig2)
 
 if __name__ == '__main__':
     unittest.main()

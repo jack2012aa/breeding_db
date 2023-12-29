@@ -9,6 +9,30 @@ class PigModel(BaseModel):
     def __init__(self):
         super().__init__()
 
+    def __get_attributes(self, pig: Pig) -> dict:
+        ''' Generate a dictionary of non-empty attributes'''
+
+        attributes = {
+            "id": pig.get_id(),
+            "birthday": str(pig.get_birthday()),
+            "farm": pig.get_farm(),
+            "breed": pig.get_breed(),
+            "naif_id": pig.get_naif_id(),
+            "gender": pig.get_gender(),
+            "chinese_name": pig.get_chinese_name(),
+        }
+        if pig.get_dam() is not None:
+            attributes["dam_id"] = pig.get_dam().get_id()
+            attributes["dam_birthday"] = str(pig.get_dam().get_birthday())
+            attributes["dam_farm"] = pig.get_dam().get_farm()
+        if pig.get_sire() is not None:
+            attributes["sire_id"] = pig.get_sire().get_id()
+            attributes["sire_birthday"] = str(pig.get_sire().get_birthday())
+            attributes["sire_farm"] = pig.get_sire().get_farm()
+
+        return attributes
+
+
     def insert(self, pig: Pig) -> None:
         '''
         Insert a pig to the database. \\
@@ -29,24 +53,7 @@ class PigModel(BaseModel):
             raise TypeError("farm can not be None")
         
         # Pick non-empty attributes.
-        attributes = {
-            "id": pig.get_id(),
-            "birthday": str(pig.get_birthday()),
-            "farm": pig.get_farm(),
-            "breed": pig.get_breed(),
-            "naif_id": pig.get_naif_id(),
-            "gender": pig.get_gender(),
-            "chinese_name": pig.get_chinese_name(),
-        }
-        if pig.get_dam() is not None:
-            attributes["dam_id"] = pig.get_dam().get_id()
-            attributes["dam_birthday"] = str(pig.get_dam().get_birthday())
-            attributes["dam_farm"] = pig.get_dam().get_farm()
-        if pig.get_sire() is not None:
-            attributes["sire_id"] = pig.get_sire().get_id()
-            attributes["sire_birthday"] = str(pig.get_sire().get_birthday())
-            attributes["sire_farm"] = pig.get_sire().get_farm()
-
+        attributes = self.__get_attributes(pig)
         columns = []
         values = []
         for key, item in attributes.items():
@@ -167,6 +174,32 @@ class PigModel(BaseModel):
             pigs.append(self.dict_to_pig(pig))
         
         return pigs
+    
+    def update(self, pig: Pig):
+        ''' * Raise ValueError and TypeError.'''
+
+        if not isinstance(pig, Pig):
+            raise TypeError("pig must be a Pig. Get {type_}".format(type_=str(type(pig))))
+
+        if not pig.is_unique():
+            raise ValueError("The pig must have id, birthday and farm.")
+        
+        attributes = self.__get_attributes(pig)
+        setting = []
+        for key, value in attributes.items():
+            if value is not None:
+                setting.append("{key}='{value}'".format(key=key, value=value))
+        condition = "id='{id}' AND birthday='{birthday}' AND farm='{farm}'".format(
+            id=pig.get_id(),
+            birthday=str(pig.get_birthday()),
+            farm=pig.get_farm()
+        )
+        sql_query = "UPDATE Pigs SET {setting} WHERE {condition};".format(
+            setting=", ".join(setting),
+            condition=condition
+        )
+
+        self.query(sql_query)
 
     def delete_all(self) -> None:
         '''Delete all data in the table. Should only be used in debugging.'''

@@ -56,15 +56,30 @@ class Pig:
         self.__farm: str = None
 
     def __str__(self):
-        s = {'ID':self.__id,
-             'breed': self.__breed,
-             'gender': self.__gender,
-             'dam': self.__dam,
-             'sire': self.__sire,
-             'birthday': self.__birthday,
-             "farm": self.__farm}
+        s = (
+            "耳號 ID: {id}\n".format(id=self.__id)
+            + "生日 birthday: {birth}\n".format(birth=str(self.__birthday))
+            + "所屬牧場 farm: {farm}\n".format(farm=self.__farm)
+            + "品種 breed: {breed}\n".format(breed=self.__breed)
+            + "性別 gender: {gender}\n".format(gender=self.__gender)
+            + "中文名 Chinese name: {name}\n".format(name=self.__chinese_name)
+            + "母畜耳號 dam id: {dam}\n".format(dam=self.get_dam_id())
+            + "父畜耳號 sire id: {sire}\n".format(sire=self.get_sire_id())
+            )
         return str(s)
+    
+    def __eq__(self, other):
 
+        return \
+            self.__id == other.get_id()\
+            and self.__farm == other.get_farm()\
+            and self.__birthday == other.get_birthday()\
+            and self.__breed == other.get_breed()\
+            and self.__gender == other.get_gender()\
+            and self.__chinese_name == other.get_chinese_name()\
+            and self.get_dam_id() == other.get_dam_id()\
+            and self.get_sire_id() == other.get_sire_id()
+        
 
     def __is_valid_id(self, id:str):
         return len(id) > 0 and len(id) < Pig.MAX_ID_LENGTH
@@ -182,8 +197,20 @@ class Pig:
     def get_dam(self):
         return self.__dam
     
+    def get_dam_id(self):
+        
+        if self.__dam is None:
+            return "None"
+        return self.__dam.get_id()
+    
     def get_sire(self):
         return self.__sire
+    
+    def get_sire_id(self):
+        
+        if self.__sire is None:
+            return "None"
+        return self.__sire.get_id()
     
     def get_naif_id(self):
         return self.__naif_id

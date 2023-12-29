@@ -73,5 +73,15 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(len(self.model.find_pigs({"naif_id": "654421", "farm": "test_farm"})),2)
         self.assertEqual(len(self.model.find_pigs(equal={"farm": "test_farm"}, smaller={"birthday": "2022-12-28"})),2)
 
+    def test_update(self):
+
+        pig = Pig()
+        pig.set_id("123457")
+        pig.set_birthday("2022-12-27")
+        pig.set_farm("test_farm")
+        pig.set_chinese_name("65")
+        self.model.update(pig)
+        self.assertEqual(self.model.find_pig(pig).get_chinese_name(), "65")
+
 if __name__ == '__main__':
     unittest.main()

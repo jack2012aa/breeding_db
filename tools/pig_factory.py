@@ -70,17 +70,7 @@ class PigFactory:
                 hind = '0' + hind[0]
             id = front + hind
 
-        # Find the index of the first and second character in id
-        first = 0
-        second = len(id)
-        for i in range(len(id)):
-            if not id[i].isnumeric():
-                if first == 0:
-                    first = i + 1
-                elif second == len(id):
-                    second = i
-                    break
-        return id[first:second]
+        return self.remove_nonnumeric(id)
 
     def remove_nonnumeric(self, s: str) -> str:
         ''' Remove all nonnumeric characters in s.'''
@@ -147,6 +137,14 @@ class PigFactory:
 
         try:
             self.pig.set_farm(farm)
+        except TypeError as error:
+            raise error
+        
+    def set_chinese_name(self, name: str):
+        ''' * Raise TypeError'''
+
+        try:
+            self.pig.set_chinese_name(name)
         except TypeError as error:
             raise error
         
@@ -249,11 +247,11 @@ class DongYingFactory(PigFactory):
         The birthday and gender of parent will be checked. So the birthday of the pig can not be None.
 
 
-        * Raise ValueError, KeyError and ParentError
         * param dam: `True` if setting dam, `False` if setting sire
         * param parent_id: breed + id + *
         * param in_farm: `True` if the parent belongs to Dong-Ying
         * param nearest: `True` to auto-select the pig with the nearest birthday as the parent.
+        * Raise ValueError and ParentError
         '''
 
         if not isinstance(dam, bool):
