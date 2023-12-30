@@ -15,4 +15,15 @@ CREATE TABLE Pigs(
     PRIMARY KEY (id, birthday, farm),
     FOREIGN KEY (dam_id, dam_birthday, dam_farm) REFERENCES Pigs(id, birthday, farm),
     FOREIGN KEY (sire_id, sire_birthday, sire_farm) REFERENCES Pigs(id, birthday, farm)
-)
+);
+
+CREATE TABLE Estrus(
+    id varchar(20),
+    birthday date,
+    farm varchar(20),
+    estrus_datetime datetime,
+    pregnant ENUM('Yes', 'No', 'Unknown'),
+    parity tinyint unsigned,
+    PRIMARY KEY (id, birthday, farm, estrus_datetime),
+    FOREIGN KEY (id, birthday, farm) REFERENCES Pigs(id, birthday, farm)
+);
