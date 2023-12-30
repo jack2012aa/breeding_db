@@ -113,7 +113,6 @@ class DongYingCsvReader(CsvReader):
                         factory.set_parent(False, str(pig.get("Sire")), in_farm, nearest)
                     if not_nan[4]:
                         factory.set_parent(True, str(pig.get("Dam")), in_farm, nearest)
-                    print("HI")
                 except ParentError:
                     parent_not_found.append([factory, str(pig.get("Sire")), str(pig.get("Dam"))])
                     continue

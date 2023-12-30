@@ -1,5 +1,3 @@
-import re
-
 from tools.general import ask
 from tools.general import ask_multiple
 from models.pig_model import PigModel

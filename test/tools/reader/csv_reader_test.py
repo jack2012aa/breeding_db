@@ -11,9 +11,7 @@ class ReaderTest(unittest.TestCase):
 
     def tearDown(self):
         self.reader = None
-        self.model.query("SET foreign_key_checks = 0;")
-        self.model.delete_all()
-        self.model.query("SET foreign_key_checks = 1;")
+        self.model.delete_all("Pigs")
         self.model = None
 
     def test_reader(self):
