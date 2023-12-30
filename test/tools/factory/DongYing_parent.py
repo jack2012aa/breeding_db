@@ -13,7 +13,7 @@ class FactoryTest(unittest.TestCase):
 
     def tearDown(self):
         self.factory = None
-        self.model.delete_all()
+        self.model.delete_all("Pigs")
         self.model = None
 
     def test_set_parent(self):

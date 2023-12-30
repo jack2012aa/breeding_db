@@ -1,3 +1,5 @@
+import re
+
 from tools.general import ask
 from tools.general import ask_multiple
 from models.pig_model import PigModel
@@ -56,7 +58,12 @@ class PigFactory:
         * Ex: 1234-2-2 -> 123402
         * If any character is in the id, only string between first two characters will be considered.
         * Ex: 20Y1234-2cao -> 123402
+        * Ex: 20Y1234-12 -> 123412
+        * Ex: 1234-2cao -> 123402
         '''
+
+        if not isinstance(id, str):
+            raise TypeError("id should be a string. Get {type_}".format(type_=str(type(id))))
 
         # Deal with the dash
         if '-' in id:
@@ -70,6 +77,20 @@ class PigFactory:
                 hind = '0' + hind[0]
             id = front + hind
 
+        # Find the index of every nonnumeric characters and slice the string between them.
+        nonnumeric = []
+        for i in range(len(id)):
+            if not id[i].isnumeric():
+                nonnumeric.append(i)
+        if len(nonnumeric) > 0:
+            slices = []
+            for i in nonnumeric:
+                slices.append(id[:i])
+                id = id[i:]
+            slices.append(id)
+            # The longest digits is the most possible to be the id.
+            id = max(slices, key=len, default="")
+        
         return self.remove_nonnumeric(id)
 
     def remove_nonnumeric(self, s: str) -> str:
@@ -164,8 +185,7 @@ class DongYingFactory(PigFactory):
     
         if not isinstance(breed, str):
             self._turn_on_flag(self.BREED_FLAG)
-            self.error_messages.append("品種型別 {type_} 錯誤".format(type_=type(breed)))
-            raise TypeError("品種型別 {type_} 錯誤".format(type_=type(breed)))
+            raise TypeError("breed should be a string. Get {type_}".format(type_=type(breed)))
         
         if breed in Pig.BREED:
             self.pig.set_breed(breed)
@@ -346,13 +366,13 @@ class DongYingFactory(PigFactory):
                 raise error
         
     def set_naif_id(self, naif: str):
-        '''
-        naif id is a six-digit unique id.
-        '''
+        '''naif id is a six-digit unique id.'''
+
+        if not isinstance(naif, str):
+            raise TypeError("naif should be a string. Get {type_}".format(type_=str(type(naif))))
+        
         if naif == '' or naif == '無登':
             return
-        
-        naif = str(naif)
         
         if not naif.isnumeric():
             n_naif = self.remove_nonnumeric(naif)

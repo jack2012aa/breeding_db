@@ -70,6 +70,9 @@ class Pig:
     
     def __eq__(self, other):
 
+        if not isinstance(other, Pig):
+            raise TypeError("other should be a Pig. Get {type_}".format(type_=str(type(other))))
+
         return \
             self.__id == other.get_id()\
             and self.__farm == other.get_farm()\
@@ -125,9 +128,9 @@ class Pig:
         '''
 
         if not isinstance(parent, Pig):
-            raise TypeError("parent 應該是 Pig，現在輸入的是 {type_} ".format(type_=str(type(parent))))
-        if parent.get_id() is None or parent.get_birthday() is None or parent.get_farm() is None:
-            raise ValueError("parent 應該要有id，出生日期與所屬牧場")
+            raise TypeError("parent should be a Pig. Get {type_} ".format(type_=str(type(parent))))
+        if not parent.is_unique():
+            raise ValueError("parent shold be unique")
         self.__dam = parent
         return None
 
@@ -174,15 +177,22 @@ class Pig:
         self.__gender = Pig.GENDER[gender]
 
     def set_chinese_name(self, name: str):
-        '''* Raise TypeError'''
+        '''
+        Set a Chinese name which is shorter than 5 characters.
+        * Raise TypeError, ValueError
+        '''
         if not isinstance(name, str):
-            raise TypeError("Chinese name should be a string. Get {type_}".format(str(type(name))))
+            raise TypeError("Chinese name should be a string. Get {type_}".format(type_=str(type(name))))
+        if len(name) > 5:
+            raise ValueError("Chinese name should be shorter than 5 characters. Get {n}".format(
+                n=len(name)
+            ))
         self.__chinese_name = name
 
     def set_farm(self, farm: str):
         '''* Raise TypeError'''
         if not isinstance(farm, str):
-            raise TypeError("farm should be a string. Get {type_}".format(str((type(farm)))))
+            raise TypeError("farm should be a string. Get {type_}".format(type_=str((type(farm)))))
         self.__farm = farm
 
     def get_breed(self):
