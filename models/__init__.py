@@ -39,3 +39,24 @@ class BaseModel():
             except Exception as error:
                 cursor.close()
                 raise error
+            
+    def delete_all(self, table: str):
+        '''Delete all data in the table. Should only be used in debugging.'''
+
+        if not isinstance(table, str):
+            raise TypeError()
+        
+        with pymysql.connect(
+            host=self.__config["DATABASE_HOST"],
+            user=self.__config["USER"],
+            password=self.__config["PASSWORD"],
+            database=self.__config["DATABASE"],
+            charset=self.__config["CHARSET"],
+            cursorclass=pymysql.cursors.DictCursor
+        ) as connection:
+            cursor = connection.cursor()
+            cursor.execute("SET foreign_key_checks = 0;")
+            cursor.execute("DELETE FROM {table};".format(table=table))
+            cursor.execute("SET foreign_key_checks = 1;")
+            cursor.close()
+            connection.commit()

@@ -142,7 +142,14 @@ class PigModel(BaseModel):
 
         return self.dict_to_pig(result[0])
 
-    def find_pigs(self, equal: dict = {}, larger: dict = {}, smaller: dict = {}) -> list:
+    def find_pigs(
+            self, 
+            equal: dict = {}, 
+            larger: dict = {}, 
+            smaller: dict = {},
+            larger_equal: dict = {},
+            smaller_equal: dict = {}
+        ) -> list:
         '''
         Find all pigs satisfy the conditions. 
         Keys of the dictionary should be same as attributes.
@@ -151,19 +158,35 @@ class PigModel(BaseModel):
         * param equal: query will be `key`=`value`
         * param larger: query will be `key`>`value`
         * param smaller: query will be `key`<`value`
-        * Raise TypeError
+        * Raise TypeError, ValueError
         '''
 
         if not isinstance(equal, dict):
-            raise TypeError("pig_dict should be a dict. Get {type_}.".format(type_=str(type(equal))))
+            raise TypeError("equal should be a dict. Get {type_}.".format(type_=str(type(equal))))
+        if not isinstance(smaller, dict):
+            raise TypeError("smaller should be a dict. Get {type_}.".format(type_=str(type(smaller))))
+        if not isinstance(larger, dict):
+            raise TypeError("larger should be a dict. Get {type_}.".format(type_=str(type(larger))))        
+        if not isinstance(larger_equal, dict):
+            raise TypeError("larger_equal should be a dict. Get {type_}.".format(type_=str(type(larger_equal))))        
+        if not isinstance(smaller_equal, dict):
+            raise TypeError("smaller_equal should be a dict. Get {type_}.".format(type_=str(type(smaller_equal))))        
         
         conditions = []
         for key, value in equal.items():
-            conditions.append("{key}='{value}'".format(key=str(key),value=str(value)))
+            conditions.append("{key}='{value}'".format(key=str(key), value=str(value)))
         for key, value in larger.items():
-            conditions.append("{key}>'{value}'".format(key=str(key),value=str(value)))
+            conditions.append("{key}>'{value}'".format(key=str(key), value=str(value)))
         for key, value in smaller.items():
-            conditions.append("{key}<'{value}'".format(key=str(key),value=str(value)))
+            conditions.append("{key}<'{value}'".format(key=str(key), value=str(value)))
+        for key, value in larger_equal.items():
+            conditions.append("{key}>='{value}'".format(key=str(key), value=str(value)))
+        for key, value in smaller_equal.items():
+            conditions.append("{key}<='{value}'".format(key=str(key), value=str(value)))
+
+        if len(conditions) == 0:
+            raise ValueError("Searching condition can not be empty.")
+
         sql_query = "SELECT * FROM Pigs WHERE {condition}".format(
             condition=" AND ".join(conditions)
         )
@@ -176,7 +199,12 @@ class PigModel(BaseModel):
         return pigs
     
     def update(self, pig: Pig):
-        ''' * Raise ValueError and TypeError.'''
+        '''
+        Update attributes of a single pig. 
+        The attributes of the argument `pig` excluding id, birthday and farm will be changed.
+        * param pig: an unique pig.
+        * Raise ValueError and TypeError.
+        '''
 
         if not isinstance(pig, Pig):
             raise TypeError("pig must be a Pig. Get {type_}".format(type_=str(type(pig))))
@@ -200,14 +228,6 @@ class PigModel(BaseModel):
         )
 
         self.query(sql_query)
-
-    def delete_all(self) -> None:
-        '''Delete all data in the table. Should only be used in debugging.'''
-
-        try:
-            self.query("DELETE FROM Pigs;")
-        except Exception as error:
-            raise error
         
     def find_all(self) -> None:
         '''Should only be used in debugging'''
