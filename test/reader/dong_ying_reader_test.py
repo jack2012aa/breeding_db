@@ -23,8 +23,12 @@ class ReaderTest(unittest.TestCase):
         # Test ignore parents
         self.reader.create_pigs(True)
         self.assertEqual(self.model.query("SELECT COUNT(*) FROM Pigs;")[0]["COUNT(*)"], 285)
+        self.reader = DongYingPigReader("./test/test_basic_data.xlsx")
         self.reader.create_pigs(ignore_parent=False, update=True)
-        input("wait")
+        self.assertEqual(self.model.query(
+            "SELECT COUNT(*) FROM Pigs where (dam_id is not NULL) or (sire_id is not NULL);"
+            )[0]["COUNT(*)"], 51
+        )
 
 if __name__ == '__main__':
     unittest.main()
