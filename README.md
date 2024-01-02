@@ -14,13 +14,12 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 ## Structure
 
 * `data_structures`: basic structures that represent entities of a table in the database.
-    * `Pig`: the structure that holds the basic information of a pig.
+    * `pig`: the structure that holds the basic information of a pig.
+    * `estrus`: the structure that holds the information of a single estrus.
+* `factory`: classes that produce an instance of `data_structure` based on data from different farms.
+* `general`: some frequently used functions.
 * `models`: operations related to reading or changing the database.
-* `tools`: classes that help handling different type of inputs.
-    * `factory`: classes that produce an instance of `data_structure` based on data from different farms.
-    * `reader`: classes that read files to database.
+* `reader`: classes that read excels to database.
 
 ## To Do
-* Sow ID regularize
-* CSV format
-* ER diagram
+* DongYingEstrusFactory

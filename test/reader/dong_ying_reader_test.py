@@ -1,12 +1,12 @@
 import unittest
 
-from tools.csv_reader import DongYingCsvReader
+from reader.dong_ying_reader import DongYingPigReader
 from models.pig_model import PigModel
 
 class ReaderTest(unittest.TestCase):
 
     def setUp(self):
-        self.reader = DongYingCsvReader("./test/test_basic_data.xlsx")
+        self.reader = DongYingPigReader("./test/test_basic_data.xlsx")
         self.model = PigModel()
 
     def tearDown(self):

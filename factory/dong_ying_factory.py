@@ -1,0 +1,232 @@
+from data_structures.pig import Pig
+from factory import PigFactory
+from general import ask
+from models.pig_model import PigModel
+from general import ask_multiple
+from factory import ParentError
+
+
+class DongYingPigFactory(PigFactory):
+
+    def __init__(self):
+        super().__init__()
+
+    def set_breed(self, breed: str):
+        '''
+        1. Does breed in {L, Y, D}?
+        2. Is breed an English word?
+        3. Is breed in BREED_DICT?
+        * Raise TypeError
+        '''
+
+        if not isinstance(breed, str):
+            self._turn_on_flag(self.BREED_FLAG)
+            raise TypeError("breed should be a string. Get {type_}".format(type_=type(breed)))
+
+        if breed in Pig.BREED:
+            self.pig.set_breed(breed)
+            return
+
+        # Chinese string is recognized as alpha in the isalpha method. 
+        if breed.encode('UTF-8').isalpha():
+            n_breed = self.get_breed_abbrevation(breed)
+            if ask("是否可以將品種從 {breed} 修改為 {n_breed} ？".format(breed=breed,n_breed=n_breed)):
+                self.pig.set_breed(n_breed)
+                return
+
+        if breed in Pig.BREED_DICT:
+            n_breed = Pig.BREED_DICT[breed]
+            if ask("是否可以將品種從 {breed} 修改為 {n_breed} ？".format(breed=breed,n_breed=n_breed)):
+                self.pig.set_breed(n_breed)
+                return
+
+        self.error_messages.append('品種不在常見品種名單中，或有錯誤字元')
+        self._turn_on_flag(self.ID_FLAG)
+
+    def set_id(self, id: str):
+        '''
+        * Can be turn into an int -> valid
+        * Contain a dash -> Remove the dash
+        * Get the number between first two nonnumeric characters (if any)
+        * Raise TypeError
+        '''
+
+        if not isinstance(id, str):
+            self._turn_on_flag(self.ID_FLAG)
+            self.error_messages.append('耳號格式 {type_} 錯誤'.format(type_=str(type(id))))
+            raise TypeError('耳號格式 {type_} 錯誤'.format(type_=str(type(id))))
+
+        n_id = self.remove_dash_from_id(id)
+        if (n_id != id and ask("是否可以將耳號從 {id} 修改為 {n_id} ？".format(id=id, n_id=n_id))) or n_id == id:
+            try:
+                self.pig.set_id(n_id)
+                return
+            except ValueError as error:
+                self.error_messages.append(str(error))
+                self._turn_on_flag(self.ID_FLAG)
+                return
+            except TypeError as error: # TypeError should not happen here.
+                self.error_messages.append(str(error))
+                self._turn_on_flag(self.ID_FLAG)
+                raise error
+
+        self.error_messages.append('耳號格式錯誤')
+        self._turn_on_flag(self.ID_FLAG)
+        return
+
+    def set_parent(self, dam: bool, parent_id: str, in_farm: bool, nearest: bool) -> None:
+        '''
+        Find the parent in the database using id and breed and assign the parent to iteself.
+
+
+        Parents may be pigs in Dong-Ying or pigs imported from different nations.
+        In other words, they have different `farm` attribute. 
+        You can restrict the `farm` attribute by param `in_farm`.
+
+
+        Dong-Ying reuses id (ear tag) every several years. 
+        If more than one result exist, they will be shown for user to select the correct one.
+        Or, you can automatically select the one whose birthday is the closest to the pig 
+        by param `nearest`.\\
+        When `nearest` is true, those pigs with None `birthday` attribute will be ignored.
+
+
+        If the parent does not exist, two cases possible: 
+        1. the parent is in the rest of the file; 
+        2. the parent does not exist.
+
+
+        To handle case 1, the method will raise a special exception `ParentError` 
+        so the csv_reader can record these pigs and re-generate them after others are done.
+
+
+        The birthday and gender of parent will be checked. So the birthday of the pig can not be None.
+
+
+        * param dam: `True` if setting dam, `False` if setting sire
+        * param parent_id: breed + id + *
+        * param in_farm: `True` if the parent belongs to Dong-Ying
+        * param nearest: `True` to auto-select the pig with the nearest birthday as the parent.
+        * Raise ValueError and ParentError
+        '''
+
+        if not isinstance(dam, bool):
+            raise TypeError("dam should be a bool. Get {type_}".format(type_=str(type(dam))))
+        if not isinstance(in_farm, bool):
+            raise TypeError("in_farm should be a bool. Get {type_}".format(type_=str(type(in_farm))))
+        if not isinstance(nearest, bool):
+            raise TypeError("dam should be a bool. Get {type_}".format(type_=str(type(nearest))))
+
+        if self.pig.get_birthday() is None:
+            self.error_messages.append("需要有子代的生日才能設定親代")
+            return None
+
+        # Take the first letter as breed
+        breed = ""
+        id = ""
+        for c in parent_id:
+            if c.encode().isalpha():
+                breed = c.upper()
+                id = parent_id.split(c)[1]
+                break
+        if breed not in Pig.BREED and not breed == "":
+            if dam:
+                self._turn_on_flag(self.DAM_FLAG)
+                self.error_messages.append("母畜品種不在常見名單內")
+            else:
+                self._turn_on_flag(self.SIRE_FLAG)
+                self.error_messages.append("父畜品種不在常見名單內")
+            return None
+
+        id = self.remove_dash_from_id(id)
+
+        # Find the parent in the database.
+        if dam:
+            gender = 'F'
+        else:
+            gender = 'M'
+        equal = {"id": id, "gender": gender}
+        smaller = {"birthday": str(self.pig.get_birthday())}
+        if breed != "":
+            equal["breed"] = breed
+        if in_farm:
+            equal["farm"] = "Dong-Ying"
+
+        model = PigModel()
+        found_pigs = model.find_pigs(equal=equal, smaller=smaller)
+
+        if len(found_pigs) == 0:
+            raise ParentError("親代不在資料庫中")
+
+        parent: Pig = None
+        # More than one result
+        if len(found_pigs) > 1:
+            if nearest:
+                parent = found_pigs[0]
+                for pig in found_pigs:
+                    if (
+                        self.pig.get_birthday() - pig.get_birthday()
+                        < self.pig.get_birthday() - parent.get_birthday()
+                    ):
+                        parent = pig
+            else:
+                choice = ask_multiple(
+                    "請問下列何者為{id}的親代？".format(id=self.pig.get_id()),
+                    found_pigs
+                )
+                if choice is None:
+                    raise ParentError("親代不在資料庫中")
+                else:
+                    parent = found_pigs[choice]
+        else:
+            parent = found_pigs[0]
+
+        # Set parent
+        if dam:
+            try:
+                self.pig.set_dam(parent)
+                return None
+            # Error should not happen here since parent comes from the database.
+            except (TypeError, ValueError) as error:
+                self.error_messages.append(str(error))
+                self._turn_on_flag(self.DAM_FLAG)
+                raise error
+        else:
+            try:
+                self.pig.set_sire(parent)
+                return None
+            # Error should not happen here since parent comes from the database.
+            except (TypeError, ValueError) as error:
+                self.error_messages.append(str(error))
+                self._turn_on_flag(self.SIRE_FLAG)
+                raise error
+
+    def set_naif_id(self, naif: str):
+        '''naif id is a six-digit unique id.'''
+
+        if not isinstance(naif, str):
+            raise TypeError("naif should be a string. Get {type_}".format(type_=str(type(naif))))
+
+        if naif == '' or naif == '無登':
+            return
+
+        if not naif.isnumeric():
+            n_naif = self.remove_nonnumeric(naif)
+            if not ask("是否可以將登錄號從 " + naif + " 修改為 " + n_naif + "？"):
+                self._turn_on_flag(self.NAIF_FLAG)
+                self.error_messages.append('登錄號有非數字字元')
+                return
+            naif = n_naif
+
+        try:
+            self.pig.set_naif_id(naif)
+            return
+        except BaseException as ex:
+            self._turn_on_flag(self.NAIF_FLAG)
+            self.error_messages.append(str(ex))
+            return
+
+    def set_farm(self, farm: str = "Dong-Ying"):
+        '''Default set Dong-Ying'''
+
+        return super().set_farm(farm)
