@@ -1,22 +1,14 @@
 from data_structures.pig import Pig
+from data_structures.estrus import Estrus
+from data_structures.estrus import Pregnant_status
 from general import ask
 
 
-class PigFactory:
-
-    # Mask
-    BREED_FLAG = 1
-    ID_FLAG = 2
-    BIRTHDAY_FLAG = 4
-    SIRE_FLAG = 8
-    DAM_FLAG = 16
-    NAIF_FLAG = 32
-    GENDER_FLAG = 64
+class Factory():
 
     def __init__(self):
-        self.pig = Pig()
-        self.__review_flag: int = 0
-        self.error_messages: list = []
+
+        self.__review_flag = 0
 
     def _turn_on_flag(self, flag: int):
         self.__review_flag = self.__review_flag | flag
@@ -29,6 +21,23 @@ class PigFactory:
 
     def get_flag(self):
         return self.__review_flag
+
+
+class PigFactory(Factory):
+
+    # Mask
+    BREED_FLAG = 1
+    ID_FLAG = 2
+    BIRTHDAY_FLAG = 4
+    SIRE_FLAG = 8
+    DAM_FLAG = 16
+    NAIF_FLAG = 32
+    GENDER_FLAG = 64
+
+    def __init__(self):
+        self.pig = Pig()
+        self.error_messages: list = []
+        super().__init__()
 
     def get_breed_abbrevation(self, breed: str) -> str:
         '''Return the first letter of breed in upper case as the abbrevation of the breed.'''
@@ -166,3 +175,29 @@ class ParentError(BaseException):
 
     def __init__(self, message):
         super().__init__(message)
+
+
+class EstrusFactory(Factory):
+
+    SOW_FLAG = 1
+    ESTRUS_DATE_FLAG = 2
+    PREGNANT_FLAG = 4
+    PARITY_FLAG = 8
+
+    def __init__(self) -> None:
+        
+        self.estrus = Estrus()
+        self.error_message = []
+        super().__init__()
+
+    def set_pregnant(self, status: Pregnant_status):
+
+        self.estrus.set_pregnant(status)
+
+    def set_parity(self, parity: int):
+
+        try:
+            self.estrus.set_parity(parity)
+        except ValueError:
+            self._turn_on_flag(self.PARITY_FLAG)
+            self.error_message.append("批次應該要介於0~12之間")

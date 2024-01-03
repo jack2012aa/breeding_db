@@ -46,7 +46,7 @@ class Estrus:
         * Raise TypeError, ValueError
         '''
 
-        if not (isinstance(date_time, str) or isinstance(date_time, datetime)):
+        if not (isinstance(date_time, (str, datetime))):
             raise TypeError("date_time should be a string or datetime. Get {type_}"
                             .format(type_=str(type(date_time))))
 
@@ -75,7 +75,7 @@ class Estrus:
     def set_parity(self, parity: int):
         '''
         * param parity: a non-negative int indicates how many time did the sow being pregnant.
-          The value should between 0 to 10.
+          The value should between 0 to 12.
         * Raise TypeError, ValueError
         '''
 
@@ -83,8 +83,8 @@ class Estrus:
             raise TypeError("parity should be an int. Get {type_}".format(type_=str(type(parity))))
 
         # I guess no sow can give birth more than 10 times.        
-        if parity < 0 or parity > 10:
-            raise ValueError("parity should between 0 to 10. Get {parity}".format(parity=parity))
+        if parity < 0 or parity > 12:
+            raise ValueError("parity should between 0 to 12. Get {parity}".format(parity=parity))
         
         self.__parity = parity
 

@@ -148,7 +148,8 @@ class PigModel(BaseModel):
             larger: dict = {}, 
             smaller: dict = {},
             larger_equal: dict = {},
-            smaller_equal: dict = {}
+            smaller_equal: dict = {},
+            order_by: str = None
         ) -> list:
         '''
         Find all pigs satisfy the conditions. 
@@ -158,6 +159,7 @@ class PigModel(BaseModel):
         * param equal: query will be `key`=`value`
         * param larger: query will be `key`>`value`
         * param smaller: query will be `key`<`value`
+        * param order_by: `column_name` `ASC|DESC`
         * Raise TypeError, ValueError
         '''
 
@@ -171,7 +173,9 @@ class PigModel(BaseModel):
             raise TypeError("larger_equal should be a dict. Get {type_}.".format(type_=str(type(larger_equal))))        
         if not isinstance(smaller_equal, dict):
             raise TypeError("smaller_equal should be a dict. Get {type_}.".format(type_=str(type(smaller_equal))))        
-        
+        if not isinstance(order_by, (str, type(None))):
+            raise TypeError("order_by should be a dict. Get {type_}.".format(type_=str(type(order_by))))        
+
         conditions = []
         for key, value in equal.items():
             conditions.append("{key}='{value}'".format(key=str(key), value=str(value)))
@@ -190,7 +194,9 @@ class PigModel(BaseModel):
         sql_query = "SELECT * FROM Pigs WHERE {condition}".format(
             condition=" AND ".join(conditions)
         )
-        sql_query = sql_query + ";"
+        if order_by is not None:
+            sql_query = "".join([sql_query, "ORDER BY ", order_by])
+        sql_query = "".join([sql_query, ";"])
         results = self.query(sql_query)
         pigs = []
         for pig in results:

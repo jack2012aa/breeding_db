@@ -16,7 +16,6 @@ class FactoryTestCase(unittest.TestCase):
         self.model.delete_all("Pigs")
         self.model = None
 
-
     def test_flag(self):
 
         self.factory._turn_on_flag(self.factory.BIRTHDAY_FLAG)
