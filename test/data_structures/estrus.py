@@ -129,7 +129,7 @@ class EstrusTestCase(unittest.TestCase):
         self.estrus.set_sow(pig)
         self.assertFalse(self.estrus.is_unique())
         self.estrus.set_estrus_datetime("2023-02-02")
-        self.assert_(self.estrus.is_unique())
+        self.assertTrue(self.estrus.is_unique())
 
 
 if __name__ == '__main__':

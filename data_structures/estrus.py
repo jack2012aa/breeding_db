@@ -40,31 +40,32 @@ class Estrus:
             status = self.__pregnant.value
         
 
-        s = "母豬耳號：{id}".format(id=str(id)) \
-            + "母豬生日：{birthday}".format(birthday=str(birthday)) \
-            + "母豬所屬牧場：{farm}".format(farm=str(farm)) \
-            + "發情日期：{date_}".format(date_=str(self.__estrus_datetime)) \
-            + "是否懷孕：{status}".format(status=str(status)) \
-            + "生產批次：{parity}".format(parity=str(self.__parity))
+        s = "母豬耳號 id：{id}\n".format(id=str(id)) \
+            + "母豬生日 birthday：{birthday}\n".format(birthday=str(birthday)) \
+            + "母豬所屬牧場 farm：{farm}\n".format(farm=str(farm)) \
+            + "發情日期 estrus_datetime：{date_}\n".format(date_=str(self.__estrus_datetime)) \
+            + "是否懷孕 pregnant：{status}\n".format(status=str(status)) \
+            + "生產批次 parity：{parity}\n".format(parity=str(self.__parity))
         
         return s
     
     def __eq__(self, __value: object) -> bool:
         
+        if __value == None:
+            return False
+
         if not isinstance(__value, Estrus):
             raise TypeError("Can not compare Estrus to {type_}".format(type_=str(type(__value))))
         
+        # Deal with the case that self.__sow is None.
         result = True
         if (self.__sow is None) ^ (__value.get_sow() is None):
             return False
         elif (self.__sow is not None) and (__value.get_sow() is not None):
             # I do not care other attributes of the sow.
-            result = result \
-                and self.__sow.get_id() == __value.get_sow().get_id() \
-                and self.__sow.get_birthday() == __value.get_sow().get_birthday() \
-                and self.__sow.get_farm() == __value.get_sow().get_farm()
+            result = self.__sow.is_identical(__value.get_sow())
         
-        return result \
+        return  result \
             and self.__estrus_datetime == __value.__estrus_datetime \
             and self.__pregnant == __value.get_pregnant() \
             and self.__parity == __value.get_parity()
