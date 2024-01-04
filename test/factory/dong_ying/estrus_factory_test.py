@@ -3,7 +3,7 @@ import unittest
 from factory.dong_ying_factory import DongYingEstrusFactory
 from models.pig_model import PigModel
 from data_structures.pig import Pig
-from data_structures.estrus import Pregnant_status
+from data_structures.estrus import PregnantStatus
 
 class FactoryTestCase(unittest.TestCase):
 
@@ -84,8 +84,8 @@ class FactoryTestCase(unittest.TestCase):
 
     def test_correctly_set_pregnant_status(self):
 
-        self.factory.set_pregnant(Pregnant_status.NO)
-        self.assertEqual(Pregnant_status.NO, self.factory.estrus.get_pregnant())
+        self.factory.set_pregnant(PregnantStatus.NO)
+        self.assertEqual(PregnantStatus.NO, self.factory.estrus.get_pregnant())
 
     def test_set_parity_type_error(self):
 

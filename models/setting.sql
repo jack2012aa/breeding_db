@@ -22,8 +22,22 @@ CREATE TABLE Estrus(
     birthday date,
     farm varchar(20),
     estrus_datetime datetime,
-    pregnant ENUM('Yes', 'No', 'Unknown'),
+    pregnant ENUM('Yes', 'No', 'Unknown', 'Abortion'),
     parity tinyint unsigned,
     PRIMARY KEY (id, birthday, farm, estrus_datetime),
     FOREIGN KEY (id, birthday, farm) REFERENCES Pigs(id, birthday, farm)
+);
+
+CREATE TABLE Matings(
+    sow_id varchar(20),
+    sow_birthday date,
+    sow_farm varchar(20),
+    estrus_datetime datetime,
+    mating_datetime datetime,
+    boar_id varchar(20),
+    boar_birthday date,
+    boar_farm varchar(20),
+    PRIMARY KEY (sow_id, sow_birthday, sow_farm, estrus_datetime, mating_datetime),
+    FOREIGN KEY (sow_id, sow_birthday, sow_farm, estrus_datetime) REFERENCES Estrus(id, birthday, farm, estrus_datetime),
+    FOREIGN KEY (boar_id, boar_birthday, boar_farm) REFERENCES Pigs(id, birthday, farm)
 );

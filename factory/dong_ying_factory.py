@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from data_structures.pig import Pig
-from data_structures.estrus import Estrus, Pregnant_status
+from data_structures.estrus import Estrus, PregnantStatus
 from factory import PigFactory
 from factory import ParentError
 from factory import EstrusFactory

@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from data_structures.estrus import Estrus, Pregnant_status
+from data_structures.estrus import Estrus, PregnantStatus
 from data_structures.pig import Pig
 
 
@@ -59,8 +59,8 @@ class EstrusTestCase(unittest.TestCase):
     def test_pregnant(self):
 
         # Correct
-        self.estrus.set_pregnant(Pregnant_status.UNKNOWN)
-        self.assertEqual(self.estrus.get_pregnant(), Pregnant_status.UNKNOWN)
+        self.estrus.set_pregnant(PregnantStatus.UNKNOWN)
+        self.assertEqual(self.estrus.get_pregnant(), PregnantStatus.UNKNOWN)
 
         # TypeError
         self.assertRaises(TypeError, self.estrus.set_pregnant, Pig())
@@ -73,10 +73,64 @@ class EstrusTestCase(unittest.TestCase):
 
         # Out of range
         self.assertRaises(ValueError, self.estrus.set_parity, -1)
-        self.assertRaises(ValueError, self.estrus.set_parity, 11)
+        self.assertRaises(ValueError, self.estrus.set_parity, 13)
 
         # TypeError
         self.assertRaises(TypeError, self.estrus.set_parity, Pig())
+
+    def test_equal(self):
+
+        pig = Pig()
+        pig.set_birthday("2022-02-01")
+        pig.set_id("123456")
+        pig.set_farm("test")
+
+        other = Estrus()
+        other.set_sow(pig)
+        self.estrus.set_sow(pig)
+        other.set_estrus_datetime("2025-03-12 16:00:00")
+        self.estrus.set_estrus_datetime("2025-03-12 16:00:00")
+        self.assertEqual(self.estrus, other)
+        other.set_parity(2)
+        self.estrus.set_parity(2)
+        other.set_pregnant(PregnantStatus.YES)
+        self.estrus.set_pregnant(PregnantStatus.YES)
+        self.assertEqual(self.estrus, other)
+
+    def test_inequality(self):
+
+        pig = Pig()
+        other = Estrus()
+        pig.set_id("123456")
+        pig.set_birthday("2021-02-02")
+        pig.set_farm("test")
+        self.estrus.set_sow(pig)
+        self.assertFalse(other == self.estrus)
+        other.set_sow(pig)
+        self.estrus.set_estrus_datetime("2022-02-02 16:00:00")
+        other.set_estrus_datetime("2022-02-01 16:00:00")
+        self.assertFalse(other == self.estrus)
+        other.set_estrus_datetime("2022-02-02 16:00:00")
+        self.estrus.set_parity(3)
+        other.set_parity(2)
+        self.assertFalse(other == self.estrus)
+        self.estrus.set_parity(2)
+        self.estrus.set_pregnant(PregnantStatus.ABORTION)
+        other.set_pregnant(PregnantStatus.YES)
+        self.assertFalse(other == self.estrus)
+
+    def test_is_unique(self):
+
+        self.assertFalse(self.estrus.is_unique())
+        pig = Pig()
+        pig.set_id("123456")
+        pig.set_birthday("2021-02-02")
+        pig.set_farm("test")
+        self.estrus.set_sow(pig)
+        self.assertFalse(self.estrus.is_unique())
+        self.estrus.set_estrus_datetime("2023-02-02")
+        self.assert_(self.estrus.is_unique())
+
 
 if __name__ == '__main__':
     unittest.main()

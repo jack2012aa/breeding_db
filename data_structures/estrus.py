@@ -3,10 +3,13 @@ from enum import Enum
 
 from data_structures.pig import Pig
 
-class Pregnant_status(Enum):
-    YES = 1
-    NO = 2
-    UNKNOWN = 3
+class PregnantStatus(Enum):
+
+    YES = "Yes"
+    NO = "No"
+    UNKNOWN = "Unknown"
+    ABORTION = "Abortion"
+
 
 class Estrus:
     '''
@@ -23,8 +26,52 @@ class Estrus:
 
         self.__sow: Pig = None
         self.__estrus_datetime: datetime.datetime = None
-        self.__pregnant: Pregnant_status = None
+        self.__pregnant: PregnantStatus = None
         self.__parity: int = None
+
+    def __str__(self):
+
+        id = birthday = farm = status = str(None)
+        if self.__sow is not None:
+            id = str(self.__sow.get_id())
+            birthday = str(self.__sow.get_birthday())
+            farm = str(self.__sow.get_farm())
+        if self.__pregnant is not None:
+            status = self.__pregnant.value
+        
+
+        s = "母豬耳號：{id}".format(id=str(id)) \
+            + "母豬生日：{birthday}".format(birthday=str(birthday)) \
+            + "母豬所屬牧場：{farm}".format(farm=str(farm)) \
+            + "發情日期：{date_}".format(date_=str(self.__estrus_datetime)) \
+            + "是否懷孕：{status}".format(status=str(status)) \
+            + "生產批次：{parity}".format(parity=str(self.__parity))
+        
+        return s
+    
+    def __eq__(self, __value: object) -> bool:
+        
+        if not isinstance(__value, Estrus):
+            raise TypeError("Can not compare Estrus to {type_}".format(type_=str(type(__value))))
+        
+        result = True
+        if (self.__sow is None) ^ (__value.get_sow() is None):
+            return False
+        elif (self.__sow is not None) and (__value.get_sow() is not None):
+            # I do not care other attributes of the sow.
+            result = result \
+                and self.__sow.get_id() == __value.get_sow().get_id() \
+                and self.__sow.get_birthday() == __value.get_sow().get_birthday() \
+                and self.__sow.get_farm() == __value.get_sow().get_farm()
+        
+        return result \
+            and self.__estrus_datetime == __value.__estrus_datetime \
+            and self.__pregnant == __value.get_pregnant() \
+            and self.__parity == __value.get_parity()
+
+    def is_unique(self) -> bool:
+
+        return (self.__sow is not None) and (self.__estrus_datetime is not None)
 
     def set_sow(self, sow: Pig):
         '''
@@ -61,13 +108,13 @@ class Estrus:
 
         self.__estrus_datetime = date_time
 
-    def set_pregnant(self, status: Pregnant_status):
+    def set_pregnant(self, status: PregnantStatus):
         '''
         * param status: whether the sow got pregnant after this estrus.
         * Raise TypeError
         '''
         
-        if not isinstance(status, Pregnant_status):
+        if not isinstance(status, PregnantStatus):
             raise TypeError("status should be a Pregnan_status. Get {type_}".format(type_=str(type(status))))
         
         self.__pregnant = status

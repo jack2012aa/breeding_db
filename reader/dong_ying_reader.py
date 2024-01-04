@@ -171,3 +171,63 @@ class DongYingPigReader(ExcelReader):
             factory = None
 
         output.save('./test/reader/output.xlsx')
+
+
+class DongYingEstrusAndMatingReader(ExcelReader):
+    '''
+    ## Description
+    The reader to read estrus and mating data provided by Dong-Ying. 
+    These data is included in a table, so I only implement one reader to 
+    handle this job.
+
+    ## Logic
+    The excel only provides mating date. If a sow appears in the table more 
+    than one time, the second time it appears may because: 
+    1. it is the second mating in a single estrus,
+    2. the sow did not get pregnant in last estrus,
+    3. it is in the next parity.
+
+    We can easily distinguish these cases by calculating the time delta 
+    between the two records. Here I define:
+    1. delta = 0 ~ 15 days
+    2. delta = 16 ~ 30 days
+    3. delta > 30 days
+    
+    To calculate time delta, the reader will sort the records by mating_date 
+    in ascending order, so the earlier record can be inserted into the 
+    database first. Before insertion, the reader will check the last estrus 
+    of the sow in the database to calculate the time delta. If the delta is 
+    in range 1, then this record will only be inserted into the `mating` table.
+    Delta in range 2 accompanying with the same parity is seem as an error.
+
+    ## Auto Repair
+    Since there are plenty of emtpy columns in history data, so I come up with 
+    some repair mechanisms, which are listed below.
+
+    ### Parity
+    * If the sow has historical estrus in the database, calculate time delta. 
+    If delta > 180 days, then parity = old parity + 1. Else, the parity does 
+    not change.
+    * If the sow has no historical data, then parity = 1.
+
+    ### Mating time
+    * If mating time is empty, fill in 10:00.
+
+    ### 21th_day_test
+    * If the sow has another record in the excel and time delta < 40 days, 
+    it will be set to `False`. Else `True`.
+    * This attribute has not included in the database. So this auto fill in 
+    is not implemented. Here is just a note.
+
+    ### Pregnant Status
+    * If the `note` column mention "*流產*", then the status will be set to 
+    abortion.
+    * Else if 21th_day_test is `False` (without auto fill in) or the note 
+    is "*未*上*", the status will be set to no.
+    * If the sow has another record in the excel and time delta < 40 days, 
+    it will be set to no. If 40 <= delta <= 180, the status will be set to 
+    abortion. If delta > 180, the status will be set to yes.
+    '''
+
+    def __init__(self):
+        super().__init__()

@@ -1,6 +1,6 @@
 from data_structures.pig import Pig
 from data_structures.estrus import Estrus
-from data_structures.estrus import Pregnant_status
+from data_structures.estrus import PregnantStatus
 from general import ask
 
 
@@ -190,7 +190,7 @@ class EstrusFactory(Factory):
         self.error_message = []
         super().__init__()
 
-    def set_pregnant(self, status: Pregnant_status):
+    def set_pregnant(self, status: PregnantStatus):
 
         self.estrus.set_pregnant(status)
 
