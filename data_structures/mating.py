@@ -52,6 +52,8 @@ class Mating:
                 "公豬所屬牧場 boar_farm：None"
             ])
 
+        return s
+
     def __eq__(self, __value: object) -> bool:
         
         if __value == None:

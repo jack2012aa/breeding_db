@@ -1,7 +1,6 @@
 import pymysql
 
 from data_structures.estrus import Estrus
-from data_structures.estrus import PregnantStatus
 from . import BaseModel
 
 class EstrusModel(BaseModel):
