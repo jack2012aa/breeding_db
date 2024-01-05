@@ -1,6 +1,7 @@
 from data_structures.pig import Pig
 from data_structures.estrus import Estrus
 from data_structures.estrus import PregnantStatus
+from data_structures.mating import Mating
 from general import ask
 
 
@@ -9,6 +10,7 @@ class Factory():
     def __init__(self):
 
         self.__review_flag = 0
+        self.error_message = []
 
     def _turn_on_flag(self, flag: int):
         self.__review_flag = self.__review_flag | flag
@@ -16,7 +18,7 @@ class Factory():
     def _turn_off_flag(self, flag: int):
         self.__review_flag = self.__review_flag & ~flag
 
-    def check_flag(self, flag: int):
+    def check_flag(self, flag: int) -> bool:
         return self.__review_flag & flag != 0
 
     def get_flag(self):
@@ -36,7 +38,6 @@ class PigFactory(Factory):
 
     def __init__(self):
         self.pig = Pig()
-        self.error_messages: list = []
         super().__init__()
 
     def get_breed_abbrevation(self, breed: str) -> str:
@@ -187,7 +188,6 @@ class EstrusFactory(Factory):
     def __init__(self) -> None:
         
         self.estrus = Estrus()
-        self.error_message = []
         super().__init__()
 
     def set_pregnant(self, status: PregnantStatus):
@@ -201,3 +201,24 @@ class EstrusFactory(Factory):
         except ValueError:
             self._turn_on_flag(self.PARITY_FLAG)
             self.error_message.append("批次應該要介於0~12之間")
+
+
+class MatingFactory(Factory):
+
+    ESTRUS_FLAG = 1
+    MATING_DATE_FLAG = 2
+    BOAR_FLAG = 4
+
+    def __init__(self):
+        
+        super().__init__()
+        self.mating: Mating = Mating()
+        
+
+    def set_estrus(self, estrus: Estrus):
+
+        self.mating.set_estrus(estrus)
+
+    def set_mating_datetime(self, datetime_):
+
+        self.mating.set_mating_datetime(datetime_)
