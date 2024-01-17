@@ -1,3 +1,5 @@
+from enum import Enum
+
 from data_structures.pig import Pig
 from data_structures.estrus import Estrus
 from data_structures.estrus import PregnantStatus
@@ -10,7 +12,7 @@ class Factory():
     def __init__(self):
 
         self.__review_flag = 0
-        self.error_message = []
+        self.error_messages = []
 
     def _turn_on_flag(self, flag: int):
         self.__review_flag = self.__review_flag | flag
@@ -200,7 +202,7 @@ class EstrusFactory(Factory):
             self.estrus.set_parity(parity)
         except ValueError:
             self._turn_on_flag(self.PARITY_FLAG)
-            self.error_message.append("批次應該要介於0~12之間")
+            self.error_messages.append("批次應該要介於0~12之間")
 
 
 class MatingFactory(Factory):

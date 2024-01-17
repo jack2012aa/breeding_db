@@ -15,42 +15,31 @@ class DongYingPigReader(ExcelReader):
 
     def __init__(self, path: str):
 
-        super().__init__()
-        print("Reading...")
-
         # df format:
         # [Index, Breed, ID, mark, Birthday, Sire, Dam, naif_id, Chinese_name, ., ., ., Gender,...]
         # to [Breed, ID, Birthday, Sire, Dam, naif_id, Chinese_name, Gender]
-        self.df = pd.read_excel(
-            path,
-            usecols=[1,2,4,5,6,7,8,12],
-            names=[
-                'Breed',
-                'ID',
-                'Birthday',
-                'Sire',
-                'Dam',
-                'naif_id',
-                'Chinese_name',
-                'Gender'
-            ],
-            dtype={
-                'Breed':'object',
-                'ID':'object',
-                'Birthday':'object',
-                'Sire':'object',
-                'Dam':'object',
-                'naif_id':'object',
-                'Chinese_name':'object',
-                'Gender':'object'
-            }
-        )
-        # Clean empty rows.
-        self.df.dropna(how = 'all', inplace = True)
-        self.queue = deque()
-        for index, row in self.df.iterrows():
-            self.queue.append(row)
-        print("Success")
+        usecols=[1,2,4,5,6,7,8,12]
+        names=[
+            'Breed',
+            'ID',
+            'Birthday',
+            'Sire',
+            'Dam',
+            'naif_id',
+            'Chinese_name',
+            'Gender'
+        ]
+        dtype={
+            'Breed':'object',
+            'ID':'object',
+            'Birthday':'object',
+            'Sire':'object',
+            'Dam':'object',
+            'naif_id':'object',
+            'Chinese_name':'object',
+            'Gender':'object'
+        }
+        super().__init__(path, usecols, names, dtype)
 
     def create_pigs(self, ignore_parent: bool = False, in_farm: bool = True, nearest: bool = True, update: bool = False):
         '''
@@ -229,5 +218,28 @@ class DongYingEstrusAndMatingReader(ExcelReader):
     abortion. If delta > 180, the status will be set to yes.
     '''
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, path: str):
+
+        # df format:
+        # [sow_id, parity, boar_id, mating_date, week_age, mating_time, times, character, 21th_day_test, note_date, note, ...]
+        # to [sow_id, parity, boar_id, mating_date, mating_time, 21th_day_test, note]
+        usecols=[0, 1, 2, 3, 5, 8, 10],
+        names=[
+            "sow_id", 
+            "parity", 
+            "boar_id", 
+            "mating_date", 
+            "mating_time", 
+            "21th_day_test", 
+            "note"
+        ]
+        dtype={
+            'sow_id':'object',
+            'parity':'int',
+            'boar_id':'object',
+            'mating_date':'object',
+            'mating_time':'object',
+            '21th_day_test':'object',
+            'note':'object',
+        }
+        super().__init__(path, usecols, names, dtype)

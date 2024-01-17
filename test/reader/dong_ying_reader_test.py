@@ -15,8 +15,7 @@ class ReaderTest(unittest.TestCase):
         self.model = None
 
     def test_reader(self):
-        print(self.reader.df.dtypes)
-        print(self.reader.df.shape)
+        print(self.reader.queue)
 
     def test_create_pigs(self):
         

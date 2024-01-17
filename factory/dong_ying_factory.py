@@ -265,7 +265,7 @@ class DongYingEstrusFactory(EstrusFactory):
         except ValueError:
             self._turn_on_flag(self.SOW_FLAG)
             self._turn_on_flag(self.ESTRUS_DATE_FLAG)
-            self.error_message.append("配種日期應該符合 ISO 格式，例如2024-01-03")
+            self.error_messages.append("配種日期應該符合 ISO 格式，例如2024-01-03")
             return
 
         # Find the youngest sow born before the estrus_date
@@ -277,7 +277,7 @@ class DongYingEstrusFactory(EstrusFactory):
         )
         if len(pigs) == 0:
             self._turn_on_flag(self.SOW_FLAG)
-            self.error_message.append("{id}母豬資料不在資料庫中".format(id=id))
+            self.error_messages.append("{id}母豬資料不在資料庫中".format(id=id))
             return
         # Set the sow
         else:
@@ -298,7 +298,7 @@ class DongYingEstrusFactory(EstrusFactory):
             date_time = datetime.strptime(" ".join([date, time]), "%Y-%m-%d %H:%M")
         except ValueError:
             self._turn_on_flag(self.ESTRUS_DATE_FLAG)
-            self.error_message.append("配種日期或配種時間格式錯誤。請參考2023-01-01 13:00")
+            self.error_messages.append("配種日期或配種時間格式錯誤。請參考2023-01-01 13:00")
             return
         
         self.estrus.set_estrus_datetime(date_time)
@@ -325,7 +325,7 @@ class DongYingMatingFactory(MatingFactory):
             date_time = datetime.strptime(" ".join([date, time]), "%Y-%m-%d %H:%M")
         except ValueError:
             self._turn_on_flag(self.MATING_DATE_FLAG)
-            self.error_message.append("配種日期或配種時間格式錯誤。請參考2023-01-01 13:00")
+            self.error_messages.append("配種日期或配種時間格式錯誤。請參考2023-01-01 13:00")
             return
         
         self.mating.set_mating_datetime(date_time)
@@ -354,7 +354,7 @@ class DongYingMatingFactory(MatingFactory):
         except ValueError:
             self._turn_on_flag(self.BOAR_FLAG)
             self._turn_on_flag(self.MATING_DATE_FLAG)
-            self.error_message.append("配種日期應該符合 ISO 格式，例如2024-01-03")
+            self.error_messages.append("配種日期應該符合 ISO 格式，例如2024-01-03")
             return
 
         # Find the youngest sow born before the estrus_date
@@ -366,7 +366,7 @@ class DongYingMatingFactory(MatingFactory):
         )
         if len(pigs) == 0:
             self._turn_on_flag(self.BOAR_FLAG)
-            self.error_message.append("{id}公豬資料不在資料庫中".format(id=id))
+            self.error_messages.append("{id}公豬資料不在資料庫中".format(id=id))
             return
         # Set the sow
         else:
