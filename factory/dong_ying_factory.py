@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from data_structures.pig import Pig
-from data_structures.estrus import Estrus, PregnantStatus
 from factory import PigFactory
 from factory import ParentError
 from factory import EstrusFactory
+from factory import MatingFactory
 from general import ask
 from general import ask_multiple
 from general import transform_date
@@ -302,3 +302,72 @@ class DongYingEstrusFactory(EstrusFactory):
             return
         
         self.estrus.set_estrus_datetime(date_time)
+
+
+class DongYingMatingFactory(MatingFactory):
+
+    def __init__(self):
+        super().__init__()
+
+    def set_mating_datetime(self, date: str, time: str):
+        '''
+        * param date: format should be yyyy-mm-dd
+        * param time: format should be HH:MM
+        * Raise TypeError and ValueError
+        '''
+
+        if not isinstance(date, str):
+            raise TypeError("date should be a string. Get {type_}".format(type_=str(type(date))))
+        if not isinstance(time, str):
+            raise TypeError("time should be a string. Get {type_}".format(type_=str(type(time))))
+        
+        try:
+            date_time = datetime.strptime(" ".join([date, time]), "%Y-%m-%d %H:%M")
+        except ValueError:
+            self._turn_on_flag(self.MATING_DATE_FLAG)
+            self.error_message.append("配種日期或配種時間格式錯誤。請參考2023-01-01 13:00")
+            return
+        
+        self.mating.set_mating_datetime(date_time)
+    
+    def set_boar(self, id: str, mating_date: str):
+        '''
+        Search the youngest boar which has correct id and farm and born before the mating date.\\
+        Some id in the excel which Dong-Ying provides contain breed information, 
+        while some do not. So the breed will not be in the sql query.
+        * param id: an id in the form *1234-56*
+        * param mating_date: an ISO formate date string
+        * Raise TypeError
+        '''
+
+
+        if not isinstance(id, str):
+            raise TypeError("id should be a string. Get {type_}".format(type_=str(type(id))))
+        if not isinstance(mating_date, str):
+            raise TypeError("mating_date should be a string. Get {type_}"
+                            .format(type_=str(type(mating_date))))
+        
+        # Transform id and estrus_date
+        id = PigFactory().remove_dash_from_id(id)
+        try:
+            date = transform_date(mating_date)
+        except ValueError:
+            self._turn_on_flag(self.BOAR_FLAG)
+            self._turn_on_flag(self.MATING_DATE_FLAG)
+            self.error_message.append("配種日期應該符合 ISO 格式，例如2024-01-03")
+            return
+
+        # Find the youngest sow born before the estrus_date
+        model = PigModel()
+        pigs = model.find_pigs(
+            equal={"id": id, "farm": "Dong-Ying", "gender": "M"},
+            smaller={"birthday": str(date)},
+            order_by="birthday DESC"
+        )
+        if len(pigs) == 0:
+            self._turn_on_flag(self.BOAR_FLAG)
+            self.error_message.append("{id}公豬資料不在資料庫中".format(id=id))
+            return
+        # Set the sow
+        else:
+            self.mating.set_boar(pigs[0])

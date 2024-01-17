@@ -107,8 +107,3 @@ class FactoryTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-'''
-    while True:
-        f = DongYingFactory()
-        f.set_id(input())
-        print(f.pig.get_id())'''

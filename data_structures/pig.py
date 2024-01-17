@@ -70,8 +70,11 @@ class Pig:
     
     def __eq__(self, other):
 
+        if other is None:
+            return False
+
         if not isinstance(other, Pig):
-            raise TypeError("other should be a Pig. Get {type_}".format(type_=str(type(other))))
+            raise TypeError("Can not compare pig with {type_}".format(type_=str(type(other))))
 
         return \
             self.__id == other.get_id()\
@@ -82,10 +85,23 @@ class Pig:
             and self.__chinese_name == other.get_chinese_name()\
             and self.get_dam_id() == other.get_dam_id()\
             and self.get_sire_id() == other.get_sire_id()
-        
 
     def __is_valid_id(self, id:str):
         return len(id) > 0 and len(id) < Pig.MAX_ID_LENGTH
+    
+    def is_identical(self, other):
+        '''Return whether their primary keys are identical.'''
+
+        if other is None:
+            return False
+
+        if not isinstance(other, Pig):
+            raise TypeError("Can not compare pig with {type_}".format(type_=str(type(other))))
+        
+        return \
+            self.__id == other.get_id()\
+            and self.__farm == other.get_farm()\
+            and self.__birthday == other.get_birthday()\
 
     def set_breed(self, breed: str):
 
