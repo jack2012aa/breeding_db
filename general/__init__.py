@@ -55,3 +55,10 @@ def transform_date(date) -> datetime.date:
         return datetime.date.fromisoformat(date)
     except:
         raise ValueError("date {date} is not in ISO format".format(date=date))
+    
+def add_with_None(*args: int) -> int:
+    sum = 0
+    for n in args:
+        if n is not None:
+            sum += n
+    return sum
