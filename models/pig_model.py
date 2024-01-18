@@ -142,7 +142,7 @@ class PigModel(BaseModel):
 
         return self.dict_to_pig(result[0])
 
-    def find_pigs(
+    def find_multiple(
             self, 
             equal: dict = {}, 
             larger: dict = {}, 
@@ -163,41 +163,14 @@ class PigModel(BaseModel):
         * Raise TypeError, ValueError
         '''
 
-        if not isinstance(equal, dict):
-            raise TypeError("equal should be a dict. Get {type_}.".format(type_=str(type(equal))))
-        if not isinstance(smaller, dict):
-            raise TypeError("smaller should be a dict. Get {type_}.".format(type_=str(type(smaller))))
-        if not isinstance(larger, dict):
-            raise TypeError("larger should be a dict. Get {type_}.".format(type_=str(type(larger))))        
-        if not isinstance(larger_equal, dict):
-            raise TypeError("larger_equal should be a dict. Get {type_}.".format(type_=str(type(larger_equal))))        
-        if not isinstance(smaller_equal, dict):
-            raise TypeError("smaller_equal should be a dict. Get {type_}.".format(type_=str(type(smaller_equal))))        
-        if not isinstance(order_by, (str, type(None))):
-            raise TypeError("order_by should be a dict. Get {type_}.".format(type_=str(type(order_by))))        
-
-        conditions = []
-        for key, value in equal.items():
-            conditions.append("{key}='{value}'".format(key=str(key), value=str(value)))
-        for key, value in larger.items():
-            conditions.append("{key}>'{value}'".format(key=str(key), value=str(value)))
-        for key, value in smaller.items():
-            conditions.append("{key}<'{value}'".format(key=str(key), value=str(value)))
-        for key, value in larger_equal.items():
-            conditions.append("{key}>='{value}'".format(key=str(key), value=str(value)))
-        for key, value in smaller_equal.items():
-            conditions.append("{key}<='{value}'".format(key=str(key), value=str(value)))
-
-        if len(conditions) == 0:
-            raise ValueError("Searching condition can not be empty.")
-
-        sql_query = "SELECT * FROM Pigs WHERE {condition}".format(
-            condition=" AND ".join(conditions)
+        results = super().find_multiple("Pigs", 
+            equal, 
+            larger, 
+            smaller, 
+            larger_equal, 
+            smaller_equal, 
+            order_by
         )
-        if order_by is not None:
-            sql_query = "".join([sql_query, "ORDER BY ", order_by])
-        sql_query = "".join([sql_query, ";"])
-        results = self.query(sql_query)
         pigs = []
         for pig in results:
             pigs.append(self.dict_to_pig(pig))

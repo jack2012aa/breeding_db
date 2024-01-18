@@ -6,7 +6,7 @@ from models.pig_model import PigModel
 class ReaderTest(unittest.TestCase):
 
     def setUp(self):
-        self.reader = DongYingPigReader("./test/reader/dong_ying_pig_data.xlsx")
+        self.reader = DongYingPigReader("./test/reader/dong_ying/pig.xlsx")
         self.model = PigModel()
 
     def tearDown(self):
@@ -22,7 +22,7 @@ class ReaderTest(unittest.TestCase):
         # Test ignore parents
         self.reader.create_pigs(True)
         self.assertEqual(self.model.query("SELECT COUNT(*) FROM Pigs;")[0]["COUNT(*)"], 285)
-        self.reader = DongYingPigReader("./test/reader/dong_ying_pig_data.xlsx")
+        self.reader = DongYingPigReader("./test/reader/dong_ying/pig.xlsx")
         self.reader.create_pigs(ignore_parent=False, update=True)
         self.assertEqual(self.model.query(
             "SELECT COUNT(*) FROM Pigs where (dam_id is not NULL) or (sire_id is not NULL);"

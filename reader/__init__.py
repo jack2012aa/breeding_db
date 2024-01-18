@@ -1,7 +1,10 @@
 import pandas as pd
+import openpyxl
 from collections import deque
 
 class ExcelReader:
+
+    fill = openpyxl.styles.PatternFill(fill_type="solid", fgColor="DDDDDD")
 
     def __init__(self, path: str, usecolumns: list, names: list, dtype: dict):
         '''
@@ -12,15 +15,15 @@ class ExcelReader:
         '''
 
         print("Reading...")
-        df = pd.read_excel(
+        self.df = pd.read_excel(
             path,
             usecols=usecolumns,
             names=names,
             dtype=dtype
         )
         # Clean empty rows.
-        df.dropna(how = 'all', inplace = True)
+        self.df.dropna(how="all", inplace=True)
         self.queue = deque()
-        for index, row in df.iterrows():
+        for index, row in self.df.iterrows():
             self.queue.append(row)
         print("Success")

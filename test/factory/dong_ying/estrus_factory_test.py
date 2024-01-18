@@ -53,12 +53,12 @@ class FactoryTestCase(unittest.TestCase):
     def test_set_sow_date_format_error(self):
 
         self.factory.set_sow("123456", "2023/01/03")
-        self.assertEqual(self.factory.get_flag(), self.factory.SOW_FLAG | self.factory.ESTRUS_DATE_FLAG)
+        self.assertEqual(self.factory.get_flag(), self.factory.Flags.SOW_FLAG.value | self.factory.Flags.ESTRUS_DATE_FLAG.value)
 
     def test_set_sow_id_not_found(self):
 
         self.factory.set_sow("123444", "2021-01-01") 
-        self.assertEqual(self.factory.get_flag(), self.factory.SOW_FLAG)
+        self.assertEqual(self.factory.get_flag(), self.factory.Flags.SOW_FLAG.value)
 
     def test_set_date_type_error(self):
 
@@ -67,16 +67,16 @@ class FactoryTestCase(unittest.TestCase):
 
     def test_correctly_set_date(self):
 
-        self.factory.set_estrus_datetime("2021-02-23", "16:00")
+        self.factory.set_estrus_datetime("2021-02-23", "16:00:00")
         self.assertEqual(str(self.factory.estrus.get_estrus_datetime()), "2021-02-23 16:00:00")
 
     def test_set_date_format_error(self):
 
-        self.factory.set_estrus_datetime("2021-02-23", "16:00:00")
-        self.assertEqual(self.factory.get_flag(), self.factory.ESTRUS_DATE_FLAG)
-        self.factory._turn_off_flag(self.factory.ESTRUS_DATE_FLAG)
+        self.factory.set_estrus_datetime("2021-02-23", "16:00")
+        self.assertEqual(self.factory.get_flag(), self.factory.Flags.ESTRUS_DATE_FLAG.value)
+        self.factory._turn_off_flag(self.factory.Flags.ESTRUS_DATE_FLAG.value)
         self.factory.set_estrus_datetime("2021/02/23", "16:00")
-        self.assertEqual(self.factory.get_flag(), self.factory.ESTRUS_DATE_FLAG)
+        self.assertEqual(self.factory.get_flag(), self.factory.Flags.ESTRUS_DATE_FLAG.value)
 
     def test_set_pregnant_status_type_error(self):
 
@@ -99,10 +99,10 @@ class FactoryTestCase(unittest.TestCase):
     def test_set_parity_out_of_range(self):
 
         self.factory.set_parity(-1)
-        self.assertEqual(self.factory.get_flag(), self.factory.PARITY_FLAG)
-        self.factory._turn_off_flag(self.factory.PARITY_FLAG)
+        self.assertEqual(self.factory.get_flag(), self.factory.Flags.PARITY_FLAG.value)
+        self.factory._turn_off_flag(self.factory.Flags.PARITY_FLAG.value)
         self.factory.set_parity(20)
-        self.assertEqual(self.factory.get_flag(), self.factory.PARITY_FLAG)
+        self.assertEqual(self.factory.get_flag(), self.factory.Flags.PARITY_FLAG.value)
 
 
 if __name__ == '__main__':

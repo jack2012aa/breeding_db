@@ -1,6 +1,8 @@
 import pymysql
 
 from data_structures.estrus import Estrus
+from data_structures.estrus import PregnantStatus
+from data_structures.pig import Pig
 from . import BaseModel
 
 class EstrusModel(BaseModel):
@@ -17,7 +19,7 @@ class EstrusModel(BaseModel):
         '''
 
         if not isinstance(estrus, Estrus):
-            raise TypeError("estrus should be an Estrus. Get {type_}".format(str(type(estrus))))
+            raise TypeError("estrus should be an Estrus. Get {type_}".format(type_=str(type(estrus))))
         
         if not estrus.is_unique():
             raise ValueError("{estrus} should be unique.".format(estrus=str(estrus)))
@@ -47,6 +49,89 @@ class EstrusModel(BaseModel):
             self.query(sql_query)
         except pymysql.err.IntegrityError as error:
             raise KeyError("Sow does not exist in the database.")
+        # Not sure what type of error may come up.
+        except Exception as error:
+            raise error
+        
+    def dict_to_estrus(self, estrus_dict):
+
+        estrus = Estrus()
+        sow = Pig()
+        sow.set_id(estrus_dict["id"])
+        sow.set_birthday(estrus_dict["birthday"])
+        sow.set_farm(estrus_dict["farm"])
+        estrus.set_sow(sow)
+        estrus.set_estrus_datetime(estrus_dict["estrus_datetime"])
+        if estrus_dict["pregnant"] is not None:
+            estrus.set_pregnant(PregnantStatus(estrus_dict["pregnant"]))
+        if estrus_dict["parity"] is not None:
+            estrus.set_parity(int(estrus_dict["parity"]))
+
+        return estrus
+    
+    def find_multiple(
+            self, 
+            equal: dict = {}, 
+            larger: dict = {}, 
+            smaller: dict = {},
+            larger_equal: dict = {},
+            smaller_equal: dict = {},
+            order_by: str = None
+        ) -> list:
+        '''
+        Find all estrus satisfy the conditions. 
+        Keys of the dictionary should be same as attributes.
+        * Different conditions will be connected by AND.
+        * Sire and Dam should be listed as sire_id, sire_birthday, ...
+        * param equal: query will be `key`=`value`
+        * param larger: query will be `key`>`value`
+        * param smaller: query will be `key`<`value`
+        * param order_by: `column_name` `ASC|DESC`
+        * Raise TypeError, ValueError
+        '''
+
+        results = super().find_multiple(
+            "Estrus",
+            equal,
+            larger,
+            smaller,
+            larger_equal,
+            smaller_equal,
+            order_by
+        )
+        estrus = []
+        for estrus_dict in results:
+            estrus.append(self.dict_to_estrus(estrus_dict))
+
+        return estrus
+    
+    def update_pregnant(self, estrus: Estrus, status: PregnantStatus):
+        '''
+        * param estrus: an unique estrus
+        * Raise TypeError, ValueError
+        '''
+
+        if not isinstance(estrus, Estrus):
+            raise TypeError("estrus should be an Estrus. Get {type_}".format(type_=str(type(estrus))))
+        if not isinstance(status, PregnantStatus):
+            raise TypeError("status should be a PregnantStatus. Get {type_}".format(type_=str(type(status))))
+        
+        if not estrus.is_unique():
+            raise ValueError("estrus should be unique.\n{estrus}".format(estrus=str(estrus)))
+
+        sql_query = "UPDATE Estrus SET pregnant='{status}' WHERE id='{id}' AND birthday='{birthday}' AND farm='{farm}' AND estrus_datetime='{datetime}';"
+        sql_query = sql_query.format(
+            status=status.value, 
+            id=estrus.get_sow().get_id(),
+            birthday=str(estrus.get_sow().get_birthday()), 
+            farm=estrus.get_sow().get_farm(),
+            datetime=str(estrus.get_estrus_datetime())
+        )
+
+        try:
+            self.query(sql_query)
+        except pymysql.err.IntegrityError as error:
+            raise KeyError("Estrus does not exist in the database.")
         # Not sure what type of error may come up.
         except Exception as error:
             raise error

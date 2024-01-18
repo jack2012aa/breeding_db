@@ -182,10 +182,12 @@ class ParentError(BaseException):
 
 class EstrusFactory(Factory):
 
-    SOW_FLAG = 1
-    ESTRUS_DATE_FLAG = 2
-    PREGNANT_FLAG = 4
-    PARITY_FLAG = 8
+    class Flags(Enum):
+
+        SOW_FLAG = 1
+        ESTRUS_DATE_FLAG = 2
+        PREGNANT_FLAG = 4
+        PARITY_FLAG = 8
 
     def __init__(self) -> None:
         
@@ -201,7 +203,7 @@ class EstrusFactory(Factory):
         try:
             self.estrus.set_parity(parity)
         except ValueError:
-            self._turn_on_flag(self.PARITY_FLAG)
+            self._turn_on_flag(self.Flags.PARITY_FLAG.value)
             self.error_messages.append("批次應該要介於0~12之間")
 
 

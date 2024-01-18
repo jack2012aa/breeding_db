@@ -136,14 +136,14 @@ class Estrus:
         
         self.__parity = parity
 
-    def get_sow(self):
+    def get_sow(self) -> Pig:
         return self.__sow
     
-    def get_estrus_datetime(self):
+    def get_estrus_datetime(self) -> datetime:
         return self.__estrus_datetime
     
-    def get_pregnant(self):
+    def get_pregnant(self) -> PregnantStatus:
         return self.__pregnant
     
-    def get_parity(self):
+    def get_parity(self) -> int:
         return self.__parity

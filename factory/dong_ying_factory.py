@@ -158,7 +158,7 @@ class DongYingPigFactory(PigFactory):
             equal["farm"] = "Dong-Ying"
 
         model = PigModel()
-        found_pigs = model.find_pigs(equal=equal, smaller=smaller)
+        found_pigs = model.find_multiple(equal=equal, smaller=smaller)
 
         if len(found_pigs) == 0:
             raise ParentError("親代不在資料庫中")
@@ -248,7 +248,7 @@ class DongYingEstrusFactory(EstrusFactory):
         Some id in the excel which Dong-Ying provides contain breed information, 
         while some do not. So the breed will not be in the sql query.
         * param id: an id in the form *1234-56*
-        * param estrus: an ISO formate date string
+        * param estrus_date: an ISO formate date string
         * Raise TypeError
         '''
 
@@ -263,20 +263,20 @@ class DongYingEstrusFactory(EstrusFactory):
         try:
             date = transform_date(estrus_date)
         except ValueError:
-            self._turn_on_flag(self.SOW_FLAG)
-            self._turn_on_flag(self.ESTRUS_DATE_FLAG)
+            self._turn_on_flag(self.Flags.SOW_FLAG.value)
+            self._turn_on_flag(self.Flags.ESTRUS_DATE_FLAG.value)
             self.error_messages.append("配種日期應該符合 ISO 格式，例如2024-01-03")
             return
 
         # Find the youngest sow born before the estrus_date
         model = PigModel()
-        pigs = model.find_pigs(
+        pigs = model.find_multiple(
             equal={"id": id, "farm": "Dong-Ying", "gender": "F"},
             smaller={"birthday": str(date)},
             order_by="birthday DESC"
         )
         if len(pigs) == 0:
-            self._turn_on_flag(self.SOW_FLAG)
+            self._turn_on_flag(self.Flags.SOW_FLAG.value)
             self.error_messages.append("{id}母豬資料不在資料庫中".format(id=id))
             return
         # Set the sow
@@ -286,7 +286,7 @@ class DongYingEstrusFactory(EstrusFactory):
     def set_estrus_datetime(self, date: str, time: str):
         '''
         * param date: format should be yyyy-mm-dd
-        * param time: format should be HH:MM
+        * param time: format should be HH:MM:SS
         '''
 
         if not isinstance(date, str):
@@ -295,9 +295,9 @@ class DongYingEstrusFactory(EstrusFactory):
             raise TypeError("time should be a string. Get {type_}".format(type_=str(type(time))))
         
         try:
-            date_time = datetime.strptime(" ".join([date, time]), "%Y-%m-%d %H:%M")
+            date_time = datetime.strptime(" ".join([date, time]), "%Y-%m-%d %H:%M:%S")
         except ValueError:
-            self._turn_on_flag(self.ESTRUS_DATE_FLAG)
+            self._turn_on_flag(self.Flags.ESTRUS_DATE_FLAG.value)
             self.error_messages.append("配種日期或配種時間格式錯誤。請參考2023-01-01 13:00")
             return
         
@@ -359,7 +359,7 @@ class DongYingMatingFactory(MatingFactory):
 
         # Find the youngest sow born before the estrus_date
         model = PigModel()
-        pigs = model.find_pigs(
+        pigs = model.find_multiple(
             equal={"id": id, "farm": "Dong-Ying", "gender": "M"},
             smaller={"birthday": str(date)},
             order_by="birthday DESC"

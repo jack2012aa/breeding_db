@@ -89,7 +89,7 @@ class ModelTest(unittest.TestCase):
 
         # Equal
         self.assertEqual(
-            len(self.model.find_pigs({
+            len(self.model.find_multiple({
                 "naif_id": "654421", 
                 "farm": "test_farm"}
                 )),
@@ -98,7 +98,7 @@ class ModelTest(unittest.TestCase):
 
         # Smaller
         self.assertEqual(
-            len(self.model.find_pigs(
+            len(self.model.find_multiple(
                 equal={"farm": "test_farm"}, 
                 smaller={"birthday": "2022-12-28"})),
             2
@@ -106,7 +106,7 @@ class ModelTest(unittest.TestCase):
 
         # Smaller Equal
         self.assertEqual(
-            len(self.model.find_pigs(
+            len(self.model.find_multiple(
                 smaller_equal={"birthday": "2022-12-28"}
             )),
             3
@@ -114,7 +114,7 @@ class ModelTest(unittest.TestCase):
 
         # Larger
         self.assertEqual(
-            len(self.model.find_pigs(
+            len(self.model.find_multiple(
                 larger={"birthday": "2022-12-27"}
             )),
             1
@@ -122,7 +122,7 @@ class ModelTest(unittest.TestCase):
 
         # Larger Equal
         self.assertEqual(
-            len(self.model.find_pigs(
+            len(self.model.find_multiple(
                 larger_equal={"birthday": "2022-12-27"}
             )),
             3
@@ -130,19 +130,19 @@ class ModelTest(unittest.TestCase):
 
         # Empty set
         self.assertEqual(
-            len(self.model.find_pigs(
+            len(self.model.find_multiple(
                 equal={"id": "jasdii"}
             )),
             0
         )
 
         # Error
-        self.assertRaises(TypeError, self.model.find_pigs, equal=None)
-        self.assertRaises(TypeError, self.model.find_pigs, smaller=None)
-        self.assertRaises(TypeError, self.model.find_pigs, larger=None)
-        self.assertRaises(TypeError, self.model.find_pigs, smaller_equal=None)
-        self.assertRaises(TypeError, self.model.find_pigs, larger_equal=None)
-        self.assertRaises(ValueError, self.model.find_pigs, smaller={})
+        self.assertRaises(TypeError, self.model.find_multiple, equal=None)
+        self.assertRaises(TypeError, self.model.find_multiple, smaller=None)
+        self.assertRaises(TypeError, self.model.find_multiple, larger=None)
+        self.assertRaises(TypeError, self.model.find_multiple, smaller_equal=None)
+        self.assertRaises(TypeError, self.model.find_multiple, larger_equal=None)
+        self.assertRaises(ValueError, self.model.find_multiple, smaller={})
 
     def test_update(self):
 
