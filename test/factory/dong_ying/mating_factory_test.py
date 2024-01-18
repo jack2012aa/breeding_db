@@ -33,14 +33,14 @@ class FactoryTestCase(unittest.TestCase):
 
     def test_correctly_set_mating_datetime(self):
 
-        self.factory.set_mating_datetime("2022-07-09", "16:00")
+        self.factory.set_mating_datetime("2022-07-09", "16:00:00")
         self.assertEqual(str(self.factory.mating.get_mating_datetime()), "2022-07-09 16:00:00")
 
     def test_set_wrong_format_datetime(self):
 
         self.assertRaises(TypeError, self.factory.set_mating_datetime, 20200709)
-        self.factory.set_mating_datetime("2022-07-07", "16:00:00")
-        self.assertEqual(self.factory.get_flag(), self.factory.MATING_DATE_FLAG)
+        self.factory.set_mating_datetime("2022-07-07", "16:00")
+        self.assertEqual(self.factory.get_flag(), self.factory.Flags.MATING_DATE_FLAG.value)
 
     def test_correctly_set_boar(self):
 
@@ -54,7 +54,7 @@ class FactoryTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.factory.set_boar, 123456, "2023-01-03")
         self.assertRaises(TypeError, self.factory.set_boar, "123456", None)
         self.factory.set_boar("111111", "2024-05-05")
-        self.assertTrue(self.factory.check_flag(self.factory.BOAR_FLAG))
+        self.assertTrue(self.factory.check_flag(self.factory.Flags.BOAR_FLAG.value))
 
 
 

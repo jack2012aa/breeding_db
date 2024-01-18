@@ -209,9 +209,11 @@ class EstrusFactory(Factory):
 
 class MatingFactory(Factory):
 
-    ESTRUS_FLAG = 1
-    MATING_DATE_FLAG = 2
-    BOAR_FLAG = 4
+    class Flags(Enum):
+
+        ESTRUS_FLAG = 1
+        MATING_DATE_FLAG = 2
+        BOAR_FLAG = 4
 
     def __init__(self):
         

@@ -1,3 +1,8 @@
+from datetime import datetime
+
+import openpyxl
+import re
+
 from data_structures.estrus import Estrus
 from data_structures.estrus import PregnantStatus
 from factory import ParentError
@@ -6,12 +11,10 @@ from factory.dong_ying_factory import DongYingEstrusFactory
 from factory.dong_ying_factory import DongYingMatingFactory
 from models.pig_model import PigModel
 from models.estrus_model import EstrusModel
+from models.mating_model import MatingModel
 from reader import ExcelReader
 from general import ask
 
-import openpyxl
-import re
-from datetime import datetime
 
 class DongYingPigReader(ExcelReader):
 
@@ -348,5 +351,26 @@ class DongYingEstrusAndMatingReader(ExcelReader):
                 # Insert new
                 estrus_model.insert(estrus_factory.estrus)
                 pass
+
+            mating_factory = DongYingMatingFactory()
+            mating_factory.set_estrus(estrus_factory.estrus)
+            mating_factory.set_mating_datetime(mating_date, time)
+            boar_id = "fake_id" if is_nan.iloc[2] else record.get("boar_id")
+            mating_factory.set_boar(boar_id, mating_date)
+
+            # If the flag is on, throw this data to output file.
+            if mating_factory.get_flag() != 0:
+                count += 1
+                data = record.to_list()
+                data.append(str(mating_factory.error_messages))
+                sheet.append(data)
+                # Check the flag and highlight incorrect cells
+                columns = {1:"A", 2:"D", 4:"C"}
+                for flag in mating_factory.Flags:
+                    if mating_factory.check_flag(flag.value):
+                        sheet[columns[flag.value] + str(count)].fill = self.fill
+                continue
+
+            MatingModel().insert(mating_factory.mating)
 
         output.save('./test/reader/dong_ying/output2.xlsx')
