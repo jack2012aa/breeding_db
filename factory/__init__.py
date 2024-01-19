@@ -1,10 +1,14 @@
 from enum import Enum
+from datetime import timedelta
 
 from data_structures.pig import Pig
 from data_structures.estrus import Estrus
 from data_structures.estrus import PregnantStatus
 from data_structures.mating import Mating
+from data_structures.farrowing import Farrowing
 from general import ask
+from general import transform_date
+from models.estrus_model import EstrusModel
 
 
 class Factory():
@@ -228,3 +232,147 @@ class MatingFactory(Factory):
     def set_mating_datetime(self, datetime_):
 
         self.mating.set_mating_datetime(datetime_)
+
+
+class FarrowingFactory(Factory):
+
+    class Flags(Enum):
+
+        ESTRUS_FLAG = 1
+        FARROWING_DATE_FLAG = 2
+        CRUSHING_FLAG = 4
+        BLACK_FLAG = 8
+        WEAK_FLAG = 16
+        MALFORMATION_FLAG = 32
+        DEAD_FLAG = 64
+        N_OF_MALE_FLAG = 128
+        N_OF_FEMALE_FLAG = 256
+        TOTAL_WEIGHT_FLAG = 512
+
+    def __init__(self, farm: str, ceil: int = 20):
+
+        if not isinstance(farm, str):
+            raise TypeError("farm should be a string. Get {type_}".format(str(type(farm))))
+
+        if not isinstance(ceil, int):
+            raise TypeError("ceil should be a string. Get {type_}".format(str(type(ceil))))
+
+        super().__init__()
+        self.farrowing = Farrowing()
+
+        # The farm attribute can be used in some basic query such as set_estrus, 
+        # so children classes do not need to implement their own method.
+        self.farm = farm
+        
+        # The ceil attribute is the possible maximum number of piglet born/dead in 
+        # a batch.
+        self.ceil = ceil
+
+    def __check_numeric(self, attribute: str, n: int, flag: int) -> int:
+        '''
+        Check 0 < n < ceil. If n out of range, ask the user how to deal with. 
+        If the user agree with the change, return the corrected value. Else, 
+        turn on the flag and return None.
+        Steps:
+        1. Check n < ceil
+        2. Chekc n > 0
+        '''
+
+        if n > self.ceil:
+            if ask("{attribute}數量過多（{n}），請確認是否正確".format(attribute=attribute, n=str(n))):
+                return n
+            else:
+                self.error_messages.append("{attribute}數量不正常".format(attribute=attribute))
+                self._turn_on_flag(flag)
+                return None
+        if n < 0:
+            if ask("{attribute}數量不能為負值（{n}），是否修正為正？".format(attribute=attribute, n=str(n))):
+                return -n
+            else:
+                self.error_messages.append("{attribute}數量不正常".format(attribute=attribute))
+                self._turn_on_flag(flag)
+                return None
+        return n
+
+    def set_estrus(self, id: str, farrowing_date) -> None:
+        '''
+        This method will find the nearest estrus record in the database base on 
+        sow id, farrowing date and farm. If no such record or the time delta is
+        larger than 250 days, then the estrus flag will turn on.
+        * param id: a sow id
+        * param farrowing_date: any ISO format
+        * Raise TypeError, ValueError
+        '''
+
+        if not isinstance(id, str):
+            raise TypeError("id should be a string. Get {type_}".format(type_=str(type(id))))
+        farrowing_date = transform_date(farrowing_date)
+        
+        estrus = EstrusModel().find_multiple(
+            equal={"id": PigFactory().remove_dash_from_id(id), "farm": self.farm},
+            smaller_equal={"estrus_datetime": farrowing_date},
+            larger_equal={"estrus_datetime": (farrowing_date - timedelta(250))},
+            order_by="estrus_datetime DESC"
+        )
+
+        if len(estrus) == 0:
+            self.error_messages.append("找不到先前的發情/配種紀錄")
+            self._turn_on_flag(self.Flags.ESTRUS_FLAG.value)
+            return None
+        
+        self.farrowing.set_estrus(estrus[0])
+
+    def set_farrowing_date(self, date) -> None:
+        ''' * Raise TypeError, ValueError'''
+
+        self.farrowing.set_farrowing_date(date)
+
+    def set_crushing(self, n: int) -> None:
+
+        n = self.__check_numeric("壓死", n, self.Flags.CRUSHING_FLAG.value)
+        if n is not None:
+            self.farrowing.set_crushing(n)
+
+    def set_black(self, n: int) -> None:
+
+        n = self.__check_numeric("黑胎", n, self.Flags.BLACK_FLAG.value)
+        if n is not None:
+            self.farrowing.set_black(n)
+
+    def set_weak(self, n: int) -> None:
+
+        n = self.__check_numeric("虛弱死", n, self.Flags.WEAK_FLAG.value)
+        if n is not None:
+            self.farrowing.set_weak(n)
+
+    def set_malformation(self, n: int) -> None:
+
+        n = self.__check_numeric("畸形", n, self.Flags.MALFORMATION_FLAG.value)
+        if n is not None:
+            self.farrowing.set_malformation(n)
+
+    def set_dead(self, n: int) -> None:
+
+        n = self.__check_numeric("死胎", n, self.Flags.DEAD_FLAG.value)
+        if n is not None:
+            self.farrowing.set_dead(n)
+
+    def set_n_of_male(self, n: int) -> None:
+
+        n = self.__check_numeric("公小豬", n, self.Flags.N_OF_MALE_FLAG.value)
+        if n is not None:
+            self.farrowing.set_n_of_male(n)
+
+    def set_n_of_female(self, n: int) -> None:
+
+        n = self.__check_numeric("母小豬", n, self.Flags.N_OF_FEMALE_FLAG.value)
+        if n is not None:
+            self.farrowing.set_n_of_female(n)
+
+    def set_total_weight(self, weight: int) -> None:
+
+        self.farrowing.set_total_weight(weight)
+
+    def set_note(self, note: str) -> None:
+
+        self.farrowing.set_note(note)

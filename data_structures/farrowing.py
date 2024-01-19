@@ -115,48 +115,64 @@ class Farrowing():
 
         if not isinstance(crushing, int):
             raise TypeError("crushing should be an int. Get {type_}".format(type_=str(type(crushing))))
+        if crushing < 0:
+            raise ValueError("crushing can not be negative. Get {n}".format(n=str(crushing)))
         self.__crushing = crushing
 
     def set_black(self, black: int) -> None:
 
         if not isinstance(black, int):
             raise TypeError("black should be an int. Get {type_}".format(type_=str(type(black))))
+        if black < 0:
+            raise ValueError("black can not be negative. Get {n}".format(n=str(black)))
         self.__black = black
 
     def set_weak(self, weak: int) -> None:
 
         if not isinstance(weak, int):
             raise TypeError("weak should be an int. Get {type_}".format(type_=str(type(weak))))
+        if weak < 0:
+            raise ValueError("weak can not be negative. Get {n}".format(n=str(weak)))
         self.__weak = weak
 
     def set_malformation(self, malformation: int) -> None:
 
         if not isinstance(malformation, int):
             raise TypeError("malformation should be an int. Get {type_}".format(type_=str(type(malformation))))
+        if malformation < 0:
+            raise ValueError("malformation can not be negative. Get {n}".format(n=str(malformation)))
         self.__malformation = malformation
 
     def set_dead(self, dead: int) -> None:
 
         if not isinstance(dead, int):
             raise TypeError("dead should be an int. Get {type_}".format(type_=str(type(dead))))
+        if dead < 0:
+            raise ValueError("black can not be negative. Get {n}".format(n=str(dead)))
         self.__dead = dead
 
     def set_n_of_male(self, n_of_male: int) -> None:
 
         if not isinstance(n_of_male, int):
             raise TypeError("n_of_male should be an int. Get {type_}".format(type_=str(type(n_of_male))))
+        if n_of_male < 0:
+            raise ValueError("n_of_male can not be negative. Get {n}".format(n=str(n_of_male)))
         self.__n_of_male = n_of_male
 
     def set_n_of_female(self, n_of_female: int) -> None:
 
         if not isinstance(n_of_female, int):
             raise TypeError("n_of_female should be an int. Get {type_}".format(type_=str(type(n_of_female))))
+        if n_of_female < 0:
+            raise ValueError("n_of_female can not be negative. Get {n}".format(n=str(n_of_female)))
         self.__n_of_female = n_of_female
 
     def set_total_weight(self, total_weight: int) -> None:
 
         if not isinstance(total_weight, int):
             raise TypeError("total_weight should be an int. Get {type_}".format(type_=str(type(total_weight))))
+        if total_weight < 0:
+            raise ValueError("total_weight can not be negative. Get {n}".format(n=str(total_weight)))
         self.__total_weight = total_weight
 
     def set_note(self, note: str) -> None:

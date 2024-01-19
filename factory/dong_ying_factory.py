@@ -5,6 +5,7 @@ from factory import PigFactory
 from factory import ParentError
 from factory import EstrusFactory
 from factory import MatingFactory
+from factory import FarrowingFactory
 from general import ask
 from general import ask_multiple
 from general import transform_date
@@ -371,3 +372,9 @@ class DongYingMatingFactory(MatingFactory):
         # Set the sow
         else:
             self.mating.set_boar(pigs[0])
+
+
+class DongYingFarrowingFactory(FarrowingFactory):
+
+    def __init__(self):
+        super().__init__("Dong-Ying")
