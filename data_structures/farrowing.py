@@ -93,6 +93,10 @@ class Farrowing():
             and (self.__n_of_male == __value.get_n_of_male()) \
             and (self.__n_of_female == __value.get_n_of_female())
     
+    def is_unique(self) -> bool:
+
+        return self.__estrus is not None
+
     def set_estrus(self, estrus: Estrus) -> None:
         '''* Raise TypeError and ValueError'''
 
