@@ -15,12 +15,16 @@ from models.mating_model import MatingModel
 from models.farrowing_model import FarrowingModel
 from reader import ExcelReader
 from general import ask
+from general import type_check
 
 
 class DongYingPigReader(ExcelReader):
 
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, output_file_name: str):
+
+        type_check(path, "path", str)
+        type_check(output_file_name, "output_file_name", str)
 
         # df format:
         # [Index, Breed, ID, mark, Birthday, Sire, Dam, reg_id, Chinese_name, ., ., ., Gender,...]
@@ -48,7 +52,23 @@ class DongYingPigReader(ExcelReader):
             'Chinese_name':'object',
             'Gender':'object',
         }
-        super().__init__(path, usecols, names, dtype)
+        super().__init__(
+            path=path, 
+            use_columns=usecols, 
+            names=names, 
+            dtype=dtype,
+            output_file_name=output_file_name,
+            output_page_name="基本資料",
+            flag_to_output={
+                1: "a",
+                2: "b",
+                4: "d",
+                8: "e",
+                16: "f",
+                32: "g",
+                64: "h"
+            }
+        )
 
     def create_pigs(self, 
             ignore_parent: bool = False, 
@@ -71,23 +91,9 @@ class DongYingPigReader(ExcelReader):
         * Check pigs with same id but close birthday.
         '''
 
-        # Set output excel
-        output = openpyxl.Workbook()
-        sheet = output.create_sheet('基本資料')
-        count = 0
-        columns = {
-            1: "a",
-            2: "b",
-            4: "d",
-            8: "e",
-            16: "f",
-            32: "g",
-            64: "h"
-        }
         model = PigModel()
 
         # Control flow
-        count = 0
         count_repeat = 0
         length = len(self.queue)
 
@@ -138,16 +144,8 @@ class DongYingPigReader(ExcelReader):
 
             # If errors happen
             if factory.get_flag() != 0:
-                count += 1
-                data = pig.to_list()
-                data.append(str(factory.error_messages))
-                sheet.append(data)
-                # Check the flag and highlight incorrect cells
-                for flag in DongYingPigFactory.Flags:
-                    if factory.check_flag(flag.value):
-                        sheet[columns[flag.value] + str(count)].fill = self.fill
+                self.insert_output(pig.to_list(), factory)
                 if wait_for_parent:
-
                     self.queue.pop()
             else:
                 # If pig in pigs exists in the database, ask how to do.
@@ -169,10 +167,9 @@ class DongYingPigReader(ExcelReader):
                                 )
                             ):
                                 # Incorrect data. Add to output excel.
-                                data = pig.to_list()
-                                data.append("與資料庫中的資料重複且不相符")
-                                sheet.append(data)
-                                count += 1
+                                factory.error_messages.append("與資料庫中的資料重複且不相符")
+                                factory._turn_on_flag(factory.Flags.ID_FLAG)
+                                self.insert_output(pig.to_list(), factory)
                             else:
                                 model.update(factory.pig)
                         else:
@@ -181,7 +178,7 @@ class DongYingPigReader(ExcelReader):
 
             factory = None
 
-        output.save('./test/reader/dong_ying/output.xlsx')
+        super().end()
 
 
 class DongYingEstrusAndMatingReader(ExcelReader):
