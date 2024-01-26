@@ -54,7 +54,11 @@ class FarrowingModel(BaseModel):
         try:
             self.query(sql_query)
         except pymysql.err.IntegrityError as error:
-            raise KeyError("Estrus does not exist in the database.")
+            if 1062 in error.args:
+                raise ValueError("Duplicate key")
+            if 1452 in error.args:
+                raise KeyError("Estrus does not exist in the database.")
+            raise error
         # Not sure what type of error may come up.
         except Exception as error:
             raise error

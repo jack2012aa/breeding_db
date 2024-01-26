@@ -45,8 +45,8 @@ class Pig:
 
         self.__dam: Pig = None
 
-        self.__naif_id: str = None
-        '''ID that is documented in naif's system. Necessary to be turned into int.'''
+        self.__reg_id: str = None
+        '''ID that is documented in reg's system. Necessary to be turned into int.'''
 
         self.__gender: str = None
         '''{'M','F'}'''
@@ -163,7 +163,7 @@ class Pig:
         self.__sire = parent
         return None
 
-    def set_naif_id(self, id):
+    def set_reg_id(self, id):
         '''
         * param id: a six-digit unique id
         * Raise TypeError, ValueError
@@ -183,7 +183,7 @@ class Pig:
         if len(str(id)) != 6:
             raise ValueError("{id} 不是六位數字".format(id=id))
         
-        self.__naif_id = id
+        self.__reg_id = id
         
     def set_gender(self, gender: str):
         ''' * Raise KeyError'''
@@ -238,8 +238,8 @@ class Pig:
             return "None"
         return self.__sire.get_id()
     
-    def get_naif_id(self):
-        return self.__naif_id
+    def get_reg_id(self):
+        return self.__reg_id
     
     def get_gender(self):
         return self.__gender

@@ -26,7 +26,7 @@ class DongYingPigFactory(PigFactory):
         '''
 
         if not isinstance(breed, str):
-            self._turn_on_flag(self.BREED_FLAG)
+            self._turn_on_flag(self.Flags.BREED_FLAG.value)
             raise TypeError("breed should be a string. Get {type_}".format(type_=type(breed)))
 
         if breed in Pig.BREED:
@@ -137,10 +137,10 @@ class DongYingPigFactory(PigFactory):
                 break
         if breed not in Pig.BREED and not breed == "":
             if dam:
-                self._turn_on_flag(self.DAM_FLAG)
+                self._turn_on_flag(self.Flags.DAM_FLAG.value)
                 self.error_messages.append("母畜品種不在常見名單內")
             else:
-                self._turn_on_flag(self.SIRE_FLAG)
+                self._turn_on_flag(self.Flags.SIRE_FLAG.value)
                 self.error_messages.append("父畜品種不在常見名單內")
             return None
 
@@ -148,9 +148,9 @@ class DongYingPigFactory(PigFactory):
 
         # Find the parent in the database.
         if dam:
-            gender = 'F'
+            gender = "F"
         else:
-            gender = 'M'
+            gender = "M"
         equal = {"id": id, "gender": gender}
         smaller = {"birthday": str(self.pig.get_birthday())}
         if breed != "":
@@ -207,28 +207,28 @@ class DongYingPigFactory(PigFactory):
                 self._turn_on_flag(self.SIRE_FLAG)
                 raise error
 
-    def set_naif_id(self, naif: str):
-        '''naif id is a six-digit unique id.'''
+    def set_reg_id(self, reg: str):
+        '''reg id is a six-digit unique id.'''
 
-        if not isinstance(naif, str):
-            raise TypeError("naif should be a string. Get {type_}".format(type_=str(type(naif))))
+        if not isinstance(reg, str):
+            raise TypeError("reg should be a string. Get {type_}".format(type_=str(type(reg))))
 
-        if naif == '' or naif == '無登':
+        if reg == '' or reg == '無登':
             return
 
-        if not naif.isnumeric():
-            n_naif = self.remove_nonnumeric(naif)
-            if not ask("是否可以將登錄號從 " + naif + " 修改為 " + n_naif + "？"):
-                self._turn_on_flag(self.NAIF_FLAG)
+        if not reg.isnumeric():
+            n_reg = self.remove_nonnumeric(reg)
+            if not ask("是否可以將登錄號從 " + reg + " 修改為 " + n_reg + "？"):
+                self._turn_on_flag(self.Flags.REG_FLAG.value)
                 self.error_messages.append('登錄號有非數字字元')
                 return
-            naif = n_naif
+            reg = n_reg
 
         try:
-            self.pig.set_naif_id(naif)
+            self.pig.set_reg_id(reg)
             return
         except BaseException as ex:
-            self._turn_on_flag(self.NAIF_FLAG)
+            self._turn_on_flag(self.Flags.REG_FLAG.value)
             self.error_messages.append(str(ex))
             return
 

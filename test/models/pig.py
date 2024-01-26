@@ -12,7 +12,7 @@ class ModelTest(unittest.TestCase):
         pig.set_id("123457")
         pig.set_birthday("2022-12-27")
         pig.set_farm("test_farm")
-        pig.set_naif_id("654321")
+        pig.set_reg_id("654321")
         self.model.insert(pig)
 
     def tearDown(self):
@@ -26,7 +26,7 @@ class ModelTest(unittest.TestCase):
         pig.set_id("123456")
         pig.set_birthday("2022-12-27")
         pig.set_farm("test_farm")
-        pig.set_naif_id("654321")
+        pig.set_reg_id("654321")
         self.model.insert(pig)
         self.assertEqual(self.model.find_pig(pig), pig)
 
@@ -78,19 +78,19 @@ class ModelTest(unittest.TestCase):
         pig.set_id("123456")
         pig.set_birthday("2022-12-28")
         pig.set_farm("test_farm")
-        pig.set_naif_id("654421")
+        pig.set_reg_id("654421")
         self.model.insert(pig)
         pig = Pig()
         pig.set_id("1234356")
         pig.set_birthday("2022-12-27")
         pig.set_farm("test_farm")
-        pig.set_naif_id("654421")
+        pig.set_reg_id("654421")
         self.model.insert(pig)
 
         # Equal
         self.assertEqual(
             len(self.model.find_multiple({
-                "naif_id": "654421", 
+                "reg_id": "654421", 
                 "farm": "test_farm"}
                 )),
             2

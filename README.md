@@ -22,4 +22,4 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 * `reader`: classes that read excels to database.
 
 ## To Do
-* DongYingEstrusFactory
+* Put 60th_day_test in Dong-Ying data into consideration.

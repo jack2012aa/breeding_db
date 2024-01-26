@@ -6,7 +6,7 @@ class ExcelReader:
 
     fill = openpyxl.styles.PatternFill(fill_type="solid", fgColor="DDDDDD")
 
-    def __init__(self, path: str, usecolumns: list, names: list, dtype: dict):
+    def __init__(self, path: str, use_columns: list, names: list, dtype: dict):
         '''
         * param path: the path of the excel file.
         * param usecolumns: which columns are to read in the excel.
@@ -17,7 +17,7 @@ class ExcelReader:
         print("Reading...")
         self.df = pd.read_excel(
             path,
-            usecols=usecolumns,
+            usecols=use_columns,
             names=names,
             dtype=dtype
         )

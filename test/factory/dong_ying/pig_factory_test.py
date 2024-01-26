@@ -18,11 +18,11 @@ class FactoryTestCase(unittest.TestCase):
 
     def test_flag(self):
 
-        self.factory._turn_on_flag(self.factory.BIRTHDAY_FLAG)
-        self.factory._turn_on_flag(self.factory.SIRE_FLAG)
-        self.assertEqual(self.factory.SIRE_FLAG | self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
-        self.factory._turn_off_flag(self.factory.SIRE_FLAG)
-        self.assertEqual(self.factory.BIRTHDAY_FLAG,self.factory.get_flag())
+        self.factory._turn_on_flag(self.factory.Flags.BIRTHDAY_FLAG.value)
+        self.factory._turn_on_flag(self.factory.Flags.SIRE_FLAG.value)
+        self.assertEqual(self.factory.Flags.SIRE_FLAG.value | self.factory.Flags.BIRTHDAY_FLAG.value,self.factory.get_flag())
+        self.factory._turn_off_flag(self.factory.Flags.SIRE_FLAG.value)
+        self.assertEqual(self.factory.Flags.BIRTHDAY_FLAG.value,self.factory.get_flag())
 
     def test_abb(self):
         breed = 'landrace'
@@ -41,20 +41,20 @@ class FactoryTestCase(unittest.TestCase):
         self.assertEqual('197006',self.factory.remove_dash_from_id("1970-6楚桃"))
         self.assertEqual('1970',self.factory.remove_dash_from_id("1970"))
 
-    def test_naif_id(self):
+    def test_reg_id(self):
 
-        self.factory.set_naif_id("123456")
-        self.assertEqual("123456",self.factory.pig.get_naif_id())
-        self.factory.set_naif_id("1234567")
-        self.assertEqual(self.factory.get_flag(), self.factory.NAIF_FLAG)
+        self.factory.set_reg_id("123456")
+        self.assertEqual("123456",self.factory.pig.get_reg_id())
+        self.factory.set_reg_id("1234567")
+        self.assertEqual(self.factory.get_flag(), self.factory.Flags.REG_FLAG.value)
         self.factory = DongYingPigFactory()
         print("Choose Yes.")
-        self.factory.set_naif_id("e234567")
-        self.assertEqual('234567',self.factory.pig.get_naif_id())
+        self.factory.set_reg_id("e234567")
+        self.assertEqual('234567',self.factory.pig.get_reg_id())
         print("Choose No.")
-        self.factory.set_naif_id("e234567")
-        self.assertEqual(self.factory.get_flag(), self.factory.NAIF_FLAG)
-        self.assertRaises(TypeError, self.factory.set_naif_id, 123456)
+        self.factory.set_reg_id("e234567")
+        self.assertEqual(self.factory.get_flag(), self.factory.Flags.REG_FLAG.value)
+        self.assertRaises(TypeError, self.factory.set_reg_id, 123456)
 
     def test_set_breed(self):
 

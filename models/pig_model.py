@@ -17,7 +17,7 @@ class PigModel(BaseModel):
             "birthday": str(pig.get_birthday()),
             "farm": pig.get_farm(),
             "breed": pig.get_breed(),
-            "naif_id": pig.get_naif_id(),
+            "reg_id": pig.get_reg_id(),
             "gender": pig.get_gender(),
             "chinese_name": pig.get_chinese_name(),
         }
@@ -92,8 +92,8 @@ class PigModel(BaseModel):
             pig.set_farm(pig_dict["farm"])
         if pig_dict["breed"] is not None:
             pig.set_breed(pig_dict["breed"])
-        if pig_dict["naif_id"] is not None:
-            pig.set_naif_id(pig_dict["naif_id"])
+        if pig_dict["reg_id"] is not None:
+            pig.set_reg_id(pig_dict["reg_id"])
         if pig_dict["gender"] is not None:
             pig.set_gender(pig_dict["gender"])
         if pig_dict["chinese_name"] is not None:

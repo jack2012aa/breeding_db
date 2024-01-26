@@ -33,14 +33,14 @@ class Factory():
 
 class PigFactory(Factory):
 
-    # Mask
-    BREED_FLAG = 1
-    ID_FLAG = 2
-    BIRTHDAY_FLAG = 4
-    SIRE_FLAG = 8
-    DAM_FLAG = 16
-    NAIF_FLAG = 32
-    GENDER_FLAG = 64
+    class Flags(Enum):
+        BREED_FLAG = 1
+        ID_FLAG = 2
+        BIRTHDAY_FLAG = 4
+        SIRE_FLAG = 8
+        DAM_FLAG = 16
+        REG_FLAG = 32
+        GENDER_FLAG = 64
 
     def __init__(self):
         self.pig = Pig()
@@ -74,7 +74,7 @@ class PigFactory(Factory):
             raise TypeError("id should be a string. Get {type_}".format(type_=str(type(id))))
 
         # Deal with the dash
-        if '-' in id:
+        if "-" in id:
             front, hind = id.split('-')[0:2]
             # Add additional 0
             try:
@@ -115,7 +115,7 @@ class PigFactory(Factory):
         try:
             self.pig.set_gender(gender)
         except KeyError as error:
-            self._turn_on_flag(self.GENDER_FLAG)
+            self._turn_on_flag(self.Flags.GENDER_FLAG.value)
             self.error_messages.append(str(error))
 
     def set_birthday(self, date):
@@ -129,35 +129,35 @@ class PigFactory(Factory):
             return
         except ValueError:
             self.error_messages.append("日期格式不是 ISO format")
-            self._turn_on_flag(self.BIRTHDAY_FLAG)
+            self._turn_on_flag(self.Flags.BIRTHDAY_FLAG.value)
             return
         except TypeError as error:
             self.error_messages.append(str(error))
-            self._turn_on_flag(self.BIRTHDAY_FLAG)
+            self._turn_on_flag(self.Flags.BIRTHDAY_FLAG.value)
             raise error
 
-    def set_naif_id(self, naif: str) -> None:
+    def set_reg_id(self, reg: str) -> None:
         '''* Raise `TypeError`'''
 
-        if naif in [
+        if reg in [
             "",
             "無登",
             ]:
             return None
 
         try:
-            self.pig.set_naif_id(naif)
+            self.pig.set_reg_id(reg)
         except TypeError as error:
-            self._turn_on_flag(self.NAIF_FLAG)
+            self._turn_on_flag(self.Flags.REG_FLAG.value)
             self.error_messages.append(str(error))
             raise error
         except ValueError as error:
-            if not naif.isnumeric():
-                n_naif = self.remove_nonnumeric(naif)
-                if ask("是否可以將登錄號從 {naif} 修改為 {n_naif} ？".format(naif=naif,n_naif=n_naif)):
-                    self.pig.set_naif_id(n_naif)
+            if not reg.isnumeric():
+                n_reg = self.remove_nonnumeric(reg)
+                if ask("是否可以將登錄號從 {reg} 修改為 {n_reg} ？".format(reg=reg,n_reg=n_reg)):
+                    self.pig.set_reg_id(n_reg)
                     return None
-            self._turn_on_flag(self.NAIF_FLAG)
+            self._turn_on_flag(self.Flags.REG_FLAG.value)
             self.error_messages.append(str(error))
             return None
 

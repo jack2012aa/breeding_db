@@ -75,14 +75,14 @@ class PigTestCase(unittest.TestCase):
         sire = None
         self.assertRaises(TypeError, self.pig.set_sire, sire)
 
-    def test_set_naif_id(self):
+    def test_set_reg_id(self):
 
-        self.pig.set_naif_id("123456")
-        self.assertEqual("123456", self.pig.get_naif_id())
+        self.pig.set_reg_id("123456")
+        self.assertEqual("123456", self.pig.get_reg_id())
 
-        self.assertRaises(ValueError, self.pig.set_naif_id, "324dsf")
-        self.assertRaises(TypeError, self.pig.set_naif_id, 12345)
-        self.assertRaises(ValueError, self.pig.set_naif_id, "1234567")
+        self.assertRaises(ValueError, self.pig.set_reg_id, "324dsf")
+        self.assertRaises(TypeError, self.pig.set_reg_id, 12345)
+        self.assertRaises(ValueError, self.pig.set_reg_id, "1234567")
 
     def test_gender(self):
 
