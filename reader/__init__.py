@@ -63,12 +63,13 @@ class ExcelReader:
         self._record: pd.Series = None
         self._not_nan: pd.Series = None
 
-    def insert_output(self, data: list):
-        '''
-        Insert error messages in the factory to the sheet and return current count.
-        * param data: error data _before_ adding error messages.
-        '''
+    def _set_output_columns(self, flag_to_output):
+        self.__output_columns = flag_to_output
 
+    def insert_output(self):
+        '''Insert error messages in the factory to the sheet and return current count.'''
+
+        data = self._record.to_list()
         data.append(str(self._factory.error_messages))
         self.__sheet.append(data)
         # Check the flag and highlight incorrect cells
@@ -96,5 +97,5 @@ class ExcelReader:
             return self._record.get(field)
         elif self._not_null:
             self._factory._turn_on_flag(flag)
-            self._factory.error_messages.append("{field} 不能為空值")
+            self._factory.error_messages.append("{field} 不能為空值".format(field=field))
         return default

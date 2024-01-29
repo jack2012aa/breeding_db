@@ -266,6 +266,9 @@ class DongYingEstrusFactory(EstrusFactory):
         * Raise TypeError
         '''
 
+        if id is None or estrus_date is None:
+            return
+
         if not isinstance(id, str):
             raise TypeError("id should be a string. Get {type_}".format(type_=str(type(id))))
         if not isinstance(estrus_date, str):
@@ -302,6 +305,9 @@ class DongYingEstrusFactory(EstrusFactory):
         * param date: format should be yyyy-mm-dd
         * param time: format should be HH:MM:SS
         '''
+
+        if date is None or time is None:
+            return
 
         if not isinstance(date, str):
             raise TypeError("date should be a string. Get {type_}".format(type_=str(type(date))))

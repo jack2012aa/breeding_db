@@ -122,7 +122,7 @@ class DongYingPigReader(ExcelReader):
 
             # Check flags
             if self._factory.get_flag() != 0:
-                self.insert_output(self._record.to_list())
+                self.insert_output()
                 continue
 
             # Insert
@@ -145,7 +145,7 @@ class DongYingPigReader(ExcelReader):
                             # Incorrect data. Add to output excel.
                             self._factory.error_messages.append("與資料庫中的資料重複且不相符")
                             self._factory._turn_on_flag(self._factory.Flags.ID_FLAG)
-                            self.insert_output(self._record.to_list())
+                            self.insert_output()
                         else:
                             model.update(self._factory.pig)
                     else:

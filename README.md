@@ -30,8 +30,6 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 * Read total_weight as sum up of multiple weights.
 * Ask <> tag in mating tables of Dong-Ying.
 * Ask use choose correct sow and boar when reading estrus, mating, farrowing data.
-* Change the default estrus time of Dong-Ying to 16:00.
-* When reading estrus, if parity become smaller or parity is the same but delta > 50, then throw an error.
 * Discuss with professor Lin about delta ranges.
 
 ## Log
@@ -39,3 +37,12 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 ### 2024-01-29
 * Transform any id into 6 digits with leading 0.
 * Divide dong_ying_reader into several files.
+* Restructur `DongYingPigReader`:
+    * Divide into 5 steps: 1. check null, 2. set values, 3. class specific check, 4. check flags, 5. insert
+    * check null now can be done by standardized method.
+* Restructur `DongYingEstrusAndMatingReader`:
+    * Remove auto repair.
+    * Add parity check.
+    * Remove part of time delta check.
+* Change the default estrus time of Dong-Ying to 16:00.
+* When reading estrus, if parity become smaller or parity is the same but delta > 50, then throw an error.

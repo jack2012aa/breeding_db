@@ -221,6 +221,9 @@ class EstrusFactory(Factory):
 
     def set_parity(self, parity: int):
 
+        if parity is None:
+            return
+
         try:
             self.estrus.set_parity(parity)
         except ValueError:
