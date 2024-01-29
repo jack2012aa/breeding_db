@@ -1,8 +1,8 @@
 import unittest
 
-from reader.dong_ying_reader import DongYingEstrusAndMatingReader
-from reader.dong_ying_reader import DongYingPigReader
-from reader.dong_ying_reader import DongYingFarrowingReader
+from reader.dong_ying.dong_ying_reader import DongYingEstrusAndMatingReader
+from reader.dong_ying.pig_reader import DongYingPigReader
+from reader.dong_ying.dong_ying_reader import DongYingFarrowingReader
 from models.estrus_model import EstrusModel
 
 class ReaderTest(unittest.TestCase):

@@ -22,6 +22,9 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 * `reader`: classes that read excels to database.
 
 ## To Do
+* When inserting a new pig, check birthday delta of it and last pig with the same id.
+    * Possibly it is a historical data?
+    * Discuss with professor Lin.
 * Put 60th_day_test in Dong-Ying data into consideration.
 * Ask professor Wu that should parity grow one after an abortion.
 * Read total_weight as sum up of multiple weights.
@@ -35,3 +38,4 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 
 ### 2024-01-29
 * Transform any id into 6 digits with leading 0.
+* Divide dong_ying_reader into several files.

@@ -72,7 +72,7 @@ class FactoryTestCase(unittest.TestCase):
         self.factory.set_breed(breed)
         self.assertEqual('Y', self.factory.pig.get_breed())
         self.assertRaises(ValueError, self.factory.set_breed, "NO")
-        self.assertRaises(TypeError, self.factory.set_breed, None)
+        self.assertRaises(TypeError, self.factory.set_breed, 123)
 
     def test_set_id_1(self):
         id = '1234-4'
@@ -159,7 +159,8 @@ class FactoryTestCase(unittest.TestCase):
         self.factory.set_parent(False, "Y123456", True, False)
         self.assertEqual(str(self.factory.pig.get_sire().get_birthday()), "2022-12-31")
         print("Choose non of above.")
-        self.assertRaises(ParentError, self.factory.set_parent, False, "Y123456", True, False)
+        self.factory.set_parent(False, "Y123456", True, False)
+        self.assertEqual(self.factory.Flags.SIRE_FLAG.value, self.factory.get_flag())
 
 
 if __name__ == '__main__':

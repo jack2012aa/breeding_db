@@ -1,6 +1,6 @@
 import unittest
 
-from reader.dong_ying_reader import DongYingPigReader
+from reader.dong_ying.pig_reader import DongYingPigReader
 from models.pig_model import PigModel
 
 class ReaderTest(unittest.TestCase):
@@ -18,12 +18,20 @@ class ReaderTest(unittest.TestCase):
     def test_create_pigs(self):
         
         # First set parents.
-        reader = DongYingPigReader("./test/reader/dong_ying/parents.xlsx", "./test/reader/dong_ying/parents_output")
+        reader = DongYingPigReader(
+            path="./test/reader/dong_ying/parents.xlsx", 
+            output_file_name="./test/reader/dong_ying/parents_output",
+            not_null=True
+        )
         reader.create_pigs(ignore_parent=True)
         self.assertEqual(self.model.query("SELECT COUNT(*) FROM Pigs;")[0]["COUNT(*)"], 187)
 
         # Then read other pigs.
-        reader = DongYingPigReader("./test/reader/dong_ying/pig.xlsx", "./test/reader/dong_ying/pigs_output")
+        reader = DongYingPigReader(
+            path="./test/reader/dong_ying/pig.xlsx", 
+            output_file_name="./test/reader/dong_ying/pigs_output",
+            not_null=True
+        )
         reader.create_pigs(ignore_parent=False, update=True)
         input("STOP")
         self.assertEqual(self.model.query(

@@ -116,6 +116,8 @@ class PigFactory(Factory):
 
     def set_gender(self, gender:str):
 
+        if gender is None:
+            return
         try:
             self.pig.set_gender(gender)
         except KeyError as error:
@@ -128,6 +130,8 @@ class PigFactory(Factory):
         * Raise TypeError
         '''
 
+        if date is None:
+            return
         try:
             self.pig.set_birthday(date)
             return
@@ -142,6 +146,9 @@ class PigFactory(Factory):
 
     def set_reg_id(self, reg: str) -> None:
         '''* Raise `TypeError`'''
+
+        if reg is None:
+            return
 
         if reg in [
             "",
@@ -168,6 +175,9 @@ class PigFactory(Factory):
     def set_farm(self, farm: str):
         ''' * Raise TypeError'''
 
+        if farm is None:
+            return
+        
         try:
             self.pig.set_farm(farm)
         except TypeError as error:
@@ -175,6 +185,9 @@ class PigFactory(Factory):
 
     def set_chinese_name(self, name: str):
         ''' * Raise TypeError'''
+
+        if name is None:
+            return
 
         try:
             self.pig.set_chinese_name(name)

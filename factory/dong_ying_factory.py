@@ -25,6 +25,9 @@ class DongYingPigFactory(PigFactory):
         * Raise TypeError
         '''
 
+        if breed is None:
+            return
+
         if not isinstance(breed, str):
             self._turn_on_flag(self.Flags.BREED_FLAG.value)
             raise TypeError("breed should be a string. Get {type_}".format(type_=type(breed)))
@@ -56,6 +59,9 @@ class DongYingPigFactory(PigFactory):
         * Get the number between first two nonnumeric characters (if any)
         * Raise TypeError
         '''
+
+        if id is None:
+            return
 
         if not isinstance(id, str):
             self._turn_on_flag(self.ID_FLAG)
@@ -97,15 +103,6 @@ class DongYingPigFactory(PigFactory):
         When `nearest` is true, those pigs with None `birthday` attribute will be ignored.
 
 
-        If the parent does not exist, two cases possible: 
-        1. the parent is in the rest of the file; 
-        2. the parent does not exist.
-
-
-        To handle case 1, the method will raise a special exception `ParentError` 
-        so the csv_reader can record these pigs and re-generate them after others are done.
-
-
         The birthday and gender of parent will be checked. So the birthday of the pig can not be None.
 
 
@@ -113,8 +110,11 @@ class DongYingPigFactory(PigFactory):
         * param parent_id: breed + id + *
         * param in_farm: `True` if the parent belongs to Dong-Ying
         * param nearest: `True` to auto-select the pig with the nearest birthday as the parent.
-        * Raise ValueError and ParentError
+        * Raise ValueError
         '''
+
+        if parent_id is None:
+            return
 
         if not isinstance(dam, bool):
             raise TypeError("dam should be a bool. Get {type_}".format(type_=str(type(dam))))
@@ -162,7 +162,12 @@ class DongYingPigFactory(PigFactory):
         found_pigs = model.find_multiple(equal=equal, smaller=smaller)
 
         if len(found_pigs) == 0:
-            raise ParentError("親代不在資料庫中")
+            if dam:
+                self._turn_on_flag(self.Flags.DAM_FLAG.value)
+            else:
+                self._turn_on_flag(self.Flags.SIRE_FLAG.value)
+            self.error_messages.append("親代不在資料庫中")
+            return
 
         parent: Pig = None
         # More than one result
@@ -181,7 +186,12 @@ class DongYingPigFactory(PigFactory):
                     found_pigs
                 )
                 if choice is None:
-                    raise ParentError("親代不在資料庫中")
+                    if dam:
+                        self._turn_on_flag(self.Flags.DAM_FLAG.value)
+                    else:
+                        self._turn_on_flag(self.Flags.SIRE_FLAG.value)
+                    self.error_messages.append("親代不在資料庫中")
+                    return
                 else:
                     parent = found_pigs[choice]
         else:
@@ -195,7 +205,7 @@ class DongYingPigFactory(PigFactory):
             # Error should not happen here since parent comes from the database.
             except (TypeError, ValueError) as error:
                 self.error_messages.append(str(error))
-                self._turn_on_flag(self.DAM_FLAG)
+                self._turn_on_flag(self.Flags.DAM_FLAG.value)
                 raise error
         else:
             try:
@@ -204,11 +214,14 @@ class DongYingPigFactory(PigFactory):
             # Error should not happen here since parent comes from the database.
             except (TypeError, ValueError) as error:
                 self.error_messages.append(str(error))
-                self._turn_on_flag(self.SIRE_FLAG)
+                self._turn_on_flag(self.Flags.SIRE_FLAG.value)
                 raise error
 
     def set_reg_id(self, reg: str):
         '''reg id is a six-digit unique id.'''
+
+        if reg is None:
+            return
 
         if not isinstance(reg, str):
             raise TypeError("reg should be a string. Get {type_}".format(type_=str(type(reg))))
