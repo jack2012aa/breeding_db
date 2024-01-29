@@ -87,8 +87,6 @@ class DongYingPigReader(ExcelReader):
         * param update: `True` to auto update when duplicate primary key is found.
         in the database in this commit.
 
-        ## To Do
-        * Check pigs with same id but close birthday.
         '''
 
         model = PigModel()

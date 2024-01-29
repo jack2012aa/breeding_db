@@ -32,14 +32,15 @@ class FactoryTestCase(unittest.TestCase):
         breed = '藍瑞斯'
         self.assertEqual('L', self.factory.translate_breed_to_english(breed))
 
-    def test_remove_dash(self):
+    def test_standardize_id(self):
 
-        self.assertEqual('123414',self.factory.remove_dash_from_id("1234-14"))
-        self.assertEqual('123404',self.factory.remove_dash_from_id("1234-4"))
-        self.assertEqual('123404',self.factory.remove_dash_from_id("1234-4-12"))
-        self.assertEqual('123404',self.factory.remove_dash_from_id("20Y1234-4"))
-        self.assertEqual('197006',self.factory.remove_dash_from_id("1970-6楚桃"))
-        self.assertEqual('1970',self.factory.remove_dash_from_id("1970"))
+        self.assertEqual('123414',self.factory.standardize_id("1234-14"))
+        self.assertEqual('123404',self.factory.standardize_id("1234-4"))
+        self.assertEqual('123404',self.factory.standardize_id("1234-4-12"))
+        self.assertEqual('123404',self.factory.standardize_id("20Y1234-4"))
+        self.assertEqual('197006',self.factory.standardize_id("1970-6楚桃"))
+        self.assertEqual('001970',self.factory.standardize_id("1970"))
+        self.assertEqual("012304", self.factory.standardize_id("123-4"))
 
     def test_reg_id(self):
 
@@ -96,7 +97,7 @@ class FactoryTestCase(unittest.TestCase):
     def test_set_id_5(self):
         id = '1970'
         self.factory.set_id(id)
-        self.assertEqual('1970',self.factory.pig.get_id())
+        self.assertEqual('001970',self.factory.pig.get_id())
 
     def test_set_id_6(self):
         id = '1970-12'

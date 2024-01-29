@@ -56,7 +56,7 @@ class PigFactory(Factory):
 
         return Pig.BREED_DICT[breed]
 
-    def remove_dash_from_id(self, id: str) -> str:
+    def standardize_id(self, id: str) -> str:
         '''
         * Remove the dash in an id. 
         * Remove none numeric characters.
@@ -99,6 +99,10 @@ class PigFactory(Factory):
             # The longest digits is the most possible to be the id.
             id = max(slices, key=len, default="")
 
+        # Add leading 0 until the id is 6 digits.
+        while len(id) < 6:
+            id = "".join(["0", id])
+        
         return self.remove_nonnumeric(id)
 
     def remove_nonnumeric(self, s: str) -> str:
@@ -309,7 +313,7 @@ class FarrowingFactory(Factory):
         farrowing_date = transform_date(farrowing_date)
         
         estrus = EstrusModel().find_multiple(
-            equal={"id": PigFactory().remove_dash_from_id(id), "farm": self.farm},
+            equal={"id": PigFactory().standardize_id(id), "farm": self.farm},
             smaller_equal={"estrus_datetime": farrowing_date},
             larger_equal={"estrus_datetime": (farrowing_date - timedelta(250))},
             order_by="estrus_datetime DESC"

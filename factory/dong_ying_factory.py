@@ -62,7 +62,7 @@ class DongYingPigFactory(PigFactory):
             self.error_messages.append('耳號格式 {type_} 錯誤'.format(type_=str(type(id))))
             raise TypeError('耳號格式 {type_} 錯誤'.format(type_=str(type(id))))
 
-        n_id = self.remove_dash_from_id(id)
+        n_id = self.standardize_id(id)
         if (n_id != id and ask("是否可以將耳號從 {id} 修改為 {n_id} ？".format(id=id, n_id=n_id))) or n_id == id:
             try:
                 self.pig.set_id(n_id)
@@ -144,7 +144,7 @@ class DongYingPigFactory(PigFactory):
                 self.error_messages.append("父畜品種不在常見名單內")
             return None
 
-        id = self.remove_dash_from_id(id)
+        id = self.standardize_id(id)
 
         # Find the parent in the database.
         if dam:
@@ -260,7 +260,7 @@ class DongYingEstrusFactory(EstrusFactory):
                             .format(type_=str(type(estrus_date))))
         
         # Transform id and estrus_date
-        id = PigFactory().remove_dash_from_id(id)
+        id = PigFactory().standardize_id(id)
         try:
             date = transform_date(estrus_date)
         except ValueError:
@@ -349,7 +349,7 @@ class DongYingMatingFactory(MatingFactory):
                             .format(type_=str(type(mating_date))))
         
         # Transform id and estrus_date
-        id = PigFactory().remove_dash_from_id(id)
+        id = PigFactory().standardize_id(id)
         try:
             date = transform_date(mating_date)
         except ValueError:

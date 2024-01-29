@@ -23,3 +23,15 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 
 ## To Do
 * Put 60th_day_test in Dong-Ying data into consideration.
+* Ask professor Wu that should parity grow one after an abortion.
+* Read total_weight as sum up of multiple weights.
+* Ask <> tag in mating tables of Dong-Ying.
+* Ask use choose correct sow and boar when reading estrus, mating, farrowing data.
+* Change the default estrus time of Dong-Ying to 16:00.
+* When reading estrus, if parity become smaller or parity is the same but delta > 50, then throw an error.
+* Discuss with professor Lin about delta ranges.
+
+## Log
+
+### 2024-01-29
+* Transform any id into 6 digits with leading 0.
