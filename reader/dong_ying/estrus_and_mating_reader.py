@@ -64,7 +64,7 @@ class DongYingEstrusAndMatingReader(ExcelReader):
         # df format:
         # [sow_id, parity, boar_id, mating_date, week_age, mating_time, times, character, 21th_day_test, note_date, note, ...]
         # to [sow_id, parity, boar_id, mating_date, mating_time, 21th_day_test, note]
-        usecols = [0, 1, 2, 3, 5, 8, 11]
+        usecols = [0, 1, 2, 3, 5, 8, 9, 11]
         names = [
             "sow_id",
             "parity",
@@ -72,6 +72,7 @@ class DongYingEstrusAndMatingReader(ExcelReader):
             "mating_date",
             "mating_time",
             "21th_day_test",
+            "60th_day_test",
             "note"
         ]
         dtype = {
@@ -126,6 +127,8 @@ class DongYingEstrusAndMatingReader(ExcelReader):
             if parity.isnumeric():
                 parity = int(parity)
             else:
+                self._factory._turn_on_flag(self._factory.Flags.PARITY_FLAG.value)
+                self._factory.error_messages.append("胎次必須為整數")
                 parity = None
 
             # Set values

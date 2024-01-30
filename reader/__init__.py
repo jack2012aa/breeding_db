@@ -53,7 +53,9 @@ class ExcelReader:
         # Set output excel.
         self.__output = openpyxl.Workbook()
         self.__sheet = self.__output.create_sheet(output_page_name)
-        self.__count = 1
+        names.append("註釋")
+        self.__sheet.append(names)
+        self.__count = 2
         self.__output_columns = flag_to_output
         self.__output_file_name = output_file_name
 

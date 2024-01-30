@@ -34,6 +34,9 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 
 ## Log
 
+### 2024-01-30
+* 
+
 ### 2024-01-29
 * Transform any id into 6 digits with leading 0.
 * Divide dong_ying_reader into several files.
