@@ -2,13 +2,17 @@ import unittest
 
 from reader.dong_ying.estrus_and_mating_reader import DongYingEstrusAndMatingReader
 from reader.dong_ying.pig_reader import DongYingPigReader
-from reader.dong_ying.dong_ying_reader import DongYingFarrowingReader
+from reader.dong_ying.farrowing_reader import DongYingFarrowingReader
 from models.estrus_model import EstrusModel
 
 class ReaderTest(unittest.TestCase):
 
     def setUp(self):
-        self.reader = DongYingFarrowingReader("./test/reader/dong_ying/farrowing.xlsx")
+        self.reader = DongYingFarrowingReader(
+            path="./test/reader/dong_ying/farrowing.xlsx",
+            output_file_name="./test/reader/dong_ying/farrowing_output",
+            not_null=True
+        )
         self.model = EstrusModel()
 
     def tearDown(self):
@@ -24,9 +28,17 @@ class ReaderTest(unittest.TestCase):
 
     def test_correctly_read(self):
 
-        reader = DongYingPigReader("./test/reader/dong_ying/pig.xlsx")
+        reader = DongYingPigReader(
+            path="./test/reader/dong_ying/pig.xlsx", 
+            output_file_name="./test/reader/dong_ying/waste",
+            not_null=False
+        )
         reader.create_pigs(ignore_parent=True, update=True)
-        reader = DongYingEstrusAndMatingReader("./test/reader/dong_ying/mating.xlsx")
+        reader = DongYingEstrusAndMatingReader(
+            path="./test/reader/dong_ying/mating.xlsx",
+            output_file_name="./test/reader/dong_ying/waste", 
+            not_null=False
+        )
         reader.create_estrus_and_mating()
         self.reader.create_farrowings()
         

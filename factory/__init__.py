@@ -8,7 +8,9 @@ from data_structures.estrus import TestResult
 from data_structures.mating import Mating
 from data_structures.farrowing import Farrowing
 from general import ask
+from general import ask_multiple
 from general import transform_date
+from general import type_check
 from models.estrus_model import EstrusModel
 
 
@@ -327,7 +329,7 @@ class FarrowingFactory(Factory):
                 return None
         return n
 
-    def set_estrus(self, id: str, farrowing_date) -> None:
+    def set_estrus(self, id: str, farrowing_date, nearest: bool = False) -> None:
         '''
         This method will find the nearest estrus record in the database base on 
         sow id, farrowing date and farm. If no such record or the time delta is
@@ -337,8 +339,7 @@ class FarrowingFactory(Factory):
         * Raise TypeError, ValueError
         '''
 
-        if not isinstance(id, str):
-            raise TypeError("id should be a string. Get {type_}".format(type_=str(type(id))))
+        type_check(id, "id", str)
         farrowing_date = transform_date(farrowing_date)
         
         estrus = EstrusModel().find_multiple(
@@ -353,7 +354,21 @@ class FarrowingFactory(Factory):
             self._turn_on_flag(self.Flags.ESTRUS_FLAG.value)
             return None
         
-        self.farrowing.set_estrus(estrus[0])
+        if len(estrus) > 1 and not nearest:
+            CHOICE = ask_multiple(
+                "有多頭母豬的發情紀錄符合條件\n耳號：{id}分娩日期：{date}\n請選擇以下一筆：".format(
+                    id=id, date=str(farrowing_date)
+                ), 
+                estrus
+            )
+            if CHOICE is None:
+                self._turn_on_flag(self.Flags.ESTRUS_FLAG.value)
+                self.error_messages.append("找不到先前的發情/配種紀錄")
+                return
+            estrus = estrus[CHOICE]
+        else:
+            estrus = estrus[0]
+        self.farrowing.set_estrus(estrus)
 
     def set_farrowing_date(self, date) -> None:
         ''' * Raise TypeError, ValueError'''

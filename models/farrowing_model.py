@@ -36,7 +36,8 @@ class FarrowingModel(BaseModel):
             "dead": farrowing.get_dead(),
             "n_of_male": farrowing.get_n_of_male(),
             "n_of_female": farrowing.get_n_of_female(),
-            "note": farrowing.get_note()
+            "note": farrowing.get_note(), 
+            "total_weight": farrowing.get_total_weight()
         }
 
         # Pick non-empty attributes.

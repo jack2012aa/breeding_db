@@ -3,3 +3,6 @@ setting.json
 /test/output.xlsx
 *.DS_Store
 *~$*
+requirements.txt
+.vscode
+*develop_*
