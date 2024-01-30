@@ -44,18 +44,18 @@ class FactoryTestCase(unittest.TestCase):
 
     def test_correctly_set_boar(self):
 
-        self.factory.set_boar("<123456>", "2023-01-01")
+        self.factory.set_boar("<123456>", "2023-01-01", nearest=True)
         self.assertEqual(str(self.factory.mating.get_boar().get_birthday()), "2022-01-03")
+        print("Choose 0.")
         self.factory.set_boar("20Y123456", "2023-05-01")
         self.assertEqual(str(self.factory.mating.get_boar().get_birthday()), "2023-01-03")
 
     def test_set_wrong_boar(self):
 
         self.assertRaises(TypeError, self.factory.set_boar, 123456, "2023-01-03")
-        self.assertRaises(TypeError, self.factory.set_boar, "123456", None)
+        self.assertRaises(TypeError, self.factory.set_boar, "123456", 123)
         self.factory.set_boar("111111", "2024-05-05")
         self.assertTrue(self.factory.check_flag(self.factory.Flags.BOAR_FLAG.value))
-
 
 
 if __name__ == '__main__':

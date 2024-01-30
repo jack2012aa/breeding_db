@@ -1,7 +1,7 @@
 from datetime import datetime
+
 from data_structures.estrus import Estrus
 from data_structures.estrus import TestResult
-
 from data_structures.pig import Pig
 from factory import PigFactory
 from factory import ParentError
@@ -11,6 +11,7 @@ from factory import FarrowingFactory
 from general import ask
 from general import ask_multiple
 from general import transform_date
+from general import type_check
 from models.pig_model import PigModel
 
 
@@ -258,9 +259,9 @@ class DongYingEstrusFactory(EstrusFactory):
     def __init__(self) -> None:
         super().__init__()
 
-    def set_sow(self, id: str, estrus_date: str):
+    def set_sow(self, id: str, estrus_date: str, nearest: bool = False):
         '''
-        Search the youngest sow which has correct id and farm and born before the estrus date.\\
+        Search sows which have correct id and farm and born before the estrus date.\\
         Some id in the excel which Dong-Ying provides contain breed information, 
         while some do not. So the breed will not be in the sql query.
         * param id: an id in the form *1234-56*
@@ -271,14 +272,12 @@ class DongYingEstrusFactory(EstrusFactory):
         if id is None or estrus_date is None:
             return
 
-        if not isinstance(id, str):
-            raise TypeError("id should be a string. Get {type_}".format(type_=str(type(id))))
-        if not isinstance(estrus_date, str):
-            raise TypeError("estrus_date should be a string. Get {type_}"
-                            .format(type_=str(type(estrus_date))))
+        type_check(id, "id", str)
+        type_check(estrus_date, "estrus_date", str)
+        type_check(nearest, "nearest", bool)
         
         # Transform id and estrus_date
-        id = PigFactory().standardize_id(id)
+        standardized_id = PigFactory().standardize_id(id)
         try:
             date = transform_date(estrus_date)
         except ValueError:
@@ -290,17 +289,30 @@ class DongYingEstrusFactory(EstrusFactory):
         # Find the youngest sow born before the estrus_date
         model = PigModel()
         pigs = model.find_multiple(
-            equal={"id": id, "farm": "Dong-Ying", "gender": "F"},
+            equal={"id": standardized_id, "farm": "Dong-Ying", "gender": "F"},
             smaller={"birthday": str(date)},
             order_by="birthday DESC"
         )
         if len(pigs) == 0:
             self._turn_on_flag(self.Flags.SOW_FLAG.value)
-            self.error_messages.append("{id}母豬資料不在資料庫中".format(id=id))
+            self.error_messages.append("{id}母豬資料不在資料庫中".format(id=standardized_id))
             return
+        
         # Set the sow
+        if len(pigs) > 1 and not nearest:
+            choice = ask_multiple(
+                message="找到多頭符合耳號{id}的母豬，請問選擇下列何者？".format(id=id),
+                choices=pigs
+            )
+            if choice is None:
+                self._turn_on_flag(self.Flags.SOW_FLAG.value)
+                self.error_messages.append("{id}母豬資料不在資料庫中".format(id=standardized_id))
+                return
+            pig = pigs[choice]
         else:
-            self.estrus.set_sow(pigs[0])
+            pig = pigs[0]
+
+        self.estrus.set_sow(pig)
 
     def set_estrus_datetime(self, date: str, time: str):
         '''
@@ -370,7 +382,7 @@ class DongYingMatingFactory(MatingFactory):
         
         self.mating.set_mating_datetime(date_time)
     
-    def set_boar(self, id: str, mating_date: str):
+    def set_boar(self, id: str, mating_date: str, nearest: bool = False):
         '''
         Search the youngest boar which has correct id and farm and born before the mating date.\\
         Some id in the excel which Dong-Ying provides contain breed information, 
@@ -380,15 +392,14 @@ class DongYingMatingFactory(MatingFactory):
         * Raise TypeError
         '''
 
-
-        if not isinstance(id, str):
-            raise TypeError("id should be a string. Get {type_}".format(type_=str(type(id))))
-        if not isinstance(mating_date, str):
-            raise TypeError("mating_date should be a string. Get {type_}"
-                            .format(type_=str(type(mating_date))))
+        if id is None or mating_date is None:
+            return
+        type_check(id, "id", str)
+        type_check(mating_date, "mating_date", str)
+        type_check(nearest, "nearest", bool)
         
         # Transform id and estrus_date
-        id = PigFactory().standardize_id(id)
+        standardized_id = PigFactory().standardize_id(id)
         try:
             date = transform_date(mating_date)
         except ValueError:
@@ -400,17 +411,29 @@ class DongYingMatingFactory(MatingFactory):
         # Find the youngest sow born before the estrus_date
         model = PigModel()
         pigs = model.find_multiple(
-            equal={"id": id, "farm": "Dong-Ying", "gender": "M"},
+            equal={"id": standardized_id, "farm": "Dong-Ying", "gender": "M"},
             smaller={"birthday": str(date)},
             order_by="birthday DESC"
         )
         if len(pigs) == 0:
             self._turn_on_flag(self.Flags.BOAR_FLAG.value)
-            self.error_messages.append("{id}公豬資料不在資料庫中".format(id=id))
+            self.error_messages.append("{id}公豬資料不在資料庫中".format(id=standardized_id))
             return
-        # Set the sow
+        
+        # Set the boar
+        if len(pigs) > 1 and not nearest:
+            CHOICE = ask_multiple(
+                message="找到多頭符合耳號{id}的公豬，請問選擇下列何者？".format(id=id),
+                choices=pigs
+            )
+            if CHOICE is None:
+                self._turn_on_flag(self.Flags.BOAR_FLAG.value)
+                self.error_messages.append("{id}公豬資料不在資料庫中".format(id=standardized_id))
+                return
+            boar = pigs[CHOICE]
         else:
-            self.mating.set_boar(pigs[0])
+            boar = pigs[0]
+        self.mating.set_boar(boar)
 
 
 class DongYingFarrowingFactory(FarrowingFactory):

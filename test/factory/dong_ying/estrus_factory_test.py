@@ -31,7 +31,7 @@ class FactoryTestCase(unittest.TestCase):
 
     def test_set_sow_type_error(self):
 
-        self.assertRaises(TypeError, self.factory.set_sow, None, "1234")
+        self.assertRaises(TypeError, self.factory.set_sow, 123, "1234")
         self.assertRaises(TypeError, self.factory.set_sow, "None", 1234)
 
     def test_correctly_set_sow(self):
@@ -42,11 +42,12 @@ class FactoryTestCase(unittest.TestCase):
         pig.set_farm("Dong-Ying")
         pig.set_gender("F")
         # Change the id into different Dong-Ying's styles
+        print("Choose 0.")
         self.factory.set_sow(pig.get_id(), "2023-01-03")
         self.assertEqual(self.factory.estrus.get_sow().get_id(), "123456")
         self.assertEqual(self.factory.estrus.get_sow().get_birthday(), pig.get_birthday())
         pig.set_id("<123456>")
-        self.factory.set_sow(pig.get_id(), "2023-01-03")
+        self.factory.set_sow(pig.get_id(), "2023-01-03", nearest=True)
         self.assertEqual(self.factory.estrus.get_sow().get_id(), "123456")
         self.assertEqual(self.factory.estrus.get_sow().get_birthday(), pig.get_birthday())
 

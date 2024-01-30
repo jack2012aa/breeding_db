@@ -28,7 +28,6 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 * Ask professor Wu that should parity grow one after an abortion.
 * Read total_weight as sum up of multiple weights.
 * Ask <> tag in mating tables of Dong-Ying.
-* Ask use choose correct sow and boar when reading estrus, mating, farrowing data.
 * Discuss with professor Lin about delta ranges.
 
 ## Log
@@ -37,6 +36,7 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 * Add a header in output files.
 * Fix nonnumeric parity bug.
 * Put 21th_day_test and 60th_day_test in Dong-Ying data into consideration.
+* Ask user to choose correct sow and boar when reading estrus and mating data.
 
 ### 2024-01-29
 * Transform any id into 6 digits with leading 0.
