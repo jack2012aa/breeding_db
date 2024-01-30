@@ -35,11 +35,11 @@ class ReaderTest(unittest.TestCase):
         input("STOP")
         self.assertEqual(self.model.query(
             "SELECT COUNT(*) FROM Estrus;"
-            )[0]["COUNT(*)"], 37
+            )[0]["COUNT(*)"], 36
         )
         self.assertEqual(self.model.query(
             "SELECT COUNT(*) FROM Matings;"
-            )[0]["COUNT(*)"], 22
+            )[0]["COUNT(*)"], 21
         )
 
 

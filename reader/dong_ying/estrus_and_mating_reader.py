@@ -1,5 +1,8 @@
-from data_structures.estrus import Estrus, PregnantStatus
-from factory.dong_ying_factory import DongYingEstrusFactory, DongYingMatingFactory
+from data_structures.estrus import Estrus
+from data_structures.estrus import PregnantStatus
+from data_structures.estrus import TestResult
+from factory.dong_ying_factory import DongYingEstrusFactory
+from factory.dong_ying_factory import DongYingMatingFactory
 from general import type_check
 from models.estrus_model import EstrusModel
 from models.mating_model import MatingModel
@@ -84,6 +87,7 @@ class DongYingEstrusAndMatingReader(ExcelReader):
             "mating_date": "object",
             "mating_time": "object",
             "21th_day_test": "object",
+            "60th_day_test": "object", 
             "note": "object",
         }
         super().__init__(
@@ -93,7 +97,7 @@ class DongYingEstrusAndMatingReader(ExcelReader):
             dtype=dtype,
             output_file_name=output_file_name, 
             output_page_name="發情與配種資料",
-            flag_to_output={1:"A", 2:"D", 8:"B"},
+            flag_to_output={1:"A", 2:"D", 8:"B", 16: "F", 32: "G"},
             not_null=not_null
         )
 
@@ -126,16 +130,22 @@ class DongYingEstrusAndMatingReader(ExcelReader):
             parity = str(self._check_null("parity", self._factory.Flags.PARITY_FLAG.value))
             if parity.isnumeric():
                 parity = int(parity)
+            elif parity == "None":
+                parity = None
             else:
                 self._factory._turn_on_flag(self._factory.Flags.PARITY_FLAG.value)
                 self._factory.error_messages.append("胎次必須為整數")
                 parity = None
+            _21th_day = self._check_null("21th_day_test", self._factory.Flags._21TH_DAY_TEST_FLAG.value)
+            _60th_day = self._check_null("60th_day_test", self._factory.Flags._60TH_DAY_TEST_FLAG.value)
 
             # Set values
             self._factory.set_sow(sow_id, mating_date)
             self._factory.set_estrus_datetime(mating_date, time)
             self._factory.set_parity(parity)
             self._factory.set_pregnant(PregnantStatus.UNKNOWN)
+            self._factory.set_21th_day_test(str(_21th_day))
+            self._factory.set_60th_day_test(str(_60th_day))
 
             # Class specific checks
             # Calculate time delta
@@ -178,7 +188,8 @@ class DongYingEstrusAndMatingReader(ExcelReader):
 
             # Check pregnant status
             note = "" if not self._not_nan.get("note") else str(self._record.get("note"))
-            if self._record.get("21th_day_test") == "x" \
+            if self._factory.estrus.get_21th_day_test() == TestResult.NOT_PREGNANT \
+                or self._factory.estrus.get_60th_day_test() == TestResult.NOT_PREGNANT\
                 or (re.search(r"未.*上", note) is not None):
                 self._factory.set_pregnant(PregnantStatus.NO)
             elif re.search(r"流產", note) is not None:
@@ -186,7 +197,7 @@ class DongYingEstrusAndMatingReader(ExcelReader):
 
             # Check flags
             if self._factory.get_flag() != 0:
-                self._set_output_columns({1:"A", 2:"D", 8:"B"})
+                self._set_output_columns({1:"A", 2:"D", 8:"B", 16: "F", 32: "G"})
                 self.insert_output()
                 continue
             # Insert

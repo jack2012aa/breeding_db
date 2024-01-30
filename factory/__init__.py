@@ -4,6 +4,7 @@ from datetime import timedelta
 from data_structures.pig import Pig
 from data_structures.estrus import Estrus
 from data_structures.estrus import PregnantStatus
+from data_structures.estrus import TestResult
 from data_structures.mating import Mating
 from data_structures.farrowing import Farrowing
 from general import ask
@@ -209,6 +210,8 @@ class EstrusFactory(Factory):
         ESTRUS_DATE_FLAG = 2
         PREGNANT_FLAG = 4
         PARITY_FLAG = 8
+        _21TH_DAY_TEST_FLAG = 16
+        _60TH_DAY_TEST_FLAG = 32
 
     def __init__(self) -> None:
         
@@ -229,6 +232,16 @@ class EstrusFactory(Factory):
         except ValueError:
             self._turn_on_flag(self.Flags.PARITY_FLAG.value)
             self.error_messages.append("批次應該要介於0~12之間")
+
+    def set_21th_day_test(self, result: TestResult):
+        if result is None:
+            return
+        self.estrus.set_21th_day_test(result)
+
+    def set_60th_day_test(self, result: TestResult):
+        if result is None:
+            return
+        self.estrus.set_60th_day_test(result)
 
 
 class MatingFactory(Factory):

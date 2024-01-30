@@ -24,6 +24,8 @@ CREATE TABLE Estrus(
     estrus_datetime datetime,
     pregnant ENUM('Yes', 'No', 'Unknown', 'Abortion'),
     parity tinyint unsigned,
+    21th_day_test ENUM('Pregnant', 'Not Pregnant'),
+    60th_day_test ENUM('Pregnant', 'Not Pregnant'),
     PRIMARY KEY (id, birthday, farm, estrus_datetime),
     FOREIGN KEY (id, birthday, farm) REFERENCES Pigs(id, birthday, farm)
 );

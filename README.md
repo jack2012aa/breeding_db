@@ -25,7 +25,6 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 * When inserting a new pig, check birthday delta of it and last pig with the same id.
     * Possibly it is a historical data?
     * Discuss with professor Lin.
-* Put 60th_day_test in Dong-Ying data into consideration.
 * Ask professor Wu that should parity grow one after an abortion.
 * Read total_weight as sum up of multiple weights.
 * Ask <> tag in mating tables of Dong-Ying.
@@ -35,7 +34,9 @@ Please read [here](https://github.com/jack2012aa/breeding_db/tree/master/models)
 ## Log
 
 ### 2024-01-30
-* 
+* Add a header in output files.
+* Fix nonnumeric parity bug.
+* Put 21th_day_test and 60th_day_test in Dong-Ying data into consideration.
 
 ### 2024-01-29
 * Transform any id into 6 digits with leading 0.

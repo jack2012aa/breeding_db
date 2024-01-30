@@ -1,7 +1,9 @@
 import unittest
 from datetime import datetime
 
-from data_structures.estrus import Estrus, PregnantStatus
+from data_structures.estrus import Estrus
+from data_structures.estrus import PregnantStatus
+from data_structures.estrus import TestResult
 from data_structures.pig import Pig
 
 
@@ -78,6 +80,18 @@ class EstrusTestCase(unittest.TestCase):
         # TypeError
         self.assertRaises(TypeError, self.estrus.set_parity, Pig())
 
+    def test_th_test(self):
+
+        # Correct
+        self.estrus.set_21th_day_test(TestResult.PREGNANT)
+        self.assertEqual(self.estrus.get_21th_day_test(), TestResult.PREGNANT)
+        self.estrus.set_60th_day_test(TestResult.NOT_PREGNANT)
+        self.assertEqual(self.estrus.get_60th_day_test(), TestResult.NOT_PREGNANT)
+
+        # TypeError
+        self.assertRaises(TypeError, self.estrus.set_21th_day_test, "Pregnant")
+        self.assertRaises(TypeError, self.estrus.set_60th_day_test, "Not Pregnant")
+
     def test_equal(self):
 
         pig = Pig()
@@ -95,6 +109,10 @@ class EstrusTestCase(unittest.TestCase):
         self.estrus.set_parity(2)
         other.set_pregnant(PregnantStatus.YES)
         self.estrus.set_pregnant(PregnantStatus.YES)
+        other.set_21th_day_test(TestResult.PREGNANT)
+        self.estrus.set_21th_day_test(TestResult.PREGNANT)
+        other.set_60th_day_test(TestResult.NOT_PREGNANT)
+        self.estrus.set_60th_day_test(TestResult.NOT_PREGNANT)
         self.assertEqual(self.estrus, other)
 
     def test_inequality(self):
@@ -118,6 +136,9 @@ class EstrusTestCase(unittest.TestCase):
         self.estrus.set_pregnant(PregnantStatus.ABORTION)
         other.set_pregnant(PregnantStatus.YES)
         self.assertFalse(other == self.estrus)
+        self.estrus.set_pregnant(PregnantStatus.YES)
+        self.estrus.set_21th_day_test(TestResult.PREGNANT)
+        self.assertFalse(other == self.estrus)
 
     def test_is_unique(self):
 
@@ -130,6 +151,26 @@ class EstrusTestCase(unittest.TestCase):
         self.assertFalse(self.estrus.is_unique())
         self.estrus.set_estrus_datetime("2023-02-02")
         self.assertTrue(self.estrus.is_unique())
+
+    def test_transform_test_result(self):
+
+        self.assertEqual(
+            Estrus.transform_test_result("x"),
+            TestResult.NOT_PREGNANT
+        )
+        self.assertEqual(
+            Estrus.transform_test_result("O"),
+            TestResult.PREGNANT
+        )
+        self.assertEqual(
+            Estrus.transform_test_result(None),
+            None
+        )
+        self.assertRaises(
+            ValueError,
+            Estrus.transform_test_result,
+            "not pregnant"
+        )
 
 
 if __name__ == '__main__':

@@ -3,7 +3,9 @@ import pymysql
 from data_structures.estrus import Estrus
 from data_structures.estrus import PregnantStatus
 from data_structures.pig import Pig
-from . import BaseModel
+from general import type_check
+from models import BaseModel
+
 
 class EstrusModel(BaseModel):
 
@@ -18,9 +20,7 @@ class EstrusModel(BaseModel):
         * Raise TypeError, ValueError, KeyError
         '''
 
-        if not isinstance(estrus, Estrus):
-            raise TypeError("estrus should be an Estrus. Get {type_}".format(type_=str(type(estrus))))
-        
+        type_check(estrus, "estrus", Estrus)        
         if not estrus.is_unique():
             raise ValueError("{estrus} should be unique.".format(estrus=str(estrus)))
         
@@ -29,8 +29,13 @@ class EstrusModel(BaseModel):
             "birthday": estrus.get_sow().get_birthday(),
             "farm": estrus.get_sow().get_farm(),
             "estrus_datetime": estrus.get_estrus_datetime(),
-            "pregnant": estrus.get_pregnant().value if (estrus.get_pregnant() is not None) else None,
-            "parity": estrus.get_parity()
+            "pregnant": estrus.get_pregnant().value 
+                if (estrus.get_pregnant() is not None) else None,
+            "parity": estrus.get_parity(), 
+            "21th_day_test": estrus.get_21th_day_test().value 
+                if (estrus.get_21th_day_test() is not None) else None,
+            "60th_day_test": estrus.get_60th_day_test().value 
+                if (estrus.get_60th_day_test() is not None) else None,
         }
 
         # Pick non-empty attributes.

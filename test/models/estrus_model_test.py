@@ -3,6 +3,7 @@ import unittest
 from data_structures.pig import Pig
 from data_structures.estrus import Estrus
 from data_structures.estrus import PregnantStatus
+from data_structures.estrus import TestResult
 from models.pig_model import PigModel
 from models.estrus_model import EstrusModel
 
@@ -41,6 +42,8 @@ class ModelTest(unittest.TestCase):
         estrus.set_estrus_datetime("2023-01-01 16:00:00")
         estrus.set_parity(3)
         estrus.set_pregnant(PregnantStatus.NO)
+        estrus.set_21th_day_test(TestResult.PREGNANT)
+        estrus.set_60th_day_test(TestResult.NOT_PREGNANT)
         self.model.insert(estrus)
         self.assertEqual(2, self.model.query("SELECT COUNT(*) FROM Estrus;")[0]["COUNT(*)"])
 

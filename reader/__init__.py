@@ -72,7 +72,7 @@ class ExcelReader:
         '''Insert error messages in the factory to the sheet and return current count.'''
 
         data = self._record.to_list()
-        data.append(str(self._factory.error_messages))
+        data.append(", ".join(self._factory.error_messages))
         self.__sheet.append(data)
         # Check the flag and highlight incorrect cells
         for flag in self._factory.Flags:

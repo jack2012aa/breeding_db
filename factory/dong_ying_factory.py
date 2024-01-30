@@ -1,4 +1,6 @@
 from datetime import datetime
+from data_structures.estrus import Estrus
+from data_structures.estrus import TestResult
 
 from data_structures.pig import Pig
 from factory import PigFactory
@@ -323,6 +325,24 @@ class DongYingEstrusFactory(EstrusFactory):
         
         self.estrus.set_estrus_datetime(date_time)
 
+    def set_21th_day_test(self, result: str):
+        ''' Call Estrus.transform_test_result and set result.'''
+
+        try:
+            return super().set_21th_day_test(Estrus.transform_test_result(result))
+        except ValueError:
+            self._turn_on_flag(self.Flags._21TH_DAY_TEST_FLAG.value)
+            self.error_messages.append("字串'{result}'並未在轉換表中被定義".format(result=result))
+
+    def set_60th_day_test(self, result: str):
+        ''' Call Estrus.transform_test_result and set result.'''
+
+        try:
+            return super().set_60th_day_test(Estrus.transform_test_result(result))
+        except ValueError:
+            self._turn_on_flag(self.Flags._60TH_DAY_TEST_FLAG.value)
+            self.error_messages.append("字串'{result}'並未在轉換表中被定義".format(result=result))
+    
 
 class DongYingMatingFactory(MatingFactory):
 

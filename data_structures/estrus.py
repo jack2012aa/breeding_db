@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 
 from data_structures.pig import Pig
+from general import type_check
 
 class PregnantStatus(Enum):
 
@@ -10,6 +11,10 @@ class PregnantStatus(Enum):
     UNKNOWN = "Unknown"
     ABORTION = "Abortion"
 
+class TestResult(Enum):
+
+    PREGNANT = "Pregnant"
+    NOT_PREGNANT = "Not Pregnant"
 
 class Estrus:
     '''
@@ -28,24 +33,31 @@ class Estrus:
         self.__estrus_datetime: datetime.datetime = None
         self.__pregnant: PregnantStatus = None
         self.__parity: int = None
+        self.__21th_day_test: TestResult = None
+        self.__60th_day_test: TestResult = None
 
     def __str__(self):
 
-        id = birthday = farm = status = str(None)
+        id = birthday = farm = status = _21th = _60th = str(None)
         if self.__sow is not None:
             id = str(self.__sow.get_id())
             birthday = str(self.__sow.get_birthday())
             farm = str(self.__sow.get_farm())
         if self.__pregnant is not None:
             status = self.__pregnant.value
-        
+        if self.__21th_day_test is not None:
+            _21th = self.__21th_day_test.value
+        if self.__60th_day_test is not None:
+            _60th = self.__60th_day_test.value
 
         s = "母豬耳號 id：{id}\n".format(id=str(id)) \
             + "母豬生日 birthday：{birthday}\n".format(birthday=str(birthday)) \
             + "母豬所屬牧場 farm：{farm}\n".format(farm=str(farm)) \
             + "發情日期 estrus_datetime：{date_}\n".format(date_=str(self.__estrus_datetime)) \
             + "是否懷孕 pregnant：{status}\n".format(status=str(status)) \
-            + "生產批次 parity：{parity}\n".format(parity=str(self.__parity))
+            + "生產批次 parity：{parity}\n".format(parity=str(self.__parity)) \
+            + "21天測孕 21th_day_test：{_21th}\n".format(_21th=str(_21th)) \
+            + "60天測孕 60th_day_test：{_60th}\n".format(_60th=str(_60th)) \
         
         return s
     
@@ -68,7 +80,36 @@ class Estrus:
         return  result \
             and self.__estrus_datetime == __value.__estrus_datetime \
             and self.__pregnant == __value.get_pregnant() \
-            and self.__parity == __value.get_parity()
+            and self.__parity == __value.get_parity() \
+            and self.__21th_day_test == __value.get_21th_day_test() \
+            and self.__60th_day_test == __value.get_60th_day_test() \
+
+    @staticmethod
+    def transform_test_result(result: str) -> TestResult:
+        '''
+        Transform a string to TestResult object. This method will remove any space in 
+        the argument.
+
+        Rules:
+        * x/X -> Not Pregnant
+        * o/O -> Pregnant
+        * None -> None
+        * others -> ValueError
+        '''
+
+        if result is None or result == "None":
+            return None
+        
+        type_check(result, "result", str)
+        result = result.replace(" ", "")
+
+        match result:
+            case "x"| "X":
+                return TestResult.NOT_PREGNANT
+            case "o"| "O":
+                return TestResult.PREGNANT
+            case _:
+                raise ValueError("Can not match {result} to TestResult.".format(result=result))
 
     def is_unique(self) -> bool:
 
@@ -79,9 +120,7 @@ class Estrus:
         * param sow: an unique Pig object.
         * Raise TypeError, ValueError'''
 
-        if not isinstance(sow, Pig):
-            raise TypeError("sow should be a Pig. Get {type_}".format(type_=str(type(sow))))
-        
+        type_check(sow, "sow", Pig)
         if not sow.is_unique():
             raise ValueError("sow should be unique.\n{sow}".format(sow=str(sow)))
         
@@ -115,9 +154,7 @@ class Estrus:
         * Raise TypeError
         '''
         
-        if not isinstance(status, PregnantStatus):
-            raise TypeError("status should be a Pregnan_status. Get {type_}".format(type_=str(type(status))))
-        
+        type_check(status, "status", PregnantStatus)
         self.__pregnant = status
 
     def set_parity(self, parity: int):
@@ -127,14 +164,25 @@ class Estrus:
         * Raise TypeError, ValueError
         '''
 
-        if not isinstance(parity, int):
-            raise TypeError("parity should be an int. Get {type_}".format(type_=str(type(parity))))
+        type_check(parity, "parity", int)
 
         # I guess no sow can give birth more than 10 times.        
         if parity < 0 or parity > 12:
             raise ValueError("parity should between 0 to 12. Get {parity}".format(parity=parity))
         
         self.__parity = parity
+
+    def set_21th_day_test(self, result: TestResult):
+        '''* param result: a result of pregnant test.'''
+
+        type_check(result, "result", TestResult)
+        self.__21th_day_test = result
+
+    def set_60th_day_test(self, result: TestResult):
+        '''* param result: a result of pregnant test.'''
+
+        type_check(result, "result", TestResult)
+        self.__60th_day_test = result
 
     def get_sow(self) -> Pig:
         return self.__sow
@@ -147,3 +195,9 @@ class Estrus:
     
     def get_parity(self) -> int:
         return self.__parity
+    
+    def get_21th_day_test(self) -> TestResult:
+        return self.__21th_day_test
+    
+    def get_60th_day_test(self) -> TestResult:
+        return self.__60th_day_test
