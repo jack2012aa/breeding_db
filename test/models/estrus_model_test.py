@@ -1,8 +1,8 @@
 import unittest
 
-from data_structures.pig import Pig
-from data_structures.estrus import Estrus
-from data_structures.estrus import PregnantStatus
+from breeding_db.data_structures import Pig
+from breeding_db.data_structures import Estrus
+from breeding_db.data_structures import PregnantStatus
 from models.pig_model import PigModel
 from models.estrus_model import EstrusModel
 

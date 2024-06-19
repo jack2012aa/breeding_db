@@ -1,6 +1,6 @@
 import pymysql
 
-from data_structures.pig import Pig
+from breeding_db.data_structures import Pig
 from . import BaseModel
 
 
@@ -17,7 +17,7 @@ class PigModel(BaseModel):
             "birthday": str(pig.get_birthday()),
             "farm": pig.get_farm(),
             "breed": pig.get_breed(),
-            "naif_id": pig.get_naif_id(),
+            "naif_id": pig.get_reg_id(),
             "gender": pig.get_gender(),
             "chinese_name": pig.get_chinese_name(),
         }

@@ -1,6 +1,14 @@
-# Some frequently used functions.
+""" Define general functions. """
 
-import datetime
+__all__ = [
+    "ask", 
+    "ask_multiple", 
+    "transform_date", 
+    "type_check"
+]
+
+import logging
+from datetime import date
 
 
 def ask(message: str):
@@ -39,19 +47,33 @@ def ask_multiple(message: str, choices: list):
     return choice
 
 
-def transform_date(date) -> datetime.date:
+def transform_date(date_string: str | date) -> date:
     ''' 
     Transform ISO string to datetime.date.
     * Raise TypeError and ValueError
     '''
 
-    if isinstance(date, datetime.date):
-        return date
+    if isinstance(date_string, date):
+        return date_string
 
-    if not isinstance(date, str):
-        raise TypeError("Need a string but get a {type_}".format(type_=type(date)))
+    type_check(date_string, "date", str)
 
     try:
-        return datetime.date.fromisoformat(date)
+        return date.fromisoformat(date_string)
     except:
-        raise ValueError("date {date} is not in ISO format".format(date=date))
+        msg = f"{date_string} is not in ISO format."
+        logging.error(msg)
+        raise ValueError(msg)
+
+
+def type_check(var, var_name: str, correct_type):
+    """
+    * param var: the incorrect variable
+    * param var_name: name of the variable.
+    * param correct_type: correct type.
+    """
+
+    if not isinstance(var, correct_type):
+        msg = f"{var_name} should be a {correct_type.__name__}. Got {type(var).__name__} instead."
+        logging.error(msg)
+        raise TypeError(msg)

@@ -1,10 +1,10 @@
 from enum import Enum
 
-from data_structures.pig import Pig
-from data_structures.estrus import Estrus
-from data_structures.estrus import PregnantStatus
-from data_structures.mating import Mating
-from general import ask
+from breeding_db.data_structures import Pig
+from breeding_db.data_structures import Estrus
+from breeding_db.data_structures import PregnantStatus
+from breeding_db.data_structures import Mating
+from breeding_db.general import ask
 
 
 class Factory():
@@ -50,7 +50,7 @@ class PigFactory(Factory):
     def translate_breed_to_english(self, breed: str) -> str:
         '''Return the English of breed'''
 
-        return Pig.BREED_DICT[breed]
+        return Pig.BREED_CHINESE_TO_ENGLISH[breed]
 
     def remove_dash_from_id(self, id: str) -> str:
         '''

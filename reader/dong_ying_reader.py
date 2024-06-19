@@ -2,7 +2,7 @@ from factory import ParentError
 from factory.dong_ying_factory import DongYingPigFactory
 from models.pig_model import PigModel
 from reader import ExcelReader
-from general import ask
+from breeding_db.general import ask
 
 import openpyxl
 import pandas as pd

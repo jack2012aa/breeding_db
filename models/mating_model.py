@@ -1,7 +1,7 @@
 import pymysql
 
 from models import BaseModel
-from data_structures.mating import Mating
+from breeding_db.data_structures import Mating
 
 
 class MatingModel(BaseModel):

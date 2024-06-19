@@ -2,8 +2,8 @@ import unittest
 
 from factory.dong_ying_factory import DongYingEstrusFactory
 from models.pig_model import PigModel
-from data_structures.pig import Pig
-from data_structures.estrus import PregnantStatus
+from breeding_db.data_structures import Pig
+from breeding_db.data_structures import PregnantStatus
 
 class FactoryTestCase(unittest.TestCase):
 

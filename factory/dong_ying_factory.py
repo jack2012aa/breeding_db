@@ -1,13 +1,13 @@
 from datetime import datetime
 
-from data_structures.pig import Pig
+from breeding_db.data_structures import Pig
 from factory import PigFactory
 from factory import ParentError
 from factory import EstrusFactory
 from factory import MatingFactory
-from general import ask
-from general import ask_multiple
-from general import transform_date
+from breeding_db.general import ask
+from breeding_db.general import ask_multiple
+from breeding_db.general import transform_date
 from models.pig_model import PigModel
 
 
@@ -39,8 +39,8 @@ class DongYingPigFactory(PigFactory):
                 self.pig.set_breed(n_breed)
                 return
 
-        if breed in Pig.BREED_DICT:
-            n_breed = Pig.BREED_DICT[breed]
+        if breed in Pig.BREED_CHINESE_TO_ENGLISH:
+            n_breed = Pig.BREED_CHINESE_TO_ENGLISH[breed]
             if ask("是否可以將品種從 {breed} 修改為 {n_breed} ？".format(breed=breed,n_breed=n_breed)):
                 self.pig.set_breed(n_breed)
                 return

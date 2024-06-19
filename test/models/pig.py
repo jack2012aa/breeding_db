@@ -1,6 +1,6 @@
 import unittest
 
-from data_structures.pig import Pig
+from breeding_db.data_structures import Pig
 from models.pig_model import PigModel
 
 class ModelTest(unittest.TestCase):

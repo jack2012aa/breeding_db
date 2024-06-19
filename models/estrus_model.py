@@ -1,6 +1,6 @@
 import pymysql
 
-from data_structures.estrus import Estrus
+from breeding_db.data_structures import Estrus
 from . import BaseModel
 
 class EstrusModel(BaseModel):

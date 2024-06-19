@@ -1,7 +1,7 @@
 import unittest
 
 from models.pig_model import PigModel
-from data_structures.pig import Pig
+from breeding_db.data_structures import Pig
 from factory import ParentError
 from factory.dong_ying_factory import DongYingPigFactory
 
@@ -44,13 +44,13 @@ class FactoryTestCase(unittest.TestCase):
     def test_naif_id(self):
 
         self.factory.set_naif_id("123456")
-        self.assertEqual("123456",self.factory.pig.get_naif_id())
+        self.assertEqual("123456",self.factory.pig.get_reg_id())
         self.factory.set_naif_id("1234567")
         self.assertEqual(self.factory.get_flag(), self.factory.NAIF_FLAG)
         self.factory = DongYingPigFactory()
         print("Choose Yes.")
         self.factory.set_naif_id("e234567")
-        self.assertEqual('234567',self.factory.pig.get_naif_id())
+        self.assertEqual('234567',self.factory.pig.get_reg_id())
         print("Choose No.")
         self.factory.set_naif_id("e234567")
         self.assertEqual(self.factory.get_flag(), self.factory.NAIF_FLAG)
