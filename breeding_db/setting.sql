@@ -9,7 +9,7 @@ CREATE TABLE Pigs(
     sire_id varchar(20),
     sire_birthday date,
     sire_farm varchar(20),
-    naif_id char(6),
+    reg_id char(6),
     gender char(10),
     chinese_name char(5),
     PRIMARY KEY (id, birthday, farm),
