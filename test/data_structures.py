@@ -132,17 +132,24 @@ class EstrusTestCase(unittest.TestCase):
         self.estrus = None
 
     def test_set_sow(self):
-
-        pig = MagicMock(spec=Pig)
-        pig.is_unique.return_value = True
-        self.estrus.set_sow(pig)
-        self.assertEqual(pig, self.estrus.get_sow())
-
-        pig.is_unique.return_value = False
+        
+        pig = Pig()
+        pig.set_birthday("1999-05-12")
+        pig.set_id("123456")
         with self.assertRaises(ValueError):
            self.estrus.set_sow(pig)
         with self.assertRaises(TypeError):
             self.estrus.set_sow(1)
+        pig.set_farm("test farm")
+
+        self.estrus.set_estrus_datetime("1998-05-12 12:00:00")
+        with self.assertRaises(ValueError):
+            self.estrus.set_sow(pig)
+        
+        self.estrus.set_estrus_datetime("2000-05-12 12:00:00")
+        self.estrus.set_sow(pig)
+        self.assertEqual(pig, self.estrus.get_sow())
+
 
     def test_set_estrus_datetime(self):
 
@@ -157,6 +164,16 @@ class EstrusTestCase(unittest.TestCase):
             self.estrus.get_estrus_datetime(),
             datetime.strptime("2023-12-05 9:27:30", "%Y-%m-%d %H:%M:%S")
         )
+
+        # Wrong date.
+        with self.assertRaises(ValueError):
+            self.estrus = Estrus()
+            pig = Pig()
+            pig.set_birthday("1999-05-12")
+            pig.set_id("123456")
+            pig.set_farm("test farm")
+            self.estrus.set_sow(pig)
+            self.estrus.set_estrus_datetime("1998-12-05 9:27:30")
 
         # Wrong format
         self.assertRaises(ValueError, self.estrus.set_estrus_datetime, "2023/12/15")

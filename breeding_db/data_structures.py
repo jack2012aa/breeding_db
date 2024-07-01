@@ -1,3 +1,12 @@
+"""Define data structures used in breeding db."""
+
+__all__ = [
+    "Pig", 
+    "PregnantStatus", 
+    "Estrus", 
+    "Mating"
+]
+
 import logging
 from enum import Enum
 from datetime import date, datetime, timedelta
@@ -395,8 +404,10 @@ class Estrus:
     def set_sow(self, sow: Pig):
         """ Set sow.
 
+        The sow's birthday should be earlier than estrus datetime.
+
         :param sow: the sow/gilt which has estrus.
-        :raises: TypeError, ValueError
+        :raises: TypeError, ValueError.
         """
 
         type_check(sow, "sow", Pig)
@@ -405,12 +416,22 @@ class Estrus:
             msg = f"sow should be unique. Get {sow}."
             logging.error(msg)
             raise ValueError(msg)
+        
+        if self.__estrus_datetime is not None:
+            if sow.get_birthday() > self.__estrus_datetime.date():
+                msg = "estrus_datetime should be later than the sow's birthday."
+                msg += f"\nestrus_datetime: {self.__estrus_datetime}, "
+                msg += f"sow's birthday: {sow.get_birthday()}."
+                logging.error(msg)
+                raise ValueError(msg)
 
         self.__sow = sow
 
     def set_estrus_datetime(self, date_time: str | datetime):
         """Set estrus datetime. Estrus datetime should be the accurate date 
         and time when estrus is observed.
+
+        The estrus_datetime should be larger than sow's birthday.
 
         :param date_time: a string in format "%Y-%m-%d %H:%M:%S".
         :raises: TypeError, ValueError.
@@ -427,6 +448,14 @@ class Estrus:
             except ValueError as ex:
                 logging.error(ex.args[0])
                 raise ex
+            
+        if self.__sow is not None:
+            if self.__sow.get_birthday() > date_time.date():
+                msg = "estrus_datetime should be later than the sow's birthday."
+                msg += f"\nestrus_datetime: {date_time}, "
+                msg += f"sow's birthday: {self.__sow.get_birthday()}."
+                logging.error(msg)
+                raise ValueError(msg)
 
         self.__estrus_datetime = date_time
 
