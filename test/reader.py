@@ -77,6 +77,8 @@ class MyTestCase(unittest.TestCase):
 
         output_dataframe = pd.read_csv("test/helper/garbage/output2.csv")
         self.assertEqual(14, output_dataframe.shape[0])
+        # 109 rows in pigs.xlsx and 13 errors.
+        self.assertEqual(100 + 109 - 13, len(self.model.find_pigs(equal={"farm":"test farm"})))
 
 
 if __name__ == '__main__':
