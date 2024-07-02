@@ -231,7 +231,8 @@ class Model():
         type_check(larger, "larger", dict)
         type_check(larger_equal, "larger_equal", dict)
         type_check(smaller_equal, "smaller_equal", dict)
-        type_check(order_by, "order_by", dict)
+        if order_by is not None:
+            type_check(order_by, "order_by", str)
 
         conditions = []
         for key, value in equal.items():

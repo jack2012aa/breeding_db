@@ -1,3 +1,7 @@
+drop table Matings;
+drop table Estrus;
+drop table Pigs;
+
 CREATE TABLE Pigs(
     id varchar(20),
     birthday date,
@@ -9,7 +13,7 @@ CREATE TABLE Pigs(
     sire_id varchar(20),
     sire_birthday date,
     sire_farm varchar(20),
-    reg_id char(6),
+    reg_id char(6) UNIQUE,
     gender char(10),
     chinese_name char(5),
     PRIMARY KEY (id, birthday, farm),
