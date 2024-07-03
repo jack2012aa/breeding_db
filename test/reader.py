@@ -80,6 +80,25 @@ class MyTestCase(unittest.TestCase):
         # 109 rows in pigs.xlsx and 13 errors.
         self.assertEqual(100 + 109 - 13, len(self.model.find_pigs(equal={"farm":"test farm"})))
 
+    def test_seperate_year_breed_id(self):
+
+        id = "19Y1234-06"
+        year, breed, id = self.reader._ExcelReader__seperate_year_breed_id(id)
+        self.assertEqual("2019", year)
+        self.assertEqual("Y",breed)
+        self.assertEqual(id, "123406")
+
+        id = "F<204>"
+        year, breed, id = self.reader._ExcelReader__seperate_year_breed_id(id)
+        self.assertEqual(id, "204")
+
+        with self.assertRaises(TypeError):
+            year, breed, id = self.reader._ExcelReader__seperate_year_breed_id(1234)
+        
+        with self.assertRaises(ValueError):
+            id = "20Y202034Y39"
+            year, breed, id = self.reader._ExcelReader__seperate_year_breed_id(id)
+
 
 if __name__ == '__main__':
     unittest.main()

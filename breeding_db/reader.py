@@ -94,6 +94,35 @@ class ExcelReader():
                 result = ''.join([result,c])
         return result
     
+    def __seperate_year_breed_id(
+            self, id: str
+        ) -> tuple[str | None, str | None, str]:
+        """Seperate id in format {birth_year}{breed}{id}.
+        
+        If the id does not contain birth year and breed info, (None, None, id) 
+        will be returned.
+
+        If more than one breed character found in id, the first one will be 
+        used.
+
+        :param id: an id, should be in format {birth_year}{breed}{id}.
+        :raises: TypeError, ValueError.
+        """
+
+        type_check(id, "id", str)
+        year = None
+        breed = None
+        for possible_breed in Pig.BREED:
+            if id.find(possible_breed) != -1:
+                year, id = id.split(possible_breed)
+                breed = possible_breed
+                break
+
+        if year is not None and len(year) == 2:
+            year = f"20{year}"
+
+        return (year, breed, self.__remove_dash_from_id(id))
+
     def read_and_insert_pigs(
         self, 
         farm: str,
@@ -389,12 +418,117 @@ class ExcelReader():
 
     def read_and_insert_estrus(
         self, 
+        farm: str,
         input_path: str = None, 
         dataframe: pd.DataFrame = None,
-        output_path: str = os.path.curdir,
-        output_filename: str = "output.csv"
-    ):
-        pass
+        output_path: str = os.path.curdir, 
+        output_filename: str = "output.csv",
+        allow_none: bool = False
+    ) -> None:
+        """Read estrus data in the source excel or dataframe, insert them into 
+        database and create a report csv containing error data.
+
+        Choose reading from excel or dataframe by pathing corresponding 
+        parameter
+
+        If read from excel, "配種資料" sheet will be used.
+
+        The source excel or dataframe must have below columns:
+        1. 生日年品種耳號
+        2. 胎次
+        3. 配種日期
+        4. 配種時間
+
+        Estrus datetime and parity is checked.
+
+        :param farm: current farm.
+        :param input_path: path of the source csv, including filename.
+        :param dataframe: the source dataframe.
+        :param output_path: path to save the report.
+        :param output_filename: name of the report.
+        :param allow_none: allow empty non-primary key. 
+        :raises: ValueError, FileNotFoundError, TypeError, KeyError.
+        """
+        # Type check.
+        if input_path is None and dataframe is None:
+            msg = "You must choose to read from an excel file or a dataframe."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        if input_path is not None:
+            type_check(input_path, "input_path", str)
+            if not os.path.isfile(input_path):
+                msg = f"File {input_path} does not exist."
+                logging.error(msg)
+                raise FileNotFoundError(msg)
+            dataframe = pd.read_excel(io=input_path, sheet_name="基本資料")
+
+        if dataframe is not None:
+            type_check(dataframe, "dataframe", pd.DataFrame)
+        
+        type_check(farm, "farm", str)
+        type_check(output_path, "output_path", str)
+        type_check(output_filename, "output_filename", str)
+
+        # Standardize the dataframe.
+        dataframe.dropna(how="all", inplace=True)
+        dataframe = dataframe.rename(columns={
+            "生日年品種耳號": "ID", 
+            "胎次": "Parity", 
+            "配種日期": "Estrus_date",
+            "配種時間": "Estrus_time"
+        })
+        required_columns = [
+            "ID", 
+            "Parity", 
+            "Estrus_date", 
+            "Estrus_time"
+        ]
+        if not set(required_columns).issubset(dataframe.columns):
+            msg = "Missing key(s) in source excel or DataFrame."
+            logging.error(msg)
+            raise KeyError(msg)
+        dataframe = dataframe.astype("object")
+        dataframe.sort_values(by="Estrus_date", inplace=True, na_position="first")
+
+        # Create estrus.
+        report_estrus = []
+        for _, data_row in dataframe.iterrows():
+            error_messages = []
+            estrus = Estrus()
+
+            # Set pig.
+            id = data_row.get("ID")
+            try:
+                if pd.isna(id):
+                    raise SyntaxError()
+                id = str(id)
+                # id in excel may contain birth_year, breed and id.
+                birth_year, breed, id = self.__seperate_year_breed_id(id)
+                equal = {"id": id, "farm": farm, "gender": "F"}
+                larger = {}
+                smaller = {}
+                if birth_year is not None and breed is not None:
+                    larger["birthday"] = f"{birth_year}-01-01"
+                    smaller["birthday"] = f"{birth_year}-12-31"
+                    equal["breed"] = breed
+                pigs = self.model.find_pigs(
+                    equal=equal, 
+                    smaller_equal=smaller,
+                    larger_equal=larger, 
+                    order_by="birthday DESC"
+                )
+                if len(pigs) == 0:
+                    raise KeyError()
+                estrus.set_sow(pigs[0])
+            except SyntaxError:
+                error_messages.append("耳號不可為空")
+            except ValueError:
+                error_messages.append("耳號格式錯誤")
+            except TypeError:
+                error_messages.append("耳號格式錯誤")
+            except KeyError:
+                error_messages.append("資料庫中無母豬資料")
 
     def read_and_insert_matings(
         self, 
