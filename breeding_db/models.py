@@ -4,7 +4,7 @@ import logging
 import pymysql
 
 from breeding_db.general import type_check
-from breeding_db.data_structures import Pig, Estrus, Mating
+from breeding_db.data_structures import Pig, Estrus, Mating, PregnantStatus
 
 
 class Model():
@@ -247,8 +247,10 @@ class Model():
             conditions.append("{key}<='{value}'".format(key=str(key), value=str(value)))
 
         if len(conditions) == 0:
-            raise ValueError("Searching condition can not be empty.")
-
+            msg = "Searching condition can not be empty."
+            logging.error(msg)
+            raise ValueError(msg)
+        
         sql_query = "SELECT * FROM Pigs WHERE {condition}".format(
             condition=" AND ".join(conditions)
         )
@@ -350,6 +352,101 @@ class Model():
             msg = "Sow does not exist in the database."
             msg += f"\n Get {estrus.get_sow()}"
             raise KeyError(msg)
+        
+    def dict_to_estrus(self, estrus_dict: dict) -> Estrus | None:
+        """Transform a dictionary from query to an unique pig instance.
+
+        If the estrus is not unique, None will be returned. \
+
+        :param estrus_dict: a dictionary contains attributes of estrus.
+        :return: an estrus object or None if estrus is not unique.
+        """
+
+        type_check(estrus_dict, "estrus_dict", dict)
+
+        estrus = Estrus()
+        sow = Pig()
+        if estrus_dict.get("id") is not None:
+            sow.set_id(estrus_dict.get("id"))
+        if estrus_dict.get("birthday") is not None:
+            sow.set_birthday(estrus_dict.get("birthday"))
+        if estrus_dict.get("farm") is not None:
+            sow.set_farm(estrus_dict.get("farm"))
+        if not sow.is_unique():
+            return None
+        estrus.set_sow(sow)
+        if estrus_dict.get("estrus_datetime") is not None:
+            estrus.set_estrus_datetime(estrus_dict.get("estrus_datetime"))
+        if estrus_dict.get("parity") is not None:
+            estrus.set_parity(int(estrus_dict.get("parity")))
+        if estrus_dict.get("pregnant") is not None:
+            estrus.set_pregnant(PregnantStatus(estrus_dict.get("pregnant")))
+        if not estrus.is_unique():
+            return None
+        return estrus
+
+    def find_estrus(
+            self,
+            equal: dict = {},
+            larger: dict = {},
+            smaller: dict = {},
+            larger_equal: dict = {},
+            smaller_equal: dict = {},
+            order_by: str = None
+        ) -> list[Estrus]:
+        """ Find all estrus satisfy the conditions. 
+
+        Please make sure:
+        * Keys of the dictionary should be same as attributes.
+        * Different conditions will be connected by AND.
+        * Sow should be listed as id, birthday, ...
+        
+        :param equal: query will be `key`=`value`
+        :param larger: query will be `key`>`value`
+        :param smaller: query will be `key`<`value`
+        :param larger_equal: query will be `key`>=`value`
+        :param smaller_equal: query will be `key`<=`value`
+        :param order_by: `column_name` `ASC|DESC`
+        :raises: TypeError, ValueError.
+        """
+
+        type_check(equal, "equal", dict)
+        type_check(smaller, "smaller", dict)
+        type_check(larger, "larger", dict)
+        type_check(larger_equal, "larger_equal", dict)
+        type_check(smaller_equal, "smaller_equal", dict)
+        if order_by is not None:
+            type_check(order_by, "order_by", str)
+
+        conditions = []
+        for key, value in equal.items():
+            conditions.append("{key}='{value}'".format(key=str(key), value=str(value)))
+        for key, value in larger.items():
+            conditions.append("{key}>'{value}'".format(key=str(key), value=str(value)))
+        for key, value in smaller.items():
+            conditions.append("{key}<'{value}'".format(key=str(key), value=str(value)))
+        for key, value in larger_equal.items():
+            conditions.append("{key}>='{value}'".format(key=str(key), value=str(value)))
+        for key, value in smaller_equal.items():
+            conditions.append("{key}<='{value}'".format(key=str(key), value=str(value)))
+
+        if len(conditions) == 0:
+            msg = "Searching condition can not be empty."
+            logging.error(msg)
+            raise ValueError(msg)
+
+        sql_query = "SELECT * FROM Estrus WHERE {condition}".format(
+            condition=" AND ".join(conditions)
+        )
+        if order_by is not None:
+            sql_query = "".join([sql_query, "ORDER BY ", order_by])
+        sql_query = "".join([sql_query, ";"])
+        results = self.__query(sql_query)
+        estrus = []
+        for dictionary in results:
+            estrus.append(self.dict_to_estrus(dictionary))
+
+        return estrus
         
     def __get_mating_attributes(self, mating: Mating):
         """Get a dictionary of attributes.

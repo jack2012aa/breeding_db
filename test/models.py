@@ -1,4 +1,5 @@
 import unittest
+from datetime import date, datetime
 
 from breeding_db.models import Model
 from breeding_db.data_structures import *
@@ -174,6 +175,67 @@ class ModelTest(unittest.TestCase):
         self.model.insert_pig(boar)
         self.model.insert_estrus(estrus)
         self.model.insert_mating(mating)
+
+    def test_dict_to_estrus(self):
+
+        estrus_dict = {
+            "id": "123456", 
+            "birthday": "1999-05-12", 
+            "farm": "test farm", 
+            "estrus_datetime": "2000-05-12 12:00:00", 
+            "parity": "2", 
+            "pregnant": "Unknown"
+        }
+        estrus = self.model.dict_to_estrus(estrus_dict)
+        self.assertEqual("123456", estrus.get_sow().get_id())
+        self.assertEqual(date(1999, 5, 12), estrus.get_sow().get_birthday())
+        self.assertEqual("test farm", estrus.get_sow().get_farm())
+        self.assertEqual(datetime(2000, 5, 12, 12, 0, 0), estrus.get_estrus_datetime())
+        self.assertEqual(2, estrus.get_parity())
+        self.assertEqual(PregnantStatus.UNKNOWN, estrus.get_pregnant())
+        estrus_dict = {
+            "birthday": "1999-05-12", 
+            "farm": "test farm", 
+            "estrus_datetime": "2000-05-12 12:00:00", 
+            "parity": "2", 
+            "pregnant": "Unknown"
+        }
+        self.assertIsNone(self.model.dict_to_estrus(estrus_dict))
+        estrus_dict = {
+            "id": "123456", 
+            "birthday": "1999-05-12", 
+            "farm": "test farm", 
+            "parity": "2", 
+            "pregnant": "Unknown"
+        }
+        self.assertIsNone(self.model.dict_to_estrus(estrus_dict))
+        with self.assertRaises(TypeError):
+            self.model.dict_to_estrus(123)
+
+    def test_find_estrus(self):
+
+        sow = Pig()
+        sow.set_id("123456")
+        sow.set_birthday("1999-05-12")
+        sow.set_farm("test farm")
+        estrus = Estrus()
+        estrus.set_sow(sow)
+        estrus.set_estrus_datetime("2000-05-12 12:00:00")
+        estrus.set_pregnant(PregnantStatus("No"))
+        estrus.set_parity(1)
+        self.model.insert_pig(sow)
+        self.model.insert_estrus(estrus)
+        sow.set_id("123455")
+        self.model.insert_pig(sow)
+        self.model.insert_estrus(estrus)
+        estrus.set_estrus_datetime("2000-11-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        
+        results = self.model.find_estrus(equal={"id": "123455"})
+        self.assertEqual(2, len(results))
+
+        results = self.model.find_estrus(smaller={"birthday": "2000-05-12"})
+        self.assertEqual(3, len(results))
 
 
 if __name__ == '__main__':
