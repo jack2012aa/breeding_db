@@ -99,6 +99,28 @@ class MyTestCase(unittest.TestCase):
             id = "20Y202034Y39"
             year, breed, id = self.reader._ExcelReader__seperate_year_breed_id(id)
 
+    @patch("breeding_db.reader.ask")
+    def test_read_and_insert_estrus(self, mock_ask):
+
+        mock_ask.return_value = True
+        self.reader.read_and_insert_pigs(
+            farm="test farm", 
+            input_path="test/helper/estrus_data/estrus_data.xlsx", 
+            output_path="test/helper/garbage", 
+            output_filename="output1.csv", 
+            allow_none=True
+        )
+        self.reader.read_and_insert_estrus(
+            farm="test farm", 
+            input_path="test/helper/estrus_data/estrus_data.xlsx", 
+            output_path="test/helper/garbage",
+            output_filename="output2.csv"
+        )
+        found = self.model.find_estrus(equal={"farm": "test farm"})
+        self.assertEqual(52, len(found))
+        error = pd.read_csv("test/helper/garbage/output2.csv")
+        self.assertEqual(6, error.shape[0])
+
 
 if __name__ == '__main__':
     unittest.main()

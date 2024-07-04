@@ -8,7 +8,7 @@ import pandas as pd
 
 from breeding_db.general import ask, ask_multiple, type_check
 from breeding_db.models import Model
-from breeding_db.data_structures import Pig, Estrus, Mating
+from breeding_db.data_structures import Pig, Estrus, Mating, PregnantStatus
 
 
 class ExcelReader():
@@ -404,7 +404,7 @@ class ExcelReader():
             self.model.update_pig(pig)
 
         report_dataframe = pd.DataFrame(report_pigs)
-        report_dataframe.rename(columns={
+        report_dataframe = report_dataframe.rename(columns={
             "Breed": "品種", 
             "ID": "耳號", 
             "Birthday": "生日", 
@@ -461,7 +461,10 @@ class ExcelReader():
                 msg = f"File {input_path} does not exist."
                 logging.error(msg)
                 raise FileNotFoundError(msg)
-            dataframe = pd.read_excel(io=input_path, sheet_name="基本資料")
+            dataframe = pd.read_excel(
+                io=input_path, 
+                sheet_name="配種資料"
+            )
 
         if dataframe is not None:
             type_check(dataframe, "dataframe", pd.DataFrame)
@@ -520,15 +523,136 @@ class ExcelReader():
                 )
                 if len(pigs) == 0:
                     raise KeyError()
+                # Use the youngest sow.
                 estrus.set_sow(pigs[0])
             except SyntaxError:
                 error_messages.append("耳號不可為空")
-            except ValueError:
-                error_messages.append("耳號格式錯誤")
             except TypeError:
                 error_messages.append("耳號格式錯誤")
+            except ValueError as e:
+                # Distinguish differen ValueError by content.
+                if "birthday" in e:
+                    error_messages.append("配種日期比資料中的母豬生日早")
+                else:
+                    # Should not happen since the pig came from database.
+                    raise e
             except KeyError:
                 error_messages.append("資料庫中無母豬資料")
+
+            # Set estrus datetime.
+            date = data_row.get("Estrus_date")
+            time = data_row.get("Estrus_time")
+            try:
+                if pd.isna(date):
+                    raise SyntaxError()
+                date = pd.to_datetime(date)
+                if pd.isna(time):
+                    estrus_datetime = f"{date.strftime('%Y-%m-%d')} 10:00:00"
+                else:
+                    estrus_datetime = f"{date.strftime('%Y-%m-%d')} "
+                    estrus_datetime += f"{time.strftime('%H:%M:%S')}"
+                estrus.set_estrus_datetime(estrus_datetime)
+            except SyntaxError:
+                error_messages.append("配種日期不能為空")
+            except TypeError:
+                error_messages.append("配種日期或配種時間格式錯誤")
+            except ValueError as e:
+                # Distinguish differen ValueError by content.
+                if "birthday" in e.args[0]:
+                    error_messages.append("配種日期比資料中的母豬生日早")
+                else:
+                    error_messages.append("配種日期或配種時間格式錯誤")
+
+            # Set parity.
+            parity = data_row.get("Parity")
+            try:
+                if not allow_none and pd.isna(parity):
+                    raise SyntaxError()
+                if allow_none and pd.isna(parity):
+                    raise ZeroDivisionError()
+                # Check parity.
+                # Need to find estrus record through primary key.
+                # Since missing primary key isn't allowed, just skip this step.
+                parity = int(parity)
+                if estrus.get_sow() is None:
+                    raise ZeroDivisionError()
+                if estrus.get_estrus_datetime() is None:
+                    raise ZeroDivisionError()
+                found = self.model.find_estrus(
+                    equal={
+                        "id": estrus.get_sow().get_id(), 
+                        "birthday": estrus.get_sow().get_birthday(), 
+                        "farm": estrus.get_sow().get_farm()
+                    }, 
+                    smaller={"estrus_datetime": estrus.get_estrus_datetime()}, 
+                    order_by="parity DESC"
+                )
+                if len(found) > 0 and parity < found[0].get_parity():
+                    error_messages.append("發情日期比前一胎次發情紀錄的發情日期早")
+                    raise ZeroDivisionError()
+                found = self.model.find_estrus(
+                    equal={
+                        "id": estrus.get_sow().get_id(), 
+                        "birthday": estrus.get_sow().get_birthday(), 
+                        "farm": estrus.get_sow().get_farm()
+                    }, 
+                    larger={"estrus_datetime": estrus.get_estrus_datetime()}, 
+                    order_by="parity ASC"
+                )
+                if len(found) > 0 and parity > found[0].get_parity():
+                    error_messages.append("發情日期比後一胎次發情紀錄的發情日期晚")
+                    raise ZeroDivisionError()
+                estrus.set_parity(parity)
+            except SyntaxError:
+                error_messages.append("胎次不可為空")
+            except ZeroDivisionError:
+                pass # Skip
+            except TypeError:
+                error_messages.append("胎次格式錯誤")
+            except ValueError:
+                error_messages.append("胎次超出範圍(1~12)")
+
+            # Set pregnant.
+            estrus.set_pregnant(PregnantStatus.UNKNOWN)
+
+            # If error then put into report.
+            if len(error_messages) > 0:
+                data_dict = data_row.to_dict()
+                data_dict["錯誤訊息"] = " ".join(error_messages)
+                report_estrus.append(data_dict)
+                continue
+
+            # Check duplicate.
+            found = self.model.find_estrus(equal={
+                "id": estrus.get_sow().get_id(), 
+                "birthday": estrus.get_sow().get_birthday(),
+                "farm": estrus.get_sow().get_farm(), 
+                "estrus_datetime": estrus.get_estrus_datetime()
+            })
+            if len(found) == 0:
+                self.model.insert_estrus(estrus)
+                continue
+            if found[0] == estrus:
+                continue
+            msg = "遇到重複發情紀錄，是否更新資料？Y：更新，N：不更新"
+            msg += f"\n讀到的發情紀錄：{estrus}"
+            msg += f"\n已有的發情紀錄：{found[0]}"
+            if not ask(msg):
+                data_dict = data_row.to_dict()
+                data_dict["錯誤訊息"] = "發情紀錄已存在於資料庫且與資料庫中數據不相符"
+                report_estrus.append(data_dict)
+                continue
+            self.model.update_estrus(estrus)
+        
+        report_dataframe = pd.DataFrame(report_estrus)
+        report_dataframe = report_dataframe.rename(columns={
+            "ID": "生日年品種耳號", 
+            "Parity": "胎次", 
+            "Estrus_date": "配種日期",
+            "Estrus_time": "配種時間"
+        })
+        report_dataframe.to_csv(os.path.join(output_path, output_filename))
+
 
     def read_and_insert_matings(
         self, 
