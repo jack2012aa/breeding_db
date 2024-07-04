@@ -237,6 +237,37 @@ class ModelTest(unittest.TestCase):
         results = self.model.find_estrus(smaller={"birthday": "2000-05-12"})
         self.assertEqual(3, len(results))
 
+    def test_update_estrus(self):
+
+        sow = Pig()
+        sow.set_id("123456")
+        sow.set_birthday("1999-05-12")
+        sow.set_farm("test farm")
+        estrus = Estrus()
+        estrus.set_sow(sow)
+        estrus.set_estrus_datetime("2000-05-12 12:00:00")
+        estrus.set_pregnant(PregnantStatus("No"))
+        estrus.set_parity(1)
+        self.model.insert_pig(sow)
+        self.model.insert_estrus(estrus)
+
+        estrus.set_parity(2)
+        self.model.update_estrus(estrus)
+        found = self.model.find_estrus(equal={
+            "id": estrus.get_sow().get_id(), "birthday": estrus.get_sow().get_birthday(), 
+            "farm": estrus.get_sow().get_farm(), "estrus_datetime": estrus.get_estrus_datetime()
+        })
+        self.assertEqual(2, found[0].get_parity())
+        estrus.set_estrus_datetime("2000-05-13 12:00:00")
+        self.model.update_estrus(estrus)
+        found = self.model.find_estrus(equal={
+            "id": estrus.get_sow().get_id(), "birthday": estrus.get_sow().get_birthday(), 
+            "farm": estrus.get_sow().get_farm(), "estrus_datetime": estrus.get_estrus_datetime()
+        })
+        self.assertEqual(len(found), 0)
+        with self.assertRaises(ValueError):
+            self.model.update_estrus(Estrus())
+
 
 if __name__ == '__main__':
     unittest.main()

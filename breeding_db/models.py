@@ -474,6 +474,36 @@ class Model():
 
         return attributes
     
+    def update_estrus(self, estrus: Estrus) -> None:
+        """ Update attributes of a estrus in the database.
+
+        :param estrus: an unique Estrus instance. attributes except primary \
+            keys will be updatad.
+        :raises: TypeError, ValueError.
+        """
+
+        type_check(estrus, "estrus", Estrus)
+        if not estrus.is_unique():
+            msg = f"estrus should be unique. Got {estrus}."
+            logging.error(msg)
+            raise ValueError(msg)
+
+        attributes = self.__get_estrus_attributes(estrus)
+        setting = []
+        for key, value in attributes.items():
+            if value is not None:
+                setting.append("{key}='{value}'".format(key=key, value=value))
+        condition = f"id='{estrus.get_sow().get_id()}' and "
+        condition += f"birthday='{str(estrus.get_sow().get_birthday())}' and "
+        condition += f"farm='{estrus.get_sow().get_farm()}' and "
+        condition += f"estrus_datetime='{str(estrus.get_estrus_datetime())}'"
+        sql_query = "UPDATE Estrus SET {setting} WHERE {condition};".format(
+            setting=", ".join(setting),
+            condition=condition
+        )
+
+        self.__query(sql_query)
+    
     def insert_mating(self, mating: Mating):
         """Insert a mating record to the database.
 
