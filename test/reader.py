@@ -121,6 +121,50 @@ class MyTestCase(unittest.TestCase):
         error = pd.read_csv("test/helper/garbage/output2.csv")
         self.assertEqual(6, error.shape[0])
 
+    @patch("breeding_db.reader.ask")
+    def test_read_and_insert_matings(self, mock_ask):
+
+        mock_ask.return_value = True
+        self.reader.read_and_insert_pigs(
+            farm="test farm", 
+            input_path="test/helper/mating_data/mating_data.xlsx", 
+            output_path="test/helper/garbage", 
+            output_filename="output1.csv", 
+            allow_none=True
+        )
+        self.reader.read_and_insert_estrus(
+            farm="test farm", 
+            input_path="test/helper/mating_data/mating_data.xlsx", 
+            output_path="test/helper/garbage", 
+            output_filename="output2.csv"
+        )
+        self.reader.read_and_insert_matings(
+            farm="test farm", 
+            input_path="test/helper/mating_data/mating_data.xlsx", 
+            output_path="test/helper/garbage", 
+            output_filename="output3.csv"
+        )
+
+        # Test pregnant status
+        found = self.model.find_estrus(equal={
+            "id": "171403", 
+            "birthday": "2018-01-17", 
+            "farm": "test farm", 
+            "estrus_datetime": "2019-01-20 12:00:00"
+        })
+        self.assertEqual(PregnantStatus.NO, found[0].get_pregnant())
+        found = self.model.find_estrus(equal={
+            "id": "158005", 
+            "birthday": "2020-04-27", 
+            "farm": "test farm", 
+            "estrus_datetime": "2020-11-01 12:00:00"
+        })
+        self.assertEqual(PregnantStatus.ABORTION, found[0].get_pregnant())
+        found = self.model.find_matings(equal={"sow_farm": "test farm"})
+        self.assertEqual(52, len(found))
+        dataframe = pd.read_csv("test/helper/garbage/output3.csv")
+        self.assertEqual(5, dataframe.shape[0])
+
 
 if __name__ == '__main__':
     unittest.main()

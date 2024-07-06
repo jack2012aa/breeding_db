@@ -38,9 +38,9 @@ CREATE TABLE Matings(
     sow_farm varchar(20),
     estrus_datetime datetime,
     mating_datetime datetime,
-    boar_id varchar(20),
-    boar_birthday date,
-    boar_farm varchar(20),
+    boar_id varchar(20) NOT NULL,
+    boar_birthday date NOT NULL,
+    boar_farm varchar(20) NOT NULL,
     PRIMARY KEY (sow_id, sow_birthday, sow_farm, estrus_datetime, mating_datetime),
     FOREIGN KEY (sow_id, sow_birthday, sow_farm, estrus_datetime) REFERENCES Estrus(id, birthday, farm, estrus_datetime),
     FOREIGN KEY (boar_id, boar_birthday, boar_farm) REFERENCES Pigs(id, birthday, farm)

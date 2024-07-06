@@ -284,7 +284,7 @@ class Model():
         """
 
         sql_query = self.__generate_qeury_string(
-            table_name="Matings", 
+            table_name="Pigs", 
             equal=equal, 
             larger=larger, 
             smaller=smaller, 

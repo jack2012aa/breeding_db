@@ -1,7 +1,7 @@
 import unittest
 
 from reader.dong_ying_reader import DongYingPigReader
-from models.pig_model import PigModel
+from breeding_db.models import PigModel
 
 class ReaderTest(unittest.TestCase):
 
@@ -11,7 +11,7 @@ class ReaderTest(unittest.TestCase):
 
     def tearDown(self):
         self.reader = None
-        self.model.delete_all("Pigs")
+        self.model._delete_all("Pigs")
         self.model = None
 
     def test_reader(self):
@@ -21,10 +21,10 @@ class ReaderTest(unittest.TestCase):
         
         # Test ignore parents
         self.reader.create_pigs(True)
-        self.assertEqual(self.model.query("SELECT COUNT(*) FROM Pigs;")[0]["COUNT(*)"], 285)
+        self.assertEqual(self.model.__query("SELECT COUNT(*) FROM Pigs;")[0]["COUNT(*)"], 285)
         self.reader = DongYingPigReader("./test/reader/dong_ying_pig_data.xlsx")
         self.reader.create_pigs(ignore_parent=False, update=True)
-        self.assertEqual(self.model.query(
+        self.assertEqual(self.model.__query(
             "SELECT COUNT(*) FROM Pigs where (dam_id is not NULL) or (sire_id is not NULL);"
             )[0]["COUNT(*)"], 51
         )
