@@ -627,6 +627,14 @@ class Mating:
                 msg += f"Mating datetime: {self.__mating_datetime}."
                 logging.error(msg)
                 raise ValueError(msg)
+            
+        if self.__boar is not None:
+            if estrus.get_estrus_datetime().date() < self.__boar.get_birthday():
+                msg = "Boar birthday is later than mating date.\n"
+                msg += f"Boar: {self.__boar}\n"
+                msg += f"Estrus date: {estrus.get_estrus_datetime().date()}."
+                logging.error(msg)
+                raise ValueError(msg)
 
         self.__estrus = estrus
 
@@ -667,6 +675,14 @@ class Mating:
                 msg += f"\nMating datetime: {date_time}."
                 logging.error(msg)
                 raise ValueError(msg)
+            
+        if self.__boar is not None:
+            if date_time.date() < self.__boar.get_birthday():
+                msg = "Boar birthday is later than mating date.\n"
+                msg += f"Boar: {self.__boar}\n"
+                msg += f"Mating date: {date_time}."
+                logging.error(msg)
+                raise ValueError(msg)
 
         self.__mating_datetime = date_time
 
@@ -685,6 +701,22 @@ class Mating:
             raise ValueError(msg)
 
         self.__boar = boar
+
+        if self.__estrus is not None:
+            if self.__estrus.get_estrus_datetime().date() < boar.get_birthday():
+                msg = "Boar birthday is later than estrus date.\n"
+                msg += f"Boar: {boar}\n Estrus date: "
+                msg += f"{self.__estrus.get_estrus_datetime().date()}."
+                logging.error(msg)
+                raise ValueError(msg)
+            
+        if self.__mating_datetime is not None:
+            if self.__mating_datetime.date() < boar.get_birthday():
+                msg = "Boar birthday is later than mating date.\n"
+                msg += f"Boar: {boar}\n Mating date: "
+                msg += f"{self.__mating_datetime.date()}."
+                logging.error(msg)
+                raise ValueError(msg)
 
     def get_estrus(self) -> Estrus:
 

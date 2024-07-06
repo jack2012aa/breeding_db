@@ -284,6 +284,12 @@ class MatingTestCase(unittest.TestCase):
             self.mating.set_mating_datetime("2020-08-20 1:1:1")
             self.mating.set_estrus(self.estrus)
 
+        boar = Pig(farm="test farm", id="123455", birthday="2021-05-12")
+        self.mating = Mating()
+        self.mating.set_boar(boar)
+        with self.assertRaises(ValueError):
+            self.mating.set_estrus(self.estrus)
+
     def test_set_not_unique_estrus(self):
 
         estrus = Estrus()
@@ -319,21 +325,31 @@ class MatingTestCase(unittest.TestCase):
             self.mating.set_estrus(self.estrus)
             self.mating.set_mating_datetime("2020-08-09 1:1:1")
 
+        boar = Pig(id="123455", birthday="2024-05-12", farm="test farm")
+        with self.assertRaises(ValueError):
+            self.mating = Mating()
+            self.mating.set_boar(boar)
+            self.mating.set_mating_datetime("2022-05-12 12:00:00")
+
     def test_correctly_set_boar(self):
 
         self.mating.set_boar(self.sow)
         self.assertEqual(self.sow, self.mating.get_boar())
 
-    def test_set_not_unique_boar(self):
-
         boar = Pig()
         boar.set_id("12344")
         self.assertRaises(ValueError, self.mating.set_boar, boar)
-
-    def test_set_not_boar(self):
-
         self.assertRaises(TypeError, self.mating.set_boar, "12344")
 
+        with self.assertRaises(ValueError):
+            boar = Pig(id="122222", farm="test farm", birthday="2024-05-12")
+            self.mating.set_mating_datetime("2022-05-12 12:00:00")
+            self.mating.set_boar(boar)
+        
+        with self.assertRaises(ValueError):
+            boar = Pig(id="122222", farm="test farm", birthday="2024-05-12")
+            self.mating.set_estrus(self.estrus)
+            self.mating.set_boar(boar)
     def test_equality(self):
 
         mating = Mating()
