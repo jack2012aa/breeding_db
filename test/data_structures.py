@@ -488,6 +488,30 @@ class FarrowingTestCase(unittest.TestCase):
         self.assertEqual(2, self.farrowing.get_born_alive())
         self.assertEqual(27, self.farrowing.get_total_born())
 
+        self.farrowing = Farrowing(
+            estrus=estrus, 
+            farrowing_date="2000-07-05", 
+            crushed=1, 
+            black=1, 
+            weak=1, 
+            malformation=1, 
+            dead=1, 
+            n_of_male=1, 
+            n_of_female=1, 
+            total_weight=1, 
+            note="HI"
+        )
+        self.assertEqual(self.farrowing.get_estrus(), estrus)
+        self.assertEqual(self.farrowing.get_farrowing_date(), date(2000, 7, 5))
+        self.assertEqual(self.farrowing.get_crushed(), 1)
+        self.assertEqual(self.farrowing.get_black(), 1)
+        self.assertEqual(self.farrowing.get_weak(), 1)
+        self.assertEqual(self.farrowing.get_malformation(), 1)
+        self.assertEqual(self.farrowing.get_n_of_male(), 1)
+        self.assertEqual(self.farrowing.get_n_of_female(), 1)
+        self.assertEqual(self.farrowing.get_total_weight(), 1)
+        self.assertEqual(self.farrowing.get_note(), "HI")
+
 
 if __name__ == '__main__':
     unittest.main()
