@@ -268,6 +268,73 @@ class ModelTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.model.update_estrus(Estrus())
 
+    def test_dict_to_mating(self):
+
+        mating_dict = {
+            "sow_id": "123455", 
+            "sow_birthday": "2020-05-12", 
+            "sow_farm": "test farm", 
+            "estrus_datetime": "2021-05-12 12:00:00", 
+            "mating_datetime": "2021-05-12 12:00:00", 
+            "boar_id": "123456", 
+            "boar_birthday": "2020-05-13", 
+            "boar_farm": "test farm 2"
+        }
+        mating = self.model.dict_to_mating(mating_dict)
+        self.assertEqual("123455", mating.get_estrus().get_sow().get_id())
+        self.assertEqual(date(2020, 5, 12), mating.get_estrus().get_sow().get_birthday())
+        self.assertEqual("test farm", mating.get_estrus().get_sow().get_farm())
+        self.assertEqual(datetime(2021, 5, 12, 12), mating.get_estrus().get_estrus_datetime())
+        self.assertEqual("123456", mating.get_boar().get_id())
+        self.assertEqual(date(2020, 5, 13), mating.get_boar().get_birthday())
+        self.assertEqual("test farm 2", mating.get_boar().get_farm())
+        self.assertEqual(datetime(2021, 5, 12, 12), mating.get_mating_datetime())
+
+        mating_dict.pop("mating_datetime")
+        self.assertIsNone(self.model.dict_to_mating(mating_dict))
+
+    def test_find_matings(self):
+
+        sow = Pig(id="123456", birthday="2020-05-12", farm="test farm")
+        estrus = Estrus(sow=sow, estrus_datetime="2021-05-12 12:00:00")
+        boar = Pig(id="123455", birthday="2020-05-12", farm="test farm")
+        mating = Mating(estrus=estrus, mating_datetime="2021-05-12 12:00:00", boar=boar)
+        self.model.insert_pig(sow)
+        self.model.insert_pig(boar)
+        self.model.insert_estrus(estrus)
+        self.model.insert_mating(mating)
+        found = self.model.find_matings(equal={"mating_datetime": "2021-05-12 12:00:00"})
+        self.assertEqual(1, len(found))
+
+        mating = Mating(estrus=estrus, mating_datetime="2021-05-13 12:00:00", boar=boar)
+        self.model.insert_mating(mating)
+        found = self.model.find_matings(equal={"estrus_datetime": "2021-05-12 12:00:00"})
+        self.assertEqual(2, len(found))
+
+        with self.assertRaises(ValueError):
+            self.model.find_matings()
+
+    def test_update_mating(self):
+
+        sow = Pig(id="123456", birthday="2020-05-12", farm="test farm")
+        estrus = Estrus(sow=sow, estrus_datetime="2021-05-12 12:00:00")
+        boar = Pig(id="123455", birthday="2020-05-12", farm="test farm")
+        mating = Mating(estrus=estrus, mating_datetime="2021-05-12 12:00:00", boar=boar)
+        self.model.insert_pig(sow)
+        self.model.insert_pig(boar)
+        self.model.insert_estrus(estrus)
+        self.model.insert_mating(mating)
+        mating.set_mating_datetime("2021-05-13 12:00:00")
+        self.model.insert_mating(mating)
+        boar = Pig(id="111111", birthday="2019-05-12", farm="test farm")
+        self.model.insert_pig(boar)
+        mating.set_boar(boar)
+        self.model.update_mating(mating)
+        found = self.model.find_matings(equal={"mating_datetime": "2021-05-13 12:00:00"})
+        self.assertEqual("111111", found[0].get_boar().get_id())
+        found = self.model.find_matings(equal={"mating_datetime": "2021-05-12 12:00:00"})
+        self.assertEqual("123455", found[0].get_boar().get_id())
+        
 
 if __name__ == '__main__':
     unittest.main()

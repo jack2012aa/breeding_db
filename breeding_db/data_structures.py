@@ -333,23 +333,19 @@ class Estrus:
         :param parity: a non-negative int indicates how many time did the sow \
             being pregnant, defaults to None
         """
+        self.__sow: Pig = None
+        self.__estrus_datetime: datetime = None
+        self.__pregnant: PregnantStatus = None
+        self.__parity: int = None
 
         if sow is not None:
             self.set_sow(sow)
-        else:
-            self.__sow: Pig = None
         if estrus_datetime is not None:
             self.set_estrus_datetime(estrus_datetime)
-        else:
-            self.__estrus_datetime: datetime = None
         if pregnant is not None:
             self.set_pregnant(pregnant)
-        else:
-            self.__pregnant: PregnantStatus = None
         if parity is not None:
             self.__parity(parity)
-        else:
-            self.__parity: int = None
 
     def __str__(self):
 
@@ -519,19 +515,17 @@ class Mating:
             defaults to None
         :param boar: the male in the mating, should be unique , defaults to None
         """
+        
+        self.__estrus: Estrus = None
+        self.__mating_datetime: datetime = None
+        self.__boar: Pig = None
 
         if estrus is not None:
             self.set_estrus(estrus)
-        else:
-            self.__estrus: Estrus = None
         if mating_datetime is not None:
             self.set_mating_datetime(mating_datetime)
-        else:
-            self.__mating_datetime: datetime = None
         if boar is not None:
             self.set_boar(boar)
-        else:
-            self.__boar: Pig = None
 
     def __str__(self) -> str:
 

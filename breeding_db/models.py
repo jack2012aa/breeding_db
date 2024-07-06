@@ -77,6 +77,63 @@ class Model():
             cursor.close()
             connection.commit()
 
+    def __generate_qeury_string(
+        self,
+        table_name: str, 
+        equal: dict = {},
+        larger: dict = {},
+        smaller: dict = {},
+        larger_equal: dict = {},
+        smaller_equal: dict = {},
+        order_by: str = None
+    ) -> str:
+        """Generate a sql query string look like:
+        `SELECT * FROM {table_name} WHERE {conditions};`
+
+        :param table_name: table's name in the database.
+        :param equal: query will be `key`=`value`
+        :param larger: query will be `key`>`value`
+        :param smaller: query will be `key`<`value`
+        :param larger_equal: query will be `key`>=`value`
+        :param smaller_equal: query will be `key`<=`value`
+        :param order_by: `column_name` `ASC|DESC`
+        :raises ValueError: if all conditions are empty
+        :raises TypeError: if passing in any parameter with incorrect type.
+        :return: a sql query string.
+        """
+        
+        type_check(table_name, "table_name", str)
+        type_check(equal, "equal", dict)
+        type_check(larger, "larger", dict)
+        type_check(larger_equal, "larger_equal", dict)
+        type_check(smaller, "smaller", dict)
+        type_check(smaller_equal, "smaller_equal", dict)
+        if order_by is not None:
+            type_check(order_by, "order_by", str)
+
+        conditions = []
+        for key, value in equal.items():
+            conditions.append("{key}='{value}'".format(key=str(key), value=str(value)))
+        for key, value in larger.items():
+            conditions.append("{key}>'{value}'".format(key=str(key), value=str(value)))
+        for key, value in smaller.items():
+            conditions.append("{key}<'{value}'".format(key=str(key), value=str(value)))
+        for key, value in larger_equal.items():
+            conditions.append("{key}>='{value}'".format(key=str(key), value=str(value)))
+        for key, value in smaller_equal.items():
+            conditions.append("{key}<='{value}'".format(key=str(key), value=str(value)))
+
+        if len(conditions) == 0:
+            msg = "Searching condition can not be empty."
+            logging.error(msg)
+            raise ValueError(msg)
+
+        sql_query = f"SELECT * FROM {table_name} WHERE {' AND '.join(conditions)}"
+        if order_by is not None:
+            sql_query = "".join([sql_query, "ORDER BY ", order_by])
+        sql_query = "".join([sql_query, ";"])
+        return sql_query
+
     def __get_pig_attributes(self, pig: Pig) -> dict:
         """ Generate a dictionary of non-empty attributes."""
 
@@ -226,37 +283,15 @@ class Model():
         :raises: TypeError, ValueError.
         """
 
-        type_check(equal, "equal", dict)
-        type_check(smaller, "smaller", dict)
-        type_check(larger, "larger", dict)
-        type_check(larger_equal, "larger_equal", dict)
-        type_check(smaller_equal, "smaller_equal", dict)
-        if order_by is not None:
-            type_check(order_by, "order_by", str)
-
-        conditions = []
-        for key, value in equal.items():
-            conditions.append("{key}='{value}'".format(key=str(key), value=str(value)))
-        for key, value in larger.items():
-            conditions.append("{key}>'{value}'".format(key=str(key), value=str(value)))
-        for key, value in smaller.items():
-            conditions.append("{key}<'{value}'".format(key=str(key), value=str(value)))
-        for key, value in larger_equal.items():
-            conditions.append("{key}>='{value}'".format(key=str(key), value=str(value)))
-        for key, value in smaller_equal.items():
-            conditions.append("{key}<='{value}'".format(key=str(key), value=str(value)))
-
-        if len(conditions) == 0:
-            msg = "Searching condition can not be empty."
-            logging.error(msg)
-            raise ValueError(msg)
-        
-        sql_query = "SELECT * FROM Pigs WHERE {condition}".format(
-            condition=" AND ".join(conditions)
+        sql_query = self.__generate_qeury_string(
+            table_name="Matings", 
+            equal=equal, 
+            larger=larger, 
+            smaller=smaller, 
+            larger_equal=larger_equal, 
+            smaller_equal=smaller_equal, 
+            order_by=order_by
         )
-        if order_by is not None:
-            sql_query = "".join([sql_query, "ORDER BY ", order_by])
-        sql_query = "".join([sql_query, ";"])
         results = self.__query(sql_query)
         pigs = []
         for pig in results:
@@ -354,7 +389,7 @@ class Model():
             raise KeyError(msg)
         
     def dict_to_estrus(self, estrus_dict: dict) -> Estrus | None:
-        """Transform a dictionary from query to an unique pig instance.
+        """Transform a dictionary from query to an unique estrus instance.
 
         If the estrus is not unique, None will be returned. \
 
@@ -409,38 +444,16 @@ class Model():
         :param order_by: `column_name` `ASC|DESC`
         :raises: TypeError, ValueError.
         """
-
-        type_check(equal, "equal", dict)
-        type_check(smaller, "smaller", dict)
-        type_check(larger, "larger", dict)
-        type_check(larger_equal, "larger_equal", dict)
-        type_check(smaller_equal, "smaller_equal", dict)
-        if order_by is not None:
-            type_check(order_by, "order_by", str)
-
-        conditions = []
-        for key, value in equal.items():
-            conditions.append("{key}='{value}'".format(key=str(key), value=str(value)))
-        for key, value in larger.items():
-            conditions.append("{key}>'{value}'".format(key=str(key), value=str(value)))
-        for key, value in smaller.items():
-            conditions.append("{key}<'{value}'".format(key=str(key), value=str(value)))
-        for key, value in larger_equal.items():
-            conditions.append("{key}>='{value}'".format(key=str(key), value=str(value)))
-        for key, value in smaller_equal.items():
-            conditions.append("{key}<='{value}'".format(key=str(key), value=str(value)))
-
-        if len(conditions) == 0:
-            msg = "Searching condition can not be empty."
-            logging.error(msg)
-            raise ValueError(msg)
-
-        sql_query = "SELECT * FROM Estrus WHERE {condition}".format(
-            condition=" AND ".join(conditions)
+        sql_query = self.__generate_qeury_string(
+            table_name="Estrus", 
+            equal=equal, 
+            larger=larger, 
+            smaller=smaller, 
+            larger_equal=larger_equal, 
+            smaller_equal=smaller_equal, 
+            order_by=order_by
         )
-        if order_by is not None:
-            sql_query = "".join([sql_query, "ORDER BY ", order_by])
-        sql_query = "".join([sql_query, ";"])
+
         results = self.__query(sql_query)
         estrus = []
         for dictionary in results:
@@ -539,3 +552,118 @@ class Model():
             msg += f"\n boar: {mating.get_boar()}."
             logging.error(msg)
             raise KeyError(msg)
+        
+    def dict_to_mating(self, mating_dict: dict) -> Mating | None:
+        """Transform a dictionary from query to an unique Mating instance.
+
+        If the estrus is not unique, None will be returned. \
+
+        :param mating_dict: a dictionary contains attributes of Mating.
+        :return: a Mating object or None if mating is not unique.
+        """
+
+        type_check(mating_dict, "mating_dict", dict)
+
+        mating = Mating()
+        estrus = Estrus()
+        sow = Pig()
+        if mating_dict.get("sow_id") is not None:
+            sow.set_id(mating_dict.get("sow_id"))
+        if mating_dict.get("sow_farm") is not None:
+            sow.set_farm(mating_dict.get("sow_farm"))
+        if mating_dict.get("sow_birthday") is not None:
+            sow.set_birthday(mating_dict.get("sow_birthday"))
+        if sow.is_unique():
+            estrus.set_sow(sow)
+        if mating_dict.get("estrus_datetime") is not None:
+            estrus.set_estrus_datetime(mating_dict.get("estrus_datetime"))
+        if estrus.is_unique():
+            mating.set_estrus(estrus)
+        boar = Pig()
+        if mating_dict.get("boar_id") is not None:
+            boar.set_id(mating_dict.get("boar_id"))
+        if mating_dict.get("boar_farm") is not None:
+            boar.set_farm(mating_dict.get("boar_farm"))
+        if mating_dict.get("boar_birthday") is not None:
+            boar.set_birthday(mating_dict.get("boar_birthday"))
+        if boar.is_unique():
+            mating.set_boar(boar)
+        if mating_dict.get("mating_datetime") is not None:
+            mating.set_mating_datetime(mating_dict.get("mating_datetime"))
+        
+        if not mating.is_unique():
+            return None
+        return mating
+
+    def find_matings(
+            self,
+            equal: dict = {},
+            larger: dict = {},
+            smaller: dict = {},
+            larger_equal: dict = {},
+            smaller_equal: dict = {},
+            order_by: str = None
+        ) -> list[Mating]:
+        """ Find all matings satisfy the conditions. 
+
+        Please make sure:
+        * Keys of the dictionary should be same as attributes.
+        * Different conditions will be connected by AND.
+        * Sow should be listed as sow_id, sow_birthday, ...
+        * Boar should be listed as boar_id, boar_birthday, ...
+        
+        :param equal: query will be `key`=`value`
+        :param larger: query will be `key`>`value`
+        :param smaller: query will be `key`<`value`
+        :param larger_equal: query will be `key`>=`value`
+        :param smaller_equal: query will be `key`<=`value`
+        :param order_by: `column_name` `ASC|DESC`
+        :raises: TypeError, ValueError.
+        """
+
+        sql_query = self.__generate_qeury_string(
+            table_name="Matings", 
+            equal=equal, 
+            larger=larger, 
+            smaller=smaller, 
+            larger_equal=larger_equal, 
+            smaller_equal=smaller_equal, 
+            order_by=order_by
+        )
+        results = self.__query(sql_query)
+        matings = []
+        for dictionary in results:
+            matings.append(self.dict_to_mating(dictionary))
+
+        return matings
+    
+    def update_mating(self, mating: Mating) -> None:
+        """ Update attributes of a Mating in the database.
+
+        :param estrus: an unique Mating instance. attributes except primary \
+            keys will be updatad.
+        :raises: TypeError, ValueError.
+        """
+
+        type_check(mating, "mating", Mating)
+        if not mating.is_unique():
+            msg = f"mating should be unique. Got {mating}."
+            logging.error(msg)
+            raise ValueError(msg)
+
+        attributes = self.__get_mating_attributes(mating)
+        setting = []
+        for key, value in attributes.items():
+            if value is not None:
+                setting.append("{key}='{value}'".format(key=key, value=value))
+        condition = f"sow_id='{mating.get_estrus().get_sow().get_id()}' and "
+        condition += f"sow_birthday='{str(mating.get_estrus().get_sow().get_birthday())}' and "
+        condition += f"sow_farm='{mating.get_estrus().get_sow().get_farm()}' and "
+        condition += f"estrus_datetime='{str(mating.get_estrus().get_estrus_datetime())}' and "
+        condition += f"mating_datetime='{str(mating.get_mating_datetime())}'"
+        sql_query = "UPDATE Matings SET {setting} WHERE {condition};".format(
+            setting=", ".join(setting),
+            condition=condition
+        )
+
+        self.__query(sql_query)
