@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 from datetime import date, datetime
 
-from breeding_db.data_structures import Estrus, Mating, Pig, PregnantStatus
+from breeding_db.data_structures import *
 
 
 class PigTestCase(unittest.TestCase):
@@ -383,6 +383,110 @@ class MatingTestCase(unittest.TestCase):
         boar.set_farm("test")
         self.mating.set_boar(boar)
         self.assertNotEqual(self.mating, mating)
+
+
+class FarrowingTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.farrowing = Farrowing()
+
+    def tearDown(self) -> None:
+        self.farrowing = None
+
+    def test_set(self):
+
+        self.assertFalse(self.farrowing.is_unique())
+
+        # Set estrus.
+        sow = Pig(id="123456", birthday="1999-05-12", farm="test farm")
+        estrus = Estrus(sow=sow)
+        with self.assertRaises(ValueError):
+            self.farrowing.set_estrus(estrus)
+        estrus.set_estrus_datetime("2000-05-12 12:00:00")
+        self.farrowing.set_estrus(estrus)
+        self.assertEqual(self.farrowing.get_estrus(), estrus)
+        self.assertRaises(TypeError, self.farrowing.set_estrus, "No")
+        self.assertTrue(self.farrowing.is_unique())
+
+        # Set farrowing date.
+        self.farrowing.set_farrowing_date("2000-09-03")
+        self.assertEqual(self.farrowing.get_farrowing_date(), date(2000, 9, 3))
+        self.assertRaises(TypeError, self.farrowing.set_farrowing_date, None)
+        self.assertRaises(ValueError, self.farrowing.set_farrowing_date, "2000/9/12")
+        
+        # Incorrect farrowing date and estrus date.
+        self.assertRaises(ValueError, self.farrowing.set_farrowing_date, "2000-08-10")
+        self.assertRaises(ValueError, self.farrowing.set_farrowing_date, "2000-10-9")
+        self.farrowing = Farrowing(farrowing_date="2000-08-10")
+        estrus.set_estrus_datetime("2000-05-12 12:00:00")
+        self.assertRaises(ValueError, self.farrowing.set_estrus, estrus)
+        estrus.set_estrus_datetime("2000-03-13 12:00:00")
+        self.assertRaises(ValueError, self.farrowing.set_estrus, estrus)
+
+        # Set crushed.
+        self.farrowing.set_crushed(5)
+        self.assertEqual(5, self.farrowing.get_crushed())
+        self.assertRaises(TypeError, self.farrowing.set_crushed, "3")
+        self.assertRaises(ValueError, self.farrowing.set_crushed, -1)
+        self.assertRaises(ValueError, self.farrowing.set_crushed, 100)
+        
+        # Set black.
+        self.farrowing.set_black(5)
+        self.assertEqual(5, self.farrowing.get_black())
+        self.assertRaises(TypeError, self.farrowing.set_black, "3")
+        self.assertRaises(ValueError, self.farrowing.set_black, -1)
+        self.assertRaises(ValueError, self.farrowing.set_black, 100)
+
+        # Set weak.
+        self.farrowing.set_weak(5)
+        self.assertEqual(5, self.farrowing.get_weak())
+        self.assertRaises(TypeError, self.farrowing.set_weak, "3")
+        self.assertRaises(ValueError, self.farrowing.set_weak, -1)
+        self.assertRaises(ValueError, self.farrowing.set_weak, 100)
+
+        # Set malformation.
+        self.farrowing.set_malformation(5)
+        self.assertEqual(5, self.farrowing.get_malformation())
+        self.assertRaises(TypeError, self.farrowing.set_malformation, "3")
+        self.assertRaises(ValueError, self.farrowing.set_malformation, -1)
+        self.assertRaises(ValueError, self.farrowing.set_malformation, 100)
+
+        # Set dead.
+        self.farrowing.set_dead(5)
+        self.assertEqual(5, self.farrowing.get_dead())
+        self.assertRaises(TypeError, self.farrowing.set_dead, "3")
+        self.assertRaises(ValueError, self.farrowing.set_dead, -1)
+        self.assertRaises(ValueError, self.farrowing.set_dead, 100)
+
+        # Set n_of_male.
+        self.farrowing.set_n_of_male(1)
+        self.assertEqual(1, self.farrowing.get_n_of_male())
+        self.assertRaises(TypeError, self.farrowing.set_n_of_male, "3")
+        self.assertRaises(ValueError, self.farrowing.set_n_of_male, -1)
+        self.assertRaises(ValueError, self.farrowing.set_n_of_male, 6)
+
+        # Set n_of_female.
+        self.farrowing.set_n_of_female(1)
+        self.assertEqual(1, self.farrowing.get_n_of_female())
+        self.assertRaises(TypeError, self.farrowing.set_n_of_female, "3")
+        self.assertRaises(ValueError, self.farrowing.set_n_of_female, -1)
+        self.assertRaises(ValueError, self.farrowing.set_n_of_male, 5)
+
+        # Set n_of_total_weight.
+        self.farrowing.set_total_weight(5)
+        self.assertEqual(5, self.farrowing.get_total_weight())
+        self.assertRaises(TypeError, self.farrowing.set_total_weight, "3")
+        self.assertRaises(ValueError, self.farrowing.set_total_weight, -1)
+
+        # Set note.
+        self.farrowing.set_note("HI")
+        self.assertEqual("HI", self.farrowing.get_note())
+        self.assertRaises(TypeError, self.farrowing.set_note, 12)
+
+        # total number dead.
+        self.assertEqual(25, self.farrowing.get_born_dead())
+        self.assertEqual(2, self.farrowing.get_born_alive())
+        self.assertEqual(27, self.farrowing.get_total_born())
 
 
 if __name__ == '__main__':

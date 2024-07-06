@@ -4,14 +4,15 @@ __all__ = [
     "Pig", 
     "PregnantStatus", 
     "Estrus", 
-    "Mating"
+    "Mating", 
+    "Farrowing"
 ]
 
 import logging
 from enum import Enum
 from datetime import date, datetime, timedelta
 
-from breeding_db.general import type_check, transform_date
+from breeding_db.general import type_check, transform_date, add_with_none
 
 
 class Pig:
@@ -723,3 +724,467 @@ class Mating:
     def get_boar(self) -> Pig:
 
         return self.__boar
+    
+
+class Farrowing():
+
+    def __init__(
+        self, 
+        estrus: Estrus = None, 
+        farrowing_date: str | date = None, 
+        crushed: int = None, 
+        black: int = None, 
+        weak: int = None, 
+        malformation: int = None,
+        dead: int = None,
+        total_weight: int = None,
+        n_of_male: int = None,
+        n_of_female: int = None,
+        note: str = None
+    ) -> None:
+        """A class represent a farrowing record.
+
+        :param estrus: which estrus record is this farrowing record belongs.
+        :param farrowing_date: date of farrowing, should be in ISO format.
+        :param crushed: number of piglets killed by being crushed by the sow.
+        :param black: number of piglets born as black dead bodies.
+        :param weak: number of piglets die because of weakness.
+        :param malformation: number of piglets born as malformation dead bodies.
+        :param dead: number of piglets born as dead bodies which have no \
+            symptoms.
+        :param total_weight: total weight of alive piglets.
+        :param n_of_male: total number of alive male piglets.
+        :param n_of_female: total number of alive female piglets.
+        :param note: farm's note.
+        :raises TypeError: if pass in wrong arguments type.
+        :raises ValueError: if pass in incorrect arguments.
+        """
+        
+        self.__estrus: Estrus = None
+        self.__farrowing_date: date = None
+        self.__crushed: int = None
+        self.__black: int = None
+        self.__weak: int = None
+        self.__malformation: int = None
+        self.__dead: int = None
+        self.__total_weight: int = None
+        self.__n_of_male: int = None
+        self.__n_of_female: int = None
+        self.__note: str = None
+
+        if estrus is not None:
+            self.set_estrus(estrus)
+        if farrowing_date is not None:
+            self.set_farrowing_date(farrowing_date)
+        if crushed is not None:
+            self.set_crushed(crushed)
+        if black is not None:
+            self.set_black(black)
+        if weak is not None:
+            self.set_weak(weak)
+        if malformation is not None:
+            self.set_malformation(malformation)
+        if dead is not None:
+            self.set_dead(dead)
+        if total_weight is not None:
+            self.set_total_weight(total_weight)
+        if n_of_male is not None:
+            self.set_n_of_male(n_of_male)
+        if n_of_female is not None:
+            self.set_n_of_female(n_of_female)
+        if note is not None:
+            self.set_note(note)
+
+    def __str__(self) -> str:
+        
+        if self.__estrus is not None:
+            s = "\n".join([
+                "母豬耳號 sow_id：{id}".format(id=str(self.__estrus.get_sow().get_id())),
+                "母豬生日 sow_birthday：{birthday}".format(birthday=str(self.__estrus.get_sow().get_birthday())), 
+                "母豬所屬牧場 sow_farm：{farm}".format(farm=str(self.__estrus.get_sow().get_farm())),
+                "發情日期 sow_estrus_datetime：{date_}".format(date_=str(self.__estrus.get_estrus_datetime())),
+            ])
+        else:
+            s = "\n".join([
+                "母豬耳號 sow_id：None",
+                "母豬生日 sow_birthday：None", 
+                "母豬所屬牧場 sow_farm：None", 
+                "發情日期 sow_estrus_datetime：None"
+            ])
+        s = "\n".join([
+            s,
+            "分娩日期 farrowing_date：{date}".format(date=str(self.__farrowing_date)),
+            "壓死 crushing：{crushing}".format(crushing=str(self.__crushed)),
+            "黑胎 black：{black}".format(black=str(self.__black)),
+            "體弱 weak：{weak}".format(weak=str(self.__weak)),
+            "畸形 malformation:{malformation}".format(malformation=str(self.__malformation)),
+            "死胎 dead：{dead}".format(dead=str(self.__dead)),
+            "總仔數 total_born：{total_born}".format(total_born=str(self.get_total_born())),
+            "活仔數 born_alive：{born_alive}".format(born_alive=str(self.get_born_alive())),
+            "死仔數 born_dead：{born_dead}".format(born_dead=str(self.get_born_dead())),
+            "窩重 total_weight：{weight}".format(weigth=str(self.__total_weight)),
+            "公豬數 n_of_male：{male}".format(male=str(self.__n_of_male)),
+            "母豬數 n_of_female：{female}".format(female=str(self.__n_of_female)),
+            "備註 note：{note}".format(note=str(self.__note))
+        ])
+
+        return s
+    
+    def __eq__(self, __value: object) -> bool:
+        
+        if __value is None:
+            return False
+        
+        if not isinstance(__value, Farrowing):
+            raise TypeError("Can not compare Farrowing with {type_}".format(type_=str(type(__value))))
+        
+        result = True
+
+        # Compare estrus
+        if self.__estrus is None and __value.get_estrus() is None:
+            pass
+        elif self.__estrus is None or __value.get_estrus() is None:
+            return False
+        else:
+            result = result \
+                and (self.__estrus.get_sow().get_id() == __value.get_estrus().get_sow().get_id())\
+                and (self.__estrus.get_sow().get_birthday() == __value.get_estrus().get_sow().get_birthday())\
+                and (self.__estrus.get_sow().get_farm() == __value.get_estrus().get_sow().get_farm())\
+                and (self.__estrus.get_estrus_datetime() == __value.get_estrus().get_estrus_datetime())
+            
+        return result \
+            and (self.__farrowing_date == __value.get_farrowing_date()) \
+            and (self.__crushed == __value.get_crushed()) \
+            and (self.__black == __value.get_black()) \
+            and (self.__weak == __value.get_weak()) \
+            and (self.__malformation == __value.get_malformation()) \
+            and (self.__dead == __value.get_dead())\
+            and (self.__total_weight == __value.get_total_weight()) \
+            and (self.__n_of_male == __value.get_n_of_male()) \
+            and (self.__n_of_female == __value.get_n_of_female())
+    
+    def __check_total_born(self) -> None:
+        """Check whether total born is smaller or equal to 30.
+
+        :param added: number want to add after check.
+        :raises ValueError: if total born is larger than 30.
+        """
+
+        if self.get_total_born() > 30:
+            msg = "total born can not be larger than 30. "
+            msg += f"Got {self.get_total_born()}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+    def is_unique(self) -> bool:
+
+        return self.__estrus is not None
+
+    def set_estrus(self, estrus: Estrus) -> None:
+        """Set the estrus which this farrowing record belongs to.
+
+        estrus date must in range [farrowing date - 140, farrowing date - 100].
+
+        :param estrus: an unique Estrus object.
+        :raises TypeError: if pass in incorrect type.
+        :raises ValueError: if pass in not unique `estrus`
+        :raises ValueError: if farrowing date - estrus date is larger than 140 \
+            days or smaller than 100 days.
+        """
+
+        type_check(estrus, "estrus", Estrus)
+        
+        if not estrus.is_unique():
+            msg = f"estrus should be unique. \nGot {estrus}."
+            logging.error(msg)
+            raise ValueError(estrus)
+        
+        if self.__farrowing_date is not None:
+            estrus_date = estrus.get_estrus_datetime().date()
+            if self.__farrowing_date - estrus_date > timedelta(140):
+                msg = f"Time gap between estrus date is longer than 140 days."
+                msg += f"\nestrus date: {estrus_date}."
+                msg += f"\nfarrowing date: {self.__farrowing_date}."
+                logging.error(msg)
+                raise ValueError(msg)
+            if self.__farrowing_date - estrus_date < timedelta(100):
+                msg = f"Time gap between estrus date is shorter than 100 days."
+                msg += f"\nestrus date: {estrus_date}."
+                msg += f"\nfarrowing date: {self.__farrowing_date}."
+                logging.error(msg)
+                raise ValueError(msg)
+            
+        self.__estrus = estrus
+
+    def set_farrowing_date(self, farrowing_date: str | date) -> None:
+        """Set farrowing date.
+
+        farrowing date must in range [estrus date + 100, estrus date + 140]
+
+        :param farrowing_date: a string in ISO date format or a datetime.date \
+            object.
+        :raises TypeError: if pass in incorrect argument type.
+        :raises ValueError: if string format incorrect.
+        :raises ValueError: if farrowing date not in range.
+        """
+        
+        farrowing_date = transform_date(farrowing_date)
+        if self.__estrus is not None:
+            estrus_date = self.__estrus.get_estrus_datetime().date()
+            if farrowing_date - estrus_date > timedelta(140):
+                msg = f"Time gap between estrus date is longer than 140 days."
+                msg += f"\nestrus date: {estrus_date}."
+                msg += f"\nfarrowing date: {farrowing_date}."
+                logging.error(msg)
+                raise ValueError(msg)
+            if farrowing_date - estrus_date < timedelta(100):
+                msg = f"Time gap between estrus date is shorter than 100 days."
+                msg += f"\nestrus date: {estrus_date}."
+                msg += f"\nfarrowing date: {farrowing_date}."
+                logging.error(msg)
+                raise ValueError(msg)
+            
+        self.__farrowing_date = farrowing_date
+  
+    def set_crushed(self, crushed: int) -> None:
+        """Set the number of piglets killed by being crushed by the sow.
+
+        :param crushed: the number of piglets killed by being crushed by the sow.
+        :raises TypeError: if pass in incorrect argument type.
+        :raises ValueError: if crushed is smaller than 0.
+        :raises ValueError: if total born is larger than 30.
+        """
+
+        type_check(crushed, "crushed", int)
+        if crushed < 0:
+            msg = f"crushed can not be smaller than 0. Got {crushed}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        old = self.__crushed
+        try:
+            self.__crushed = crushed
+            self.__check_total_born()
+        except ValueError as e:
+            self.__crushed = old
+            raise e
+
+    def set_black(self, black: int) -> None:
+        """Set the number of piglets born as black dead bodies.
+
+        :param black: number of piglets born as black dead bodies.
+        :raises TypeError: if pass in incorrect argument type.
+        :raises ValueError: if black is smaller than 0.
+        :raises ValueError: if total born is larger than 30.
+        """
+
+        type_check(black, "black", int)
+
+        if black < 0:
+            msg = f"black can not be smaller than 0. Got {black}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        old = self.__black
+        try:
+            self.__black = black
+            self.__check_total_born()
+        except Exception as e:
+            self.__black = old
+            raise e
+
+    def set_weak(self, weak: int) -> None:
+        """Set the number of piglets die because of weakness.
+
+        :param weak: number of piglets die because of weakness.
+        :raises TypeError: if pass in incorrect argument type.
+        :raises ValueError: if weak is smaller than 0.
+        :raises ValueError: if total born is larger than 30.
+        """
+
+        type_check(weak, "weak", int)
+
+        if weak < 0:
+            msg = f"weak can not be smaller than 0. Got {weak}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        old = self.__weak
+        try:
+            self.__weak = weak
+            self.__check_total_born()
+        except Exception as e:
+            self.__weak = old
+            raise e
+
+    def set_malformation(self, malformation: int) -> None:
+        """Set the number of piglets born as malformation dead bodies.
+
+        :param malformation: number of piglets born as malformation dead bodies.
+        :raises TypeError: if pass in incorrect argument type.
+        :raises ValueError: if malformation is smaller than 0.
+        :raises ValueError: if total born is larger than 30.
+        """
+
+        type_check(malformation, "malformation", int)
+
+        if malformation < 0:
+            msg = f"malformation can not be smaller than 0. Got {malformation}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        old = self.__malformation
+        try:
+            self.__malformation = malformation
+            self.__check_total_born()
+        except Exception as e:
+            self.__malformation = old
+            raise e
+
+    def set_dead(self, dead: int) -> None:
+        """Set number of piglets born as dead bodies which have no symptoms.\
+
+        :param dead: number of piglets born as dead bodies which have no \
+            symptoms.
+        :raises TypeError: if pass in incorrect argument type.
+        :raises ValueError: if dead is smaller than 0.
+        :raises ValueError: if total born is larger than 30.
+        """
+
+        type_check(dead, "dead", int)
+
+        if dead < 0:
+            msg = f"dead can not be smaller than 0. Got {dead}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        old = self.__dead
+        try:
+            self.__dead = dead
+            self.__check_total_born()
+        except Exception as e:
+            self.__dead = old
+            raise e
+
+    def set_n_of_male(self, n_of_male: int) -> None:
+        """Set the total number of alive male piglets.
+
+        :param n_of_male: total number of alive male piglets.
+        :raises TypeError: if pass in incorrect argument type.
+        :raises ValueError: if n_of_male is smaller than 0.
+        :raises ValueError: if total born is larger than 30.
+        """
+
+        type_check(n_of_male, "n_of_male", int)
+
+        if n_of_male < 0:
+            msg = f"n_of_male can not be smaller than 0. Got {n_of_male}."
+            logging.error(msg)
+            raise ValueError(msg)
+
+        old = self.__n_of_male
+        try:
+            self.__n_of_male = n_of_male
+            self.__check_total_born()
+        except Exception as e:
+            self.__n_of_male = old
+            raise e
+
+    def set_n_of_female(self, n_of_female: int) -> None:
+        """Set the total number of alive female piglets.
+
+        :param n_of_male: total number of alive female piglets.
+        :raises TypeError: if pass in incorrect argument type.
+        :raises ValueError: if n_of_female is smaller than 0.
+        :raises ValueError: if total born is larger than 30.
+        """
+
+        type_check(n_of_female, "n_of_male", int)
+
+        if n_of_female < 0:
+            msg = f"n_of_female can not be smaller than 0. Got {n_of_female}."
+            logging.error(msg)
+            raise ValueError(msg)
+
+        old = self.__n_of_female
+        try:
+            self.__n_of_female = n_of_female
+            self.__check_total_born()
+        except Exception as e:
+            self.__n_of_female = old
+            raise e
+
+    def set_total_weight(self, total_weight: int) -> None:
+        """Set the total weight of alive piglets.
+
+        :param total_weight: total weight of alive piglets.
+        :raises TypeError: if pass in incorrect argument type.
+        :raises ValueError: if total_weight is smaller than 0.
+        """
+
+        type_check(total_weight, "total_weight", int)
+
+        if total_weight < 0:
+            msg = f"total_weight can not be smaller than 0. Got {total_weight}."
+            logging.error(msg)
+            raise ValueError(msg)
+
+        self.__total_weight = total_weight
+
+    def set_note(self, note: str) -> None:
+        """Set farm note.
+
+        :param note: a string note.
+        :raises TypeError: if pass in incorrect argument type.
+        """
+
+        type_check(note, "note", str)
+        self.__note = note
+
+    def get_estrus(self) -> Estrus:
+        return self.__estrus
+    
+    def get_farrowing_date(self) -> date:
+        return self.__farrowing_date
+    
+    def get_crushed(self) -> int:
+        return self.__crushed
+    
+    def get_black(self) -> int:
+        return self.__black
+    
+    def get_weak(self) -> int:
+        return self.__weak
+    
+    def get_malformation(self) -> int:
+        return self.__malformation
+    
+    def get_dead(self) -> int:
+        return self.__dead
+    
+    def get_n_of_male(self) -> int:
+        return self.__n_of_male
+    
+    def get_n_of_female(self) -> int:
+        return self.__n_of_female
+    
+    def get_born_alive(self) -> int:
+        return add_with_none(self.__n_of_male, self.__n_of_female)        
+        
+    def get_born_dead(self) -> int:
+        return add_with_none(
+            self.__crushed, 
+            self.__black, 
+            self.__malformation, 
+            self.__weak, 
+            self.__dead
+        )
+
+    def get_total_born(self) -> int:
+        return self.get_born_alive() + self.get_born_dead()
+    
+    def get_total_weight(self) -> int:
+        return self.__total_weight
+    
+    def get_note(self) -> int:
+        return self.__note

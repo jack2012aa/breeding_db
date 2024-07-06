@@ -1,6 +1,7 @@
 """ Define general functions. """
 
 __all__ = [
+    "add_with_none", 
     "ask", 
     "ask_multiple", 
     "transform_date", 
@@ -12,6 +13,24 @@ import os
 import shutil
 import logging
 from datetime import date
+
+
+def add_with_none(*args: int | float | None):
+    """Add up args, which may contain None.
+
+    :return: sum of args.
+    """
+
+    sum = 0
+    for arg in args:
+        if arg is None:
+            continue
+        if not isinstance(arg, (int, float)):
+            msg = f"arg should be an int or float. Got {type(arg)}."
+            logging.error(msg)
+            raise TypeError(msg)
+        sum += arg
+    return sum
 
 
 def ask(message: str):

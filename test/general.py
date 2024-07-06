@@ -28,6 +28,12 @@ class MyTestCase(unittest.TestCase):
         test_str = "1999/5/12"
         self.assertRaises(ValueError, transform_date, test_str)
 
+    def test_add_with_none(self):
+
+        self.assertEqual(20, add_with_none(None, 10, 5, None, 2, 3))
+        with self.assertRaises(TypeError):
+            add_with_none("12")
+
 
 if __name__ == '__main__':
     unittest.main()

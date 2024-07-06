@@ -45,3 +45,22 @@ CREATE TABLE Matings(
     FOREIGN KEY (sow_id, sow_birthday, sow_farm, estrus_datetime) REFERENCES Estrus(id, birthday, farm, estrus_datetime),
     FOREIGN KEY (boar_id, boar_birthday, boar_farm) REFERENCES Pigs(id, birthday, farm)
 );
+
+CREATE TABLE Farrowings(
+    id varchar(20),
+    birthday date,
+    farm varchar(20),
+    estrus_datetime datetime,
+    farrowing_date date,
+    crushed tinyint unsigned,
+    black tinyint unsigned,
+    weak tinyint unsigned,
+    malformation tinyint unsigned,
+    dead tinyint unsigned,
+    total_weight tinyint unsigned,
+    n_of_male tinyint unsigned,
+    n_of_female tinyint unsigned, 
+    note varchar(20),
+    PRIMARY KEY (id, birthday, farm, estrus_datetime),
+    FOREIGN KEY (id, birthday, farm, estrus_datetime) REFERENCES Estrus (id, birthday, farm, estrus_datetime)
+);
