@@ -4,6 +4,7 @@ import logging
 import pymysql
 
 from breeding_db.general import type_check
+from breeding_db.data_structures import Farrowing
 from breeding_db.data_structures import Pig, Estrus, Mating, PregnantStatus
 
 
@@ -473,7 +474,7 @@ class Model():
             "sow_birthday": None,
             "sow_farm": None,
             "estrus_datetime": None,
-            "mating_datetime": mating.get_mating_datetime() if (mating.get_mating_datetime() is not None) else None,
+            "mating_datetime": mating.get_mating_datetime(),
             "boar_id": mating.get_boar().get_id(),
             "boar_birthday": mating.get_boar().get_birthday(),
             "boar_farm": mating.get_boar().get_farm()
@@ -488,7 +489,7 @@ class Model():
         return attributes
     
     def update_estrus(self, estrus: Estrus) -> None:
-        """ Update attributes of a estrus in the database.
+        """ Update attributes of an estrus in the database.
 
         :param estrus: an unique Estrus instance. attributes except primary \
             keys will be updatad.
@@ -556,7 +557,7 @@ class Model():
     def dict_to_mating(self, mating_dict: dict) -> Mating | None:
         """Transform a dictionary from query to an unique Mating instance.
 
-        If the estrus is not unique, None will be returned. \
+        If the mating is not unique, None will be returned. \
 
         :param mating_dict: a dictionary contains attributes of Mating.
         :return: a Mating object or None if mating is not unique.
@@ -662,6 +663,203 @@ class Model():
         condition += f"estrus_datetime='{str(mating.get_estrus().get_estrus_datetime())}' and "
         condition += f"mating_datetime='{str(mating.get_mating_datetime())}'"
         sql_query = "UPDATE Matings SET {setting} WHERE {condition};".format(
+            setting=", ".join(setting),
+            condition=condition
+        )
+
+        self.__query(sql_query)
+
+
+    def dict_to_farrowing(self, farrowing_dict: dict) -> Farrowing:
+        """Transform a dictionary from query to an unique Farrowing instance.
+
+        If the Farrowing is not unique, None will be returned. \
+
+        :param farrowing_dict: a dictionary contains attributes of Farrowing.
+        :raises TypeError: if farrowing_dict contains incorrect parameters type.
+        :raises ValueError: if pass in incorrect parameter in farrowing_dict.
+        :return: a Farrowing object or None if farrowing is not unique.
+        """
+
+        type_check(farrowing_dict, "farrowing_dict", dict)
+
+        sow = Pig()
+        estrus = Estrus()
+        farrowing = Farrowing()
+
+        # Create sow.
+        if farrowing_dict.get("id") is not None:
+            sow.set_id(farrowing_dict.get("id"))
+        if farrowing_dict.get("birthday") is not None:
+            sow.set_birthday(farrowing_dict.get("birthday"))
+        if farrowing_dict.get("farm") is not None:
+            sow.set_farm(farrowing_dict.get("farm"))
+        if sow.is_unique():
+            estrus.set_sow(sow)
+
+        # Create estrus.
+        if farrowing_dict.get("estrus_datetime") is not None:
+            estrus.set_estrus_datetime(farrowing_dict.get("estrus_datetime"))
+        if estrus.is_unique():
+            farrowing.set_estrus(estrus)
+
+        # Create farrowing.
+        if farrowing_dict.get("farrowing_date") is not None:
+            farrowing.set_farrowing_date(farrowing_dict.get("farrowing_date"))
+        if farrowing_dict.get("crushed") is not None:
+            farrowing.set_crushed(farrowing_dict.get("crushed"))
+        if farrowing_dict.get("black") is not None:
+            farrowing.set_black(farrowing_dict.get("black"))
+        if farrowing_dict.get("weak") is not None:
+            farrowing.set_weak(farrowing_dict.get("weak"))
+        if farrowing_dict.get("malformation") is not None:
+            farrowing.set_malformation(farrowing_dict.get("malformation"))
+        if farrowing_dict.get("dead") is not None:
+            farrowing.set_dead(farrowing_dict.get("dead"))
+        if farrowing_dict.get("total_weight") is not None:
+            farrowing.set_total_weight(farrowing_dict.get("total_weight"))
+        if farrowing_dict.get("n_of_male") is not None:
+            farrowing.set_n_of_male(farrowing_dict.get("n_of_male"))
+        if farrowing_dict.get("n_of_female") is not None:
+            farrowing.set_n_of_female(farrowing_dict.get("n_of_female"))
+        if farrowing_dict.get("note") is not None:
+            farrowing.set_note(farrowing_dict.get("note"))
+
+        if not farrowing.is_unique():
+            return None
+        return farrowing
+    
+    def __get_farrowing_attributes(self, farrowing: Farrowing):
+        """Get a dictionary of attributes.
+
+        None attributes will remain None in the dict.
+        :param farrowing: an Farrowing.
+        """
+
+        attributes = {
+            "id": None,
+            "birthday": None,
+            "farm": None,
+            "estrus_datetime": None,
+            "farrowing_date": farrowing.get_farrowing_date(), 
+            "crushed": farrowing.get_crushed(),
+            "black": farrowing.get_black(),
+            "weak": farrowing.get_weak(),
+            "malformation": farrowing.get_malformation(),
+            "dead": farrowing.get_dead(),
+            "total_weight": farrowing.get_total_weight(),
+            "n_of_male": farrowing.get_n_of_male(),
+            "n_of_female": farrowing.get_n_of_female(), 
+            "note": farrowing.get_note()
+        }
+
+        if farrowing.get_estrus() is not None:
+            attributes["id"] = farrowing.get_estrus().get_sow().get_id()
+            attributes["birthday"] = farrowing.get_estrus().get_sow().get_birthday()
+            attributes["farm"] = farrowing.get_estrus().get_sow().get_farm()
+            attributes["estrus_datetime"] = farrowing.get_estrus().get_estrus_datetime()
+
+        return attributes
+
+    def insert_farrowing(self, farrowing: Farrowing) -> None:
+        """Insert a farrowing record to the database.
+
+        :param farrowing: an unqiue Farrowing.
+        """
+
+        type_check(farrowing, "farrowing", Farrowing)
+        
+        if not farrowing.is_unique():
+            msg = f"farrowing should be unique. Got {farrowing}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        attributes = self.__get_farrowing_attributes(farrowing)
+
+        # Pick non-empty attributes.
+        columns = []
+        values = []
+        for key, item in attributes.items():
+            if item is not None:
+                columns.append(key)
+                values.append("'{item}'".format(item=str(item)))
+        sql_query = "INSERT INTO Farrowings ({columns}) VALUES ({values});".format(
+            columns=", ".join(columns), 
+            values=", ".join(values)
+        )
+
+        try:
+            self.__query(sql_query)
+        except pymysql.err.IntegrityError:
+            msg = "Estrus does not exist in the database."
+            msg += f"\n Get {farrowing.get_estrus()}"
+            raise KeyError(msg)
+        
+    def find_farrowings(
+        self,
+        equal: dict = {},
+        larger: dict = {},
+        smaller: dict = {},
+        larger_equal: dict = {},
+        smaller_equal: dict = {},
+        order_by: str = None
+    ) -> list[Farrowing]:
+        """ Find all farrowings satisfy the conditions. 
+
+        Please make sure:
+        * Keys of the dictionary should be same as attributes.
+        * Different conditions will be connected by AND.
+        * Sow should be listed as id, birthday, ...
+        
+        :param equal: query will be `key`=`value`
+        :param larger: query will be `key`>`value`
+        :param smaller: query will be `key`<`value`
+        :param larger_equal: query will be `key`>=`value`
+        :param smaller_equal: query will be `key`<=`value`
+        :param order_by: `column_name` `ASC|DESC`
+        :raises: TypeError, ValueError.
+        """
+        sql_query = self.__generate_qeury_string(
+            table_name="Farrowings", 
+            equal=equal, 
+            larger=larger, 
+            smaller=smaller, 
+            larger_equal=larger_equal, 
+            smaller_equal=smaller_equal, 
+            order_by=order_by
+        )
+
+        results = self.__query(sql_query)
+        estrus = []
+        for dictionary in results:
+            estrus.append(self.dict_to_farrowing(dictionary))
+
+        return estrus
+    
+    def update_farrowing(self, farrowing: Farrowing) -> None:
+        """ Update attributes of a farrowing in the database.
+
+        :param farrowing: an unique Farrowing instance. attributes except \
+            primary keys will be updatad.
+        :raises: TypeError, ValueError.
+        """
+
+        type_check(farrowing, "farrowing", Farrowing)
+        if not farrowing.is_unique():
+            msg = f"farrowing should be unique. Got {farrowing}."
+            logging.error(msg)
+            raise ValueError(msg)
+
+        attributes = self.__get_farrowing_attributes(farrowing)
+        setting = []
+        for key, value in attributes.items():
+            if value is not None:
+                setting.append("{key}='{value}'".format(key=key, value=value))
+        condition = f"id='{farrowing.get_estrus().get_sow().get_id()}' and "
+        condition += f"birthday='{str(farrowing.get_estrus().get_sow().get_birthday())}' and "
+        condition += f"farm='{farrowing.get_estrus().get_sow().get_farm()}' and "
+        condition += f"estrus_datetime='{str(farrowing.get_estrus().get_estrus_datetime())}'"
+        sql_query = "UPDATE Farrowings SET {setting} WHERE {condition};".format(
             setting=", ".join(setting),
             condition=condition
         )

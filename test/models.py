@@ -11,6 +11,7 @@ class ModelTest(unittest.TestCase):
         self.model = Model("test/helper/database_settings.json")
 
     def tearDown(self):
+        self.model._delete_all("Farrowings")
         self.model._delete_all("Matings")
         self.model._delete_all("Estrus")
         self.model._delete_all("Pigs")
@@ -334,7 +335,183 @@ class ModelTest(unittest.TestCase):
         self.assertEqual("111111", found[0].get_boar().get_id())
         found = self.model.find_matings(equal={"mating_datetime": "2021-05-12 12:00:00"})
         self.assertEqual("123455", found[0].get_boar().get_id())
+
+    def test_dict_to_farrowing(self):
+
+        farrowing_dict = {
+            "id": "123456", 
+            "birthday": "1999-05-12", 
+            "farm": "test farm", 
+            "estrus_datetime": "2000-05-12 12:00:00", 
+            "farrowing_date": "2000-09-03", 
+            "crushed": 1, 
+            "black": 1, 
+            "weak": 1, 
+            "malformation": 1, 
+            "dead": 1, 
+            "total_weight": 100, 
+            "n_of_male": 1, 
+            "n_of_female": 1, 
+            "note": "HI"
+        }
+
+        farrowing = self.model.dict_to_farrowing(farrowing_dict)
+        self.assertEqual("123456", farrowing.get_estrus().get_sow().get_id())
+        self.assertEqual("test farm", farrowing.get_estrus().get_sow().get_farm())
+        self.assertEqual(date(1999, 5, 12), farrowing.get_estrus().get_sow().get_birthday())
+        self.assertEqual(datetime(2000, 5, 12, 12), farrowing.get_estrus().get_estrus_datetime())
+        self.assertEqual(date(2000, 9, 3), farrowing.get_farrowing_date())
+        self.assertEqual(1, farrowing.get_crushed())
+        self.assertEqual(1, farrowing.get_black())
+        self.assertEqual(1, farrowing.get_weak())
+        self.assertEqual(1, farrowing.get_malformation())
+        self.assertEqual(1, farrowing.get_dead())
+        self.assertEqual(100, farrowing.get_total_weight())
+        self.assertEqual(1, farrowing.get_n_of_male())
+        self.assertEqual(1, farrowing.get_n_of_female())
+        self.assertEqual("HI", farrowing.get_note())
+
+        farrowing_dict.pop("estrus_datetime")
+        self.assertIsNone(self.model.dict_to_farrowing(farrowing_dict))
+
+        self.assertRaises(TypeError, self.model.dict_to_farrowing, "Hi")
+
+    def test_get_farrowing_attributes(self):
         
+        sow = Pig(id="123456", birthday="1999-05-12", farm="test farm")
+        estrus = Estrus(sow, "2000-05-12 12:00:00")
+        farrowing = Farrowing(
+            estrus=estrus, 
+            farrowing_date="2000-09-03", 
+            crushed=1, 
+            black=1, 
+            weak=1, 
+            malformation=1, 
+            dead=1, 
+            total_weight=100, 
+            n_of_male=1, 
+            n_of_female=1, 
+            note="Hi"
+        )
+        farrowing_dict = self.model._Model__get_farrowing_attributes(farrowing)
+        self.assertEqual(farrowing_dict, {
+            "id": "123456", 
+            "birthday": date(1999, 5, 12), 
+            "farm": "test farm", 
+            "estrus_datetime": datetime(2000, 5, 12, 12), 
+            "farrowing_date": date(2000, 9, 3), 
+            "crushed": 1, 
+            "black": 1, 
+            "weak": 1, 
+            "malformation": 1, 
+            "dead": 1, 
+            "total_weight": 100, 
+            "n_of_male": 1, 
+            "n_of_female": 1, 
+            "note": "Hi"
+        })
+
+    def test_insert_farrowing(self):
+
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        self.model.insert_pig(sow)
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        farrowing = Farrowing(
+            estrus=estrus, 
+            farrowing_date="2000-09-03", 
+            crushed=1, 
+            black=1, 
+            weak=1, 
+            malformation=1, 
+            dead=1, 
+            total_weight=100, 
+            n_of_male=1, 
+            n_of_female=1, 
+            note="Hi"            
+        )
+        self.model.insert_farrowing(farrowing)
+
+    def test_find_farrowing(self):
+
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        self.model.insert_pig(sow)
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        farrowing = Farrowing(
+            estrus=estrus, 
+            farrowing_date="2000-09-03", 
+            crushed=1, 
+            black=1, 
+            weak=1, 
+            malformation=1, 
+            dead=1, 
+            total_weight=100, 
+            n_of_male=1, 
+            n_of_female=1, 
+            note="Hi"            
+        )
+        self.model.insert_farrowing(farrowing)
+        estrus = Estrus(sow=sow, estrus_datetime="2001-05-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        farrowing = Farrowing(
+            estrus=estrus, 
+            farrowing_date="2001-09-03", 
+            crushed=1, 
+            black=1, 
+            weak=1, 
+            malformation=1, 
+            dead=1, 
+            total_weight=100, 
+            n_of_male=1, 
+            n_of_female=2, 
+            note="Hi"            
+        )
+        self.model.insert_farrowing(farrowing)
+        found = self.model.find_farrowings(equal={"n_of_female": 2})
+        self.assertEqual(found[0], farrowing)
+        found = self.model.find_farrowings(equal={"farm": "test farm"})
+        self.assertEqual(len(found), 2)
+
+    def test_update_farrowing(self):
+
+        
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        self.model.insert_pig(sow)
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        farrowing = Farrowing(
+            estrus=estrus, 
+            farrowing_date="2000-09-03", 
+            crushed=1, 
+            black=1, 
+            weak=1, 
+            malformation=1, 
+            dead=1, 
+            total_weight=100, 
+            n_of_male=1, 
+            n_of_female=1, 
+            note="Hi"            
+        )
+        self.model.insert_farrowing(farrowing)
+        farrowing = Farrowing(
+            estrus=estrus, 
+            farrowing_date="2000-09-03", 
+            crushed=1, 
+            black=1, 
+            weak=1, 
+            malformation=1, 
+            dead=1, 
+            total_weight=200, 
+            n_of_male=1, 
+            n_of_female=1, 
+            note="Hi"            
+        )
+        self.model.update_farrowing(farrowing)
+        found = self.model.find_farrowings(equal={"farm": "test farm"})
+        self.assertEqual(200, found[0].get_total_weight())
+        self.assertRaises(TypeError, self.model.update_farrowing, "123456")
+
 
 if __name__ == '__main__':
     unittest.main()

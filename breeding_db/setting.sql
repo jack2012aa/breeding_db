@@ -51,7 +51,7 @@ CREATE TABLE Farrowings(
     birthday date,
     farm varchar(20),
     estrus_datetime datetime,
-    farrowing_date date,
+    farrowing_date date NOT NULL,
     crushed tinyint unsigned,
     black tinyint unsigned,
     weak tinyint unsigned,
