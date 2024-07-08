@@ -822,7 +822,7 @@ class Farrowing():
             "總仔數 total_born：{total_born}".format(total_born=str(self.get_total_born())),
             "活仔數 born_alive：{born_alive}".format(born_alive=str(self.get_born_alive())),
             "死仔數 born_dead：{born_dead}".format(born_dead=str(self.get_born_dead())),
-            "窩重 total_weight：{weight}".format(weigth=str(self.__total_weight)),
+            "窩重 total_weight：{weight}".format(weight=str(self.__total_weight)),
             "公豬數 n_of_male：{male}".format(male=str(self.__n_of_male)),
             "母豬數 n_of_female：{female}".format(female=str(self.__n_of_female)),
             "備註 note：{note}".format(note=str(self.__note))
