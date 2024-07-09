@@ -57,7 +57,7 @@ CREATE TABLE Farrowings(
     weak tinyint unsigned,
     malformation tinyint unsigned,
     dead tinyint unsigned,
-    total_weight tinyint unsigned,
+    total_weight int unsigned,
     n_of_male tinyint unsigned,
     n_of_female tinyint unsigned, 
     note varchar(20),

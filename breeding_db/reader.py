@@ -9,6 +9,7 @@ import pandas as pd
 
 from breeding_db.general import ask, ask_multiple, type_check
 from breeding_db.models import Model
+from breeding_db.data_structures import Farrowing
 from breeding_db.data_structures import Pig, Estrus, Mating, PregnantStatus
 
 
@@ -25,15 +26,6 @@ class ExcelReader():
             logging.error(msg)
             raise FileNotFoundError(msg)
         self.model = Model(path)
-
-    def __create_pig(self) -> Pig:
-        pass
-    
-    def __create_estrus(self) -> Estrus:
-        pass
-
-    def __create_mating(self) -> Mating:
-        pass
 
     def __remove_dash_from_id(self, id: str) -> str:
         """ Remove the dash and none numeric characters in an id, and add a 
@@ -180,6 +172,7 @@ class ExcelReader():
         type_check(farm, "farm", str)
         type_check(output_path, "output_path", str)
         type_check(output_filename, "output_filename", str)
+        type_check(allow_none, "allow_none", bool)
 
         # Standardize the dataframe.
         dataframe.dropna(how = 'all', inplace = True)
@@ -473,6 +466,7 @@ class ExcelReader():
         type_check(farm, "farm", str)
         type_check(output_path, "output_path", str)
         type_check(output_filename, "output_filename", str)
+        type_check(allow_none, "allow_none", bool)
 
         # Standardize the dataframe.
         dataframe.dropna(how="all", inplace=True)
@@ -674,7 +668,6 @@ class ExcelReader():
         })
         report_dataframe.to_csv(os.path.join(output_path, output_filename))
 
-
     def read_and_insert_matings(
         self, 
         farm: str,
@@ -682,8 +675,21 @@ class ExcelReader():
         dataframe: pd.DataFrame = None,
         output_path: str = os.path.curdir, 
         output_filename: str = "output.csv",
-        allow_none: bool = False
     ) -> None:
+        """Read data from excel or dataframe and insert Mating objects into 
+        database.
+
+        Choose to read data from excel or dataframe by passing in 
+        corresponding arguments.
+
+        :param farm: current farm.
+        :param input_path: path of the source csv, including filename.
+        :param dataframe: the source dataframe.
+        :param output_path: path to save the report.
+        :param output_filename: name of the report.
+        :param allow_none: allow empty non-primary key. 
+        :raises: ValueError, FileNotFoundError, TypeError, KeyError.
+        """
 
         # Type check.
         if input_path is None and dataframe is None:
@@ -949,5 +955,223 @@ class ExcelReader():
             "BOAR_ID": "與配公豬", 
             "21th_day_test": "21天測孕", 
             "60th_day_test": "60天測孕"
+        })
+        report_dataframe.to_csv(os.path.join(output_path, output_filename))
+
+    def read_and_insert_farrowings(
+        self, 
+        farm: str,
+        input_path: str = None, 
+        dataframe: pd.DataFrame = None,
+        output_path: str = os.path.curdir, 
+        output_filename: str = "output.csv",
+        allow_none: bool = False
+    ) -> None:
+        """Read data from excel or dataframe and insert Farrowing objects 
+        into database.
+
+        Choose to read data from excel or dataframe by passing in 
+        corresponding arguments.
+
+        :param farm: current farm.
+        :param input_path: path of the source csv, including filename.
+        :param dataframe: the source dataframe.
+        :param output_path: path to save the report.
+        :param output_filename: name of the report.
+        :param allow_none: allow empty non-primary key. 
+        :raises: ValueError, FileNotFoundError, TypeError, KeyError.
+        """
+
+        # Type check.
+        if input_path is None and dataframe is None:
+            msg = "You must choose to read from an excel file or a dataframe."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        if input_path is not None:
+            type_check(input_path, "input_path", str)
+            if not os.path.isfile(input_path):
+                msg = f"File {input_path} does not exist."
+                logging.error(msg)
+                raise FileNotFoundError(msg)
+            dataframe = pd.read_excel(
+                io=input_path, 
+                sheet_name="分娩資料"
+            )
+
+        if dataframe is not None:
+            type_check(dataframe, "dataframe", pd.DataFrame)
+        
+        type_check(farm, "farm", str)
+        type_check(output_path, "output_path", str)
+        type_check(output_filename, "output_filename", str)
+        type_check(allow_none, "allow_none", bool)
+        
+        # Standardize the dataframe.
+        dataframe.dropna(how = 'all', inplace = True)
+        rename_dict = {
+            "生日年品種耳號": "birthyear_breed_id", 
+            "分娩日期": "farrowing_date", 
+            "(公) 小豬": "n_of_male", 
+            "(母) 小豬": "n_of_female", 
+            "壓": "crushed", 
+            "黑": "black", 
+            "弱": "weak", 
+            "畸": "malformation", 
+            "死": "dead", 
+            "出生窩重": "total_weight", 
+            "備註": "note"
+        }
+        dataframe = dataframe.rename(columns=rename_dict)
+        if not set(rename_dict.values()).issubset(dataframe.columns):
+            msg = "Missing key(s) in source excel or DataFrame."
+            logging.error(msg)
+            raise KeyError(msg)
+        dataframe = dataframe.astype("object")
+        
+        # Create farrowings.
+        report_farrowings = []
+        for _, data_row in dataframe.iterrows():
+            error_messages = []
+            farrowing = Farrowing()
+            
+            # Set farrowing date first to do qeury in the finding estrus step.
+            farrowing_date = data_row.get("farrowing_date")
+            try:
+                if pd.isna(farrowing_date):
+                    raise SyntaxError()
+                # pd.Timestamp is a child class of datetime.date 
+                # It will confuse general.transform_date(), so do the 
+                # transformation here.
+                farrowing_date = farrowing_date.date()
+                farrowing.set_farrowing_date(farrowing_date)
+            except SyntaxError:
+                error_messages.append("分娩日期不能為空")
+            except TypeError:
+                error_messages.append("分娩日期格式錯誤")
+            except ValueError as e:
+                if "than 140" in e.args[0]:
+                    error_messages.append("分娩日期與發情日期間隔過長")
+                elif "than 100" in e.args[0]:
+                    error_messages.append("分娩日期與發情日期間隔過短")
+                else:
+                    error_messages.append("分娩日期格式錯誤")
+
+            # Set estrus.
+            birthyear_breed_id = data_row.get("birthyear_breed_id")
+            try:
+                if pd.isna(birthyear_breed_id):
+                    raise SyntaxError()
+                year, breed, id = self.__seperate_year_breed_id(birthyear_breed_id)
+                equal = {"id": id, "farm": farm}
+                larger_equal = {}
+                smaller_equal = {}
+                if year is not None:
+                    larger_equal["birthday"] = f"{year}-01-01"
+                    smaller_equal["birthday"] = f"{year}-12-31"
+                if not pd.isna(farrowing_date):
+                    smaller_equal["estrus_datetime"] = f"{farrowing_date} 10:00:00"
+                found = self.model.find_estrus(
+                    equal=equal, 
+                    smaller_equal=smaller_equal, 
+                    larger_equal=larger_equal, 
+                    order_by="estrus_datetime DESC"
+                )
+                if len(found) == 0:
+                    raise KeyError()
+                farrowing.set_estrus(found[0])
+            except SyntaxError:
+                error_messages.append("耳號不能為空")
+            except KeyError:
+                error_messages.append("資料庫中無所屬發情資料")
+
+            except ValueError as e:
+                if "than 140" in e.args[0]:
+                    error_messages.append("分娩日期與發情日期間隔過長")
+                elif "than 100" in e.args[0]:
+                    error_messages.append("分娩日期與發情日期間隔過短")
+                else:
+                    error_messages.append("未知錯誤")
+
+            # Set numeric attributes.
+            def set_numeric(arg_name, arg_chinese, setting_func):
+                arg = data_row.get(arg_name)
+                try:
+                    if allow_none and pd.isna(arg):
+                        raise ZeroDivisionError()
+                    if not allow_none and pd.isna(arg):
+                        raise SyntaxError()
+                    setting_func(int(arg))
+                except ZeroDivisionError:
+                    pass
+                except SyntaxError:
+                    error_messages.append(f"{arg_chinese}不能為空")
+                except TypeError:
+                    error_messages.append(f"{arg_chinese}格式錯誤")
+                except ValueError as e:
+                    if "invalid literal" in e.args[0]:
+                        error_messages.append(f"{arg_chinese}格式錯誤")
+                    elif "total born" in e.args[0]:
+                        error_messages.append("總出生數超出上限(30)")
+                    elif "than 0" in e.args[0]:
+                        error_messages.append(f"{arg_chinese}不能低於0")
+                    else:
+                        error_messages.append("未知錯誤")
+            
+            set_numeric("crushed", "壓", farrowing.set_crushed)
+            set_numeric("black", "黑", farrowing.set_black)
+            set_numeric("weak", "弱", farrowing.set_weak)
+            set_numeric("malformation", "畸", farrowing.set_malformation)
+            set_numeric("dead", "死", farrowing.set_dead)
+            set_numeric("n_of_male", "(公)小豬", farrowing.set_n_of_male)
+            set_numeric("n_of_female", "(母)小豬", farrowing.set_n_of_female)
+            set_numeric("total_weight", "出生窩重", farrowing.set_total_weight)
+
+            note = data_row.get("note")
+            try:
+                if not pd.isna(note):
+                    farrowing.set_note(note)
+            except TypeError:
+                error_messages.append("備註格式錯誤")
+
+            if len(error_messages) > 0:
+                data_dict = data_row.to_dict()
+                data_dict["錯誤訊息"] = " ".join(error_messages)
+                report_farrowings.append(data_dict)
+                continue
+
+            # Update estrus pregnant status.
+            estrus = found[0]
+            if farrowing.get_born_alive() > 0:
+                estrus.set_pregnant(PregnantStatus.YES)
+                self.model.update_estrus(estrus)
+            
+            # Check duplicate
+            found = self.model.find_farrowings(equal={
+                "id": farrowing.get_estrus().get_sow().get_id(), 
+                "farm": farrowing.get_estrus().get_sow().get_farm(), 
+                "birthday": farrowing.get_estrus().get_sow().get_birthday(), 
+                "estrus_datetime": farrowing.get_estrus().get_estrus_datetime()
+            })
+
+            if len(found) == 0:
+                self.model.insert_farrowing(farrowing)
+                continue
+            if found[0] == farrowing:
+                continue
+
+            msg = "遇到重複分娩紀錄，是否更新資料？Y：更新，N：不更新"
+            msg += f"\n讀到的分娩紀錄：{farrowing}"
+            msg += f"\n已有的分娩紀錄：{found[0]}"
+            if not ask(msg):
+                data_dict = data_row.to_dict()
+                data_dict["錯誤訊息"] = "分娩紀錄已存在於資料庫且與資料庫中數據不相符"
+                report_farrowings.append(data_dict)
+                continue
+            self.model.update_farrowing(farrowing)
+
+        report_dataframe = pd.DataFrame(report_farrowings)
+        report_dataframe = report_dataframe.rename(columns={
+            value: key for key, value in rename_dict.items()
         })
         report_dataframe.to_csv(os.path.join(output_path, output_filename))

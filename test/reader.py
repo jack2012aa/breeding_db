@@ -165,6 +165,35 @@ class MyTestCase(unittest.TestCase):
         dataframe = pd.read_csv("test/helper/garbage/output3.csv")
         self.assertEqual(5, dataframe.shape[0])
 
+    @patch("breeding_db.reader.ask")
+    def test_read_and_insert_matings(self, mock_ask):
+
+        mock_ask.return_value = True
+        self.reader.read_and_insert_pigs(
+            farm="test farm", 
+            input_path="test/helper/farrowing_data/farrowing_data.xlsx", 
+            output_filename="output1.csv", 
+            output_path="test/helper/garbage", 
+            allow_none=True
+        )
+        self.reader.read_and_insert_estrus(
+            farm="test farm", 
+            input_path="test/helper/farrowing_data/farrowing_data.xlsx", 
+            output_filename="output2.csv", 
+            output_path="test/helper/garbage"
+        )
+        self.reader.read_and_insert_farrowings(
+            farm="test farm", 
+            input_path="test/helper/farrowing_data/farrowing_data.xlsx", 
+            output_filename="output3.csv", 
+            output_path="test/helper/garbage"
+        )
+        
+        found = self.model.find_farrowings(equal={"farm": "test farm"})
+        self.assertEqual(49, len(found))
+        dataframe = pd.read_csv("test/helper/garbage/output3.csv")
+        self.assertEqual(13, dataframe.shape[0])
+
 
 if __name__ == '__main__':
     unittest.main()
