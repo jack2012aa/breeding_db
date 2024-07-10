@@ -166,7 +166,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(5, dataframe.shape[0])
 
     @patch("breeding_db.reader.ask")
-    def test_read_and_insert_matings(self, mock_ask):
+    def test_read_and_insert_farrowings(self, mock_ask):
 
         mock_ask.return_value = True
         self.reader.read_and_insert_pigs(
@@ -193,6 +193,40 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(49, len(found))
         dataframe = pd.read_csv("test/helper/garbage/output3.csv")
         self.assertEqual(13, dataframe.shape[0])
+
+    @patch("breeding_db.reader.ask")
+    def test_read_and_insert_weanings(self, mock_ask):
+
+        mock_ask.return_value = True
+        self.reader.read_and_insert_pigs(
+            farm="test farm", 
+            input_path="test/helper/weaning_data/weaning_data.xlsx", 
+            output_filename="output1.csv", 
+            output_path="test/helper/garbage", 
+            allow_none=True
+        )
+        self.reader.read_and_insert_estrus(
+            farm="test farm", 
+            input_path="test/helper/weaning_data/weaning_data.xlsx", 
+            output_filename="output2.csv", 
+            output_path="test/helper/garbage", 
+        )
+        self.reader.read_and_insert_farrowings(
+            farm="test farm", 
+            input_path="test/helper/weaning_data/weaning_data.xlsx", 
+            output_filename="output3.csv", 
+            output_path="test/helper/garbage", 
+        )
+        self.reader.read_and_insert_weanings(
+            farm="test farm", 
+            input_path="test/helper/weaning_data/weaning_data.xlsx", 
+            output_filename="output4.csv", 
+            output_path="test/helper/garbage", 
+        )
+        found = self.model.find_weanings(equal={"farm": "test farm"})
+        self.assertEqual(48, len(found))
+        output = pd.read_csv("test/helper/garbage/output4.csv")
+        self.assertEqual(12, output.shape[0])
 
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ import pandas as pd
 
 from breeding_db.general import ask, ask_multiple, type_check
 from breeding_db.models import Model
-from breeding_db.data_structures import Farrowing
+from breeding_db.data_structures import Farrowing, Weaning
 from breeding_db.data_structures import Pig, Estrus, Mating, PregnantStatus
 
 
@@ -1084,7 +1084,8 @@ class ExcelReader():
                 error_messages.append("耳號不能為空")
             except KeyError:
                 error_messages.append("資料庫中無所屬發情資料")
-
+            except TypeError:
+                error_messages.append("耳號格式錯誤")
             except ValueError as e:
                 if "than 140" in e.args[0]:
                     error_messages.append("分娩日期與發情日期間隔過長")
@@ -1171,6 +1172,211 @@ class ExcelReader():
             self.model.update_farrowing(farrowing)
 
         report_dataframe = pd.DataFrame(report_farrowings)
+        report_dataframe = report_dataframe.rename(columns={
+            value: key for key, value in rename_dict.items()
+        })
+        report_dataframe.to_csv(os.path.join(output_path, output_filename))
+
+    def read_and_insert_weanings(
+        self, 
+        farm: str,
+        input_path: str = None, 
+        dataframe: pd.DataFrame = None,
+        output_path: str = os.path.curdir, 
+        output_filename: str = "output.csv",
+        allow_none: bool = False
+    ) -> None:
+        """Read data from excel or dataframe and insert Weaning objects 
+        into database.
+
+        Choose to read data from excel or dataframe by passing in 
+        corresponding arguments.
+
+        :param farm: current farm.
+        :param input_path: path of the source csv, including filename.
+        :param dataframe: the source dataframe.
+        :param output_path: path to save the report.
+        :param output_filename: name of the report.
+        :param allow_none: allow empty non-primary key. 
+        :raises: ValueError, FileNotFoundError, TypeError, KeyError.
+        """
+
+        # Type check.
+        if input_path is None and dataframe is None:
+            msg = "You must choose to read from an excel file or a dataframe."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        if input_path is not None:
+            type_check(input_path, "input_path", str)
+            if not os.path.isfile(input_path):
+                msg = f"File {input_path} does not exist."
+                logging.error(msg)
+                raise FileNotFoundError(msg)
+            dataframe = pd.read_excel(
+                io=input_path, 
+                sheet_name="離乳資料"
+            )
+
+        if dataframe is not None:
+            type_check(dataframe, "dataframe", pd.DataFrame)
+        
+        type_check(farm, "farm", str)
+        type_check(output_path, "output_path", str)
+        type_check(output_filename, "output_filename", str)
+        type_check(allow_none, "allow_none", bool)
+
+        # Standardize the dataframe.
+        dataframe.dropna(how = 'all', inplace = True)
+        rename_dict = {
+            "生日年品種耳號": "birthyear_breed_id", 
+            "離乳日期": "weaning_date", 
+            "哺乳數": "total_nursed_piglets", 
+            "離乳數": "total_weaning_piglets", 
+            "離乳窩重(kg)": "total_weaning_weight"
+        }
+        dataframe = dataframe.rename(columns=rename_dict)
+        if not set(rename_dict.values()).issubset(dataframe.columns):
+            msg = "Missing key(s) in source excel or DataFrame."
+            logging.error(msg)
+            raise KeyError(msg)
+        dataframe = dataframe.astype("object")
+
+        # Create weanings.
+        report_weanings = []
+        for _, data_row in dataframe.iterrows():
+            error_messages = []
+            weaning = Weaning()
+
+            # Set weaning date first to do query in the finding farrowing step.
+            weaning_date = data_row.get("weaning_date")
+            try:
+                if pd.isna(weaning_date):
+                    raise SyntaxError()
+                # pd.Timestamp is a child class of datetime.date 
+                # It will confuse general.transform_date(), so do the 
+                # transformation here.
+                weaning_date = weaning_date.date()
+                weaning.set_weaning_date(weaning_date)
+            except SyntaxError:
+                error_messages.append("離乳日期不能為空")
+            except TypeError:
+                error_messages.append("離乳日期格式錯誤")
+            except ValueError as e:
+                if "too long" in e.args[0]:
+                    error_messages.append("分娩日期與離乳日期間隔過長")
+                elif "too short" in e.args[0]:
+                    error_messages.append("分娩日期與離乳日期間隔過短")
+                else:
+                    error_messages.append("離乳日期格式錯誤")
+
+            # Set farrowing.
+            birthyear_breed_id = data_row.get("birthyear_breed_id")
+            try:
+                if pd.isna(birthyear_breed_id):
+                    raise SyntaxError()
+                year, breed, id = self.__seperate_year_breed_id(birthyear_breed_id)
+                equal = {"id": id, "farm": farm}
+                larger_equal = {}
+                smaller_equal = {}
+                if year is not None:
+                    larger_equal["birthday"] = f"{year}-01-01"
+                    smaller_equal["birthday"] = f"{year}-12-31"
+                if not pd.isna(weaning_date):
+                    smaller_equal["farrowing_date"] = weaning_date
+                found = self.model.find_farrowings(
+                    equal=equal, 
+                    smaller_equal=smaller_equal, 
+                    larger_equal=larger_equal, 
+                    order_by="farrowing_date DESC"
+                )
+                if len(found) == 0:
+                    raise KeyError()
+                weaning.set_farrowing(found[0])
+            except SyntaxError:
+                error_messages.append("耳號不能為空")
+            except KeyError:
+                error_messages.append("資料庫中無所屬發情資料")
+            except TypeError:
+                error_messages.append("耳號格式錯誤")
+            except ValueError as e:
+                if "too long" in e.args[0]:
+                    error_messages.append("分娩日期與離乳日期間隔過長")
+                elif "too short" in e.args[0]:
+                    error_messages.append("分娩日期與離乳日期間隔過短")
+                else:
+                    error_messages.append("未知錯誤")
+
+            # Set numeric attributes.
+            def set_numeric(arg_name, arg_chinese, setting_func):
+                arg = data_row.get(arg_name)
+                try:
+                    if allow_none and pd.isna(arg):
+                        raise ZeroDivisionError()
+                    if not allow_none and pd.isna(arg):
+                        raise SyntaxError()
+                    setting_func(int(arg))
+                except ZeroDivisionError:
+                    pass
+                except SyntaxError:
+                    error_messages.append(f"{arg_chinese}不能為空")
+                except TypeError:
+                    error_messages.append(f"{arg_chinese}格式錯誤")
+                except ValueError as e:
+                    if "invalid literal" in e.args[0]:
+                        error_messages.append(f"{arg_chinese}格式錯誤")
+                    elif "smaller than 30." in e.args[0]:
+                        error_messages.append(f"{arg_chinese}需小於30")
+                    elif "or equal to 30. " in e.args[0]:
+                        error_messages.append(f"{arg_chinese}需小於30")
+                    elif "total_nursed_piglets must be more than " in e.args[0]:
+                        error_messages.append("離乳數需小於等於哺乳數")
+                    elif "greater or equal to 0. " in e.args[0]:
+                        error_messages.append(f"{arg_chinese}不能低於0")
+                    elif "than 0" in e.args[0]:
+                        error_messages.append(f"{arg_chinese}不能低於0")
+                    else:
+                        error_messages.append("未知錯誤")
+
+            set_numeric("total_nursed_piglets", "哺乳數", weaning.set_total_nursed_piglets)
+            set_numeric("total_weaning_piglets", "離乳數", weaning.set_total_weaning_piglets)
+            set_numeric("total_weaning_weight", "離乳窩重(kg)", weaning.set_total_weaning_weight)
+
+            if len(error_messages) > 0:
+                data_dict = data_row.to_dict()
+                data_dict["錯誤訊息"] = " ".join(error_messages)
+                report_weanings.append(data_dict)
+                continue
+
+            # Check duplicate.
+            id = weaning.get_farrowing().get_estrus().get_sow().get_id()
+            birthday = weaning.get_farrowing().get_estrus().get_sow().get_birthday()
+            estrus_datetime = weaning.get_farrowing().get_estrus().get_estrus_datetime()
+            farrowing_date = weaning.get_farrowing().get_farrowing_date()
+            found = self.model.find_weanings(equal={
+                "id": id, 
+                "birthday": birthday, 
+                "estrus_datetime": estrus_datetime,
+                "farrowing_date": farrowing_date
+            })
+
+            if len(found) == 0:
+                self.model.insert_weaning(weaning)
+                continue
+            if found[0] == weaning:
+                continue
+
+            msg = "遇到重複離乳紀錄，是否更新資料？Y：更新，N：不更新"
+            msg += f"\n讀到的離乳紀錄：{weaning}"
+            msg += f"\n已有的離乳紀錄：{found[0]}"
+            if not ask(msg):
+                data_dict = data_row.to_dict()
+                data_dict["錯誤訊息"] = "離乳紀錄已存在於資料庫且與資料庫中數據不相符"
+                report_weanings.append(data_dict)
+                continue
+            self.model.update_weaning(weaning)
+
+        report_dataframe = pd.DataFrame(report_weanings)
         report_dataframe = report_dataframe.rename(columns={
             value: key for key, value in rename_dict.items()
         })

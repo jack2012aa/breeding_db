@@ -1412,7 +1412,7 @@ class Weaning:
             logging.error(msg)
             raise ValueError(msg)
         if total_weaning_piglets > 30:
-            msg = "total_weaning_piglets must be smaller or equal to 0. "
+            msg = "total_weaning_piglets must be smaller or equal to 30. "
             msg += f"Got {total_weaning_piglets}."
             logging.error(msg)
             raise ValueError(msg)
