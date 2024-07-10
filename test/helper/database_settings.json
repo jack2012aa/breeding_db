@@ -1,7 +1,0 @@
-{
-    "DATABASE_HOST": "localhost",
-    "USER": "root",
-    "PASSWORD": "Timecompressor1919810",
-    "DATABASE": "breeding_dev",
-    "CHARSET": "utf8mb4"
-}
