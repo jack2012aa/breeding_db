@@ -606,12 +606,6 @@ class ExcelReader():
                     }, 
                     order_by="estrus_datetime DESC"
                 )
-                if len(found) > 0:
-                    dt = estrus.get_estrus_datetime().date() # Shorter
-                    found_dt = found[0].get_estrus_datetime().date() # Shorter
-                    if dt < found_dt - timedelta(3) or dt > found_dt + timedelta(3):
-                        error_messages.append("已經有同一胎次資料且日期距離過長")
-                        raise ZeroDivisionError()
                 estrus.set_parity(parity)
             except SyntaxError:
                 error_messages.append("胎次不可為空")
