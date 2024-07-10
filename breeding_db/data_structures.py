@@ -5,7 +5,8 @@ __all__ = [
     "PregnantStatus", 
     "Estrus", 
     "Mating", 
-    "Farrowing"
+    "Farrowing", 
+    "Weaning"
 ]
 
 import logging
@@ -1188,3 +1189,265 @@ class Farrowing():
     
     def get_note(self) -> int:
         return self.__note
+    
+
+class Weaning:
+
+    def __init__(
+        self, 
+        farrowing: Farrowing = None, 
+        weaning_date: str | date = None, 
+        total_nursed_piglets: int = None, 
+        total_weaning_piglets: int = None, 
+        total_weaning_weight: int = None
+    ) -> None:
+        """A class represents a weaning record.
+
+        The primary key of Weaning is estrus. However, corresponding farrowing 
+        data should be in the database.
+
+        :param farrowing: an unique Farrowing.
+        :param weaning_date: weaning date.
+        :param total_nursed_piglets: number of piglets at the beginning \
+            of nursing, which should equal to total born alive + number of \
+            fosterred piglets.
+        :param total_weaning_piglets: number of alive piglets when weaning. 
+        :param total_weaning_weight: weight of alive piglets when weaning in kg.
+        :raises TypeError: if pass in wrong arguments type.
+        :raises ValueError: if pass in incorrect arguments.
+        """
+        
+        self.__farrowing: Farrowing = None
+        self.__weaning_date: date = None
+        self.__total_nursed_piglets: int = None
+        self.__total_weaning_piglets: int = None
+        self.__total_weaning_weight: float = None
+
+        if farrowing is not None:
+            self.set_farrowing(farrowing)
+        if weaning_date is not None:
+            self.set_weaning_date(weaning_date)
+        if total_nursed_piglets is not None:
+            self.set_total_nursed_piglets(total_nursed_piglets)
+        if total_weaning_piglets is not None:
+            self.set_total_weaning_piglets(total_weaning_piglets)
+        if total_weaning_weight is not None:
+            self.set_total_weaning_weight(total_weaning_weight)
+
+    def __str__(self) -> str:
+
+        s = ""
+        if self.__farrowing is not None:
+            s = "\n".join([
+                f"耳號 id: {self.__farrowing.get_sow().get_id()}", 
+                f"生日 birthday: {str(self.__farrowing.get_sow().get_birthday())}", 
+                f"牧場 farm: {self.__farrowing.get_sow().get_farm()}"
+            ])
+
+        s = "\n".join([
+            s, 
+            f"離乳日 weaning_date: {self.__weaning_date}",
+            f"哺乳數 total_nursed_piglets: {self.__total_weaning_piglets}", 
+            f"離乳數 total_weaning_piglets: {self.__total_weaning_piglets}", 
+            f"離乳窩重(kg) total_weaning_weight: {self.__total_weaning_weight}"
+        ])
+
+        return s
+    
+    def __eq__(self, __value: object) -> bool:
+
+        if __value is None:
+            return False
+        
+        if not isinstance(__value, Weaning):
+            msg = f"Can not compare Farrowing to {type(__value)}."
+            logging.error(msg)
+            raise TypeError(msg)
+        
+        # Compare estrus
+        if self.__farrowing is None and __value.get_farrowing() is None:
+            pass
+        elif self.__farrowing is None or __value.get_farrowing() is None:
+            return False
+        else:
+            result = result \
+                and (self.__farrowing.get_sow().get_id() == __value.get_farrowing().get_sow().get_id())\
+                and (self.__farrowing.get_sow().get_birthday() == __value.get_farrowing().get_sow().get_birthday())\
+                and (self.__farrowing.get_sow().get_farm() == __value.get_farrowing().get_sow().get_farm())\
+                and (self.__farrowing.get_estrus_datetime() == __value.get_farrowing().get_estrus_datetime())
+        return result \
+            and (self.__weaning_date == __value.get_weaning_date()) \
+            and (self.__total_nursed_piglets == __value.get_total_nursed_piglets()) \
+            and (self.__total_weaning_piglets == __value.get_total_weaning_piglets()) \
+            and (self.__total_weaning_weight == __value.get_total_weaning_weight())
+    
+    def is_unique(self) -> bool:
+        
+        return self.__farrowing is not None
+
+    def set_farrowing(self, farrowing: Farrowing) -> None:
+        """Set the farrowing which this weaning record belongs to.
+
+        Farrowing date must in range [weaning date - 50, weaning date - 14].
+
+        :param farrowing: an unique Farrowing object.
+        :raises ValueError: if farrowing is not unique.
+        :raises ValueError: if farrowing date out of range.
+        """
+        
+        type_check(farrowing, "farrowing", Farrowing)
+
+        if not farrowing.is_unique():
+            msg = f"farrowing should be unique. \nGot {farrowing}."
+            logging.error(msg)
+            raise ValueError(farrowing)
+
+        farrowing_date = farrowing.get_farrowing_date()
+        if self.__weaning_date is not None and farrowing_date is not None:
+            if self.__weaning_date - farrowing_date < timedelta(14):
+                msg = "Time between farrowing and weaning is too short.\n"
+                msg += f"Weaning date: {self.__weaning_date}. \n"
+                msg += f"Farrowing date: {farrowing_date}."
+                logging.error(msg)
+                raise ValueError(msg)
+            if self.__weaning_date - farrowing_date > timedelta(50):
+                msg = "Time between farrowing and weaning is too long.\n"
+                msg += f"Weaning date: {self.__weaning_date}. \n"
+                msg += f"Farrowing date: {farrowing_date}."
+                logging.error(msg)
+                raise ValueError(msg)
+            
+        self.__farrowing = farrowing
+
+    def set_weaning_date(self, weaning_date: str | date) -> None:
+        """Set weaning date.
+
+        Weaning date must in range [farrowing date + 14, farrowing date + 50].
+
+        :param weaning_date: weaning date in ISO format.
+        :raises TypeError: if weaning_date is not string or datetime.date.
+        :raises ValueError: if weaning_date not in ISO format.
+        :raises ValueError: if weaning_date out of range.
+        """
+        
+        weaning_date = transform_date(weaning_date)
+        farrowing_date = None
+        if self.__farrowing is not None:
+            farrowing_date = self.__farrowing.get_farrowing_date()
+        if farrowing_date is not None:
+            if weaning_date - farrowing_date < timedelta(14):
+                msg = "Time between farrowing and weaning is too short.\n"
+                msg += f"Weaning date: {weaning_date}. \n"
+                msg += f"Farrowing date: {farrowing_date}."
+                logging.error(msg)
+                raise ValueError(msg)
+            if weaning_date - farrowing_date > timedelta(50):
+                msg = "Time between farrowing and weaning is too long.\n"
+                msg += f"Weaning date: {weaning_date}. \n"
+                msg += f"Farrowing date: {farrowing_date}."
+                logging.error(msg)
+                raise ValueError(msg)
+        self.__weaning_date = weaning_date
+
+    def set_total_nursed_piglets(self, total_nursed_piglets: int) -> None:
+        """Set number of piglets at the beginning of nursing, which should 
+        equal to total born alive + number of fosterred piglets.
+
+        total_nursed_piglets must be in range (0, 30]
+
+        :param total_nursed_piglets: number of piglets at the beginning of \
+            nursing, which should equal to total born alive + number of \
+            fosterred piglets.
+        :raises TypeError: if total_nursed_piglets is not int.
+        :raises ValueError: if total_nursed_piglets is smaller than 0.
+        :raises ValueError: if total_nursed_piglets is greater than 30.
+        :raises ValueError: if total_nursed_piglets is less than \
+            total_weaning_piglets.
+        """
+        
+        type_check(total_nursed_piglets, "total_nursed_piglets", int)
+        
+        if total_nursed_piglets <= 0:
+            msg = "total_nursed_piglets must be greater than 0. "
+            msg += f"Got {total_nursed_piglets}."
+            logging.error(msg)
+            raise ValueError(msg)
+        if total_nursed_piglets > 30:
+            msg = "total_nursed_piglets must be smaller than 30. "
+            msg += f"Got {total_nursed_piglets}."
+            logging.error(msg)
+            raise ValueError(msg)
+        if self.__total_weaning_piglets is not None:
+            if total_nursed_piglets < self.__total_weaning_piglets:
+                msg = "total_nursed_piglets must be more than "
+                msg += "total_weaning_piglets. \n"
+                msg += f"total_nursed_piglets: {total_nursed_piglets}. \n"
+                msg += f"total_weaning_piglets: {self.__total_weaning_piglets}."
+                logging.error(msg)
+                raise ValueError(msg)
+        
+        self.__total_nursed_piglets = total_nursed_piglets
+
+    def set_total_weaning_piglets(self, total_weaning_piglets: int) -> None:
+        """Set number of alive piglets when weaning.
+
+        total_weaning_piglets must in range [0, 30] and smaller or equal to 
+        total_nursed_piglets.
+
+        :param total_weaning_piglets: number of alive piglets when weaning.
+        :raises TypeError: if total_weaning_piglets is not int.
+        :raises ValueError: if total_weaning_piglets not in range.
+        :raises ValueError: if total_weaning_piglets > total_nursed_piglets.
+        """
+
+        type_check(total_weaning_piglets, "total_weaning_piglets", int)
+
+        if total_weaning_piglets < 0:
+            msg = "total_weaning_piglets must be greater or equal to 0. "
+            msg += f"Got {total_weaning_piglets}."
+            logging.error(msg)
+            raise ValueError(msg)
+        if total_weaning_piglets > 30:
+            msg = "total_weaning_piglets must be smaller or equal to 0. "
+            msg += f"Got {total_weaning_piglets}."
+            logging.error(msg)
+            raise ValueError(msg)
+        if self.__total_nursed_piglets is not None:
+            if total_weaning_piglets > self.__total_nursed_piglets:
+                msg = "total_nursed_piglets must be more than "
+                msg += "total_weaning_piglets. \n"
+                msg += f"total_nursed_piglets: {self.__total_nursed_piglets}. \n"
+                msg += f"total_weaning_piglets: {total_weaning_piglets}."
+                logging.error(msg)
+                raise ValueError(msg)
+
+        self.__total_weaning_piglets = total_weaning_piglets
+        
+    def set_total_weaning_weight(self, total_weaning_weight: float) -> None:
+
+        if isinstance(total_weaning_weight, int):
+            total_weaning_weight = float(total_weaning_weight)
+        type_check(total_weaning_weight, "total_weaning_weight", float)
+
+        if total_weaning_weight < 0:
+            msg = "total_weaning_weight must be greater than 0. "
+            msg += f"Got {total_weaning_weight}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        self.__total_weaning_weight = total_weaning_weight
+
+    def get_farrowing(self) -> Farrowing:
+        return self.__farrowing
+    
+    def get_weaning_date(self) -> date:
+        return self.__weaning_date
+    
+    def get_total_nursed_piglets(self) -> int:
+        return self.__total_nursed_piglets
+    
+    def get_total_weaning_piglets(self) -> int:
+        return self.__total_weaning_piglets
+    
+    def get_total_weaning_weight(self) -> float:
+        return self.__total_weaning_weight

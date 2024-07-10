@@ -513,5 +513,66 @@ class FarrowingTestCase(unittest.TestCase):
         self.assertEqual(self.farrowing.get_note(), "HI")
 
 
+class WeaningTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.weaning = Weaning()
+
+    def tearDown(self) -> None:
+        self.weaning = None
+
+    def test_set(self):
+
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        estrus = Estrus(
+            sow=sow, 
+            estrus_datetime="2000-05-12 12:00:00"
+        )
+        farrowing = Farrowing(
+            estrus=estrus, 
+            farrowing_date="2000-09-03"
+        )
+        self.weaning.set_weaning_date("2000-09-24")
+        self.assertEqual(date(2000, 9, 24), self.weaning.get_weaning_date())
+        self.weaning.set_farrowing(farrowing)
+        self.assertEqual(farrowing, self.weaning.get_farrowing())
+        self.weaning.set_total_nursed_piglets(10)
+        self.assertEqual(10, self.weaning.get_total_nursed_piglets())
+        self.weaning.set_total_weaning_piglets(9)
+        self.assertEqual(9, self.weaning.get_total_weaning_piglets())
+        self.weaning.set_total_weaning_weight(42.2)
+        self.assertEqual(42.2, self.weaning.get_total_weaning_weight())
+        self.weaning = Weaning()
+        self.weaning.set_farrowing(farrowing)
+        self.assertTrue(self.weaning.is_unique())
+        self.assertRaises(ValueError, self.weaning.set_weaning_date, "2024-11-01")
+        self.assertRaises(ValueError, self.weaning.set_weaning_date, "2024-09-04")
+        self.weaning = Weaning()
+        self.weaning.set_weaning_date("2000-09-04")
+        farrowing = Farrowing(estrus, "2000-09-03")
+        self.assertRaises(ValueError, self.weaning.set_farrowing, farrowing)
+        self.weaning = Weaning()
+        self.weaning.set_weaning_date("2000-09-04")
+        self.assertRaises(ValueError, self.weaning.set_farrowing, farrowing)
+        self.weaning.set_total_nursed_piglets(10)
+        self.assertRaises(ValueError, self.weaning.set_total_weaning_piglets, 11)
+        self.weaning.set_total_weaning_piglets(10)
+        self.assertRaises(ValueError, self.weaning.set_total_nursed_piglets, 9)
+        self.weaning = Weaning()
+        self.assertRaises(TypeError, self.weaning.set_farrowing, "HI")
+        self.assertRaises(ValueError, self.weaning.set_farrowing, Farrowing())
+        self.assertRaises(TypeError, self.weaning.set_weaning_date, farrowing)
+        self.assertRaises(ValueError, self.weaning.set_weaning_date, "HI")
+        self.assertRaises(TypeError, self.weaning.set_total_nursed_piglets, "HI")
+        self.assertRaises(ValueError, self.weaning.set_total_nursed_piglets, -1)
+        self.assertRaises(ValueError, self.weaning.set_total_nursed_piglets, 31)
+        self.assertRaises(TypeError, self.weaning.set_total_weaning_piglets, "HI")
+        self.assertRaises(ValueError, self.weaning.set_total_weaning_piglets, -1)
+        self.assertRaises(ValueError, self.weaning.set_total_weaning_piglets, 31)
+        self.assertRaises(TypeError, self.weaning.set_total_weaning_weight, "HI")
+        self.assertRaises(ValueError, self.weaning.set_total_weaning_weight, -1.0)
+
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,3 +1,5 @@
+drop table Weanings;
+drop table Farrowings;
 drop table Matings;
 drop table Estrus;
 drop table Pigs;
@@ -61,6 +63,20 @@ CREATE TABLE Farrowings(
     n_of_male tinyint unsigned,
     n_of_female tinyint unsigned, 
     note varchar(20),
-    PRIMARY KEY (id, birthday, farm, estrus_datetime),
+    PRIMARY KEY (id, birthday, farm, estrus_datetime, farrowing_date),
     FOREIGN KEY (id, birthday, farm, estrus_datetime) REFERENCES Estrus (id, birthday, farm, estrus_datetime)
+);
+
+CREATE TABLE Weanings(
+    id varchar(20),
+    birthday date,
+    farm varchar(20),
+    estrus_datetime datetime,
+    farrowing_date date,
+    weaning_date date NOT NULL,
+    total_nursed_piglets tinyint unsigned, 
+    total_weaning_piglets tinyint unsigned, 
+    total_weaning_weight int unsigned,
+    PRIMARY KEY (id, birthday, farm, estrus_datetime, farrowing_date),
+    FOREIGN KEY (id, birthday, farm, estrus_datetime, farrowing_date) REFERENCES Farrowings (id, birthday, farm, estrus_datetime, farrowing_date)
 );
