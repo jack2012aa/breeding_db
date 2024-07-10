@@ -1,3 +1,9 @@
+drop table Weanings;
+drop table Farrowings;
+drop table Matings;
+drop table Estrus;
+drop table Pigs;
+
 CREATE TABLE Pigs(
     id varchar(20),
     birthday date,
@@ -9,7 +15,7 @@ CREATE TABLE Pigs(
     sire_id varchar(20),
     sire_birthday date,
     sire_farm varchar(20),
-    reg_id char(6),
+    reg_id char(6) UNIQUE,
     gender char(10),
     chinese_name char(5),
     PRIMARY KEY (id, birthday, farm),
@@ -24,8 +30,6 @@ CREATE TABLE Estrus(
     estrus_datetime datetime,
     pregnant ENUM('Yes', 'No', 'Unknown', 'Abortion'),
     parity tinyint unsigned,
-    21th_day_test ENUM('Pregnant', 'Not Pregnant'),
-    60th_day_test ENUM('Pregnant', 'Not Pregnant'),
     PRIMARY KEY (id, birthday, farm, estrus_datetime),
     FOREIGN KEY (id, birthday, farm) REFERENCES Pigs(id, birthday, farm)
 );
@@ -36,9 +40,9 @@ CREATE TABLE Matings(
     sow_farm varchar(20),
     estrus_datetime datetime,
     mating_datetime datetime,
-    boar_id varchar(20),
-    boar_birthday date,
-    boar_farm varchar(20),
+    boar_id varchar(20) NOT NULL,
+    boar_birthday date NOT NULL,
+    boar_farm varchar(20) NOT NULL,
     PRIMARY KEY (sow_id, sow_birthday, sow_farm, estrus_datetime, mating_datetime),
     FOREIGN KEY (sow_id, sow_birthday, sow_farm, estrus_datetime) REFERENCES Estrus(id, birthday, farm, estrus_datetime),
     FOREIGN KEY (boar_id, boar_birthday, boar_farm) REFERENCES Pigs(id, birthday, farm)
@@ -49,16 +53,30 @@ CREATE TABLE Farrowings(
     birthday date,
     farm varchar(20),
     estrus_datetime datetime,
-    farrowing_date date,
-    crushing tinyint unsigned,
+    farrowing_date date NOT NULL,
+    crushed tinyint unsigned,
     black tinyint unsigned,
     weak tinyint unsigned,
     malformation tinyint unsigned,
     dead tinyint unsigned,
-    total_weight tinyint unsigned,
+    total_weight float unsigned,
     n_of_male tinyint unsigned,
     n_of_female tinyint unsigned, 
     note varchar(20),
-    PRIMARY KEY (id, birthday, farm, estrus_datetime),
+    PRIMARY KEY (id, birthday, farm, estrus_datetime, farrowing_date),
     FOREIGN KEY (id, birthday, farm, estrus_datetime) REFERENCES Estrus (id, birthday, farm, estrus_datetime)
+);
+
+CREATE TABLE Weanings(
+    id varchar(20),
+    birthday date,
+    farm varchar(20),
+    estrus_datetime datetime,
+    farrowing_date date,
+    weaning_date date NOT NULL,
+    total_nursed_piglets tinyint unsigned, 
+    total_weaning_piglets tinyint unsigned, 
+    total_weaning_weight float unsigned,
+    PRIMARY KEY (id, birthday, farm, estrus_datetime, farrowing_date),
+    FOREIGN KEY (id, birthday, farm, estrus_datetime, farrowing_date) REFERENCES Farrowings (id, birthday, farm, estrus_datetime, farrowing_date)
 );
