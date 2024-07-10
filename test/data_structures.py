@@ -406,13 +406,13 @@ class FarrowingTestCase(unittest.TestCase):
         self.farrowing.set_estrus(estrus)
         self.assertEqual(self.farrowing.get_estrus(), estrus)
         self.assertRaises(TypeError, self.farrowing.set_estrus, "No")
-        self.assertTrue(self.farrowing.is_unique())
 
         # Set farrowing date.
         self.farrowing.set_farrowing_date("2000-09-03")
         self.assertEqual(self.farrowing.get_farrowing_date(), date(2000, 9, 3))
         self.assertRaises(TypeError, self.farrowing.set_farrowing_date, None)
         self.assertRaises(ValueError, self.farrowing.set_farrowing_date, "2000/9/12")
+        self.assertTrue(self.farrowing.is_unique())
         
         # Incorrect farrowing date and estrus date.
         self.assertRaises(ValueError, self.farrowing.set_farrowing_date, "2000-08-10")
