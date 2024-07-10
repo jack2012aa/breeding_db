@@ -768,7 +768,7 @@ class Farrowing():
         self.__weak: int = None
         self.__malformation: int = None
         self.__dead: int = None
-        self.__total_weight: int = None
+        self.__total_weight: float = None
         self.__n_of_male: int = None
         self.__n_of_female: int = None
         self.__note: str = None
@@ -879,7 +879,7 @@ class Farrowing():
         
     def is_unique(self) -> bool:
 
-        return self.__estrus is not None
+        return self.__estrus is not None and self.__farrowing_date is not None
 
     def set_estrus(self, estrus: Estrus) -> None:
         """Set the estrus which this farrowing record belongs to.
@@ -1115,7 +1115,7 @@ class Farrowing():
             self.__n_of_female = old
             raise e
 
-    def set_total_weight(self, total_weight: int) -> None:
+    def set_total_weight(self, total_weight: float) -> None:
         """Set the total weight of alive piglets.
 
         :param total_weight: total weight of alive piglets.
@@ -1123,7 +1123,10 @@ class Farrowing():
         :raises ValueError: if total_weight is smaller than 0.
         """
 
-        type_check(total_weight, "total_weight", int)
+        if isinstance(total_weight, int):
+            total_weight = float(total_weight)
+            
+        type_check(total_weight, "total_weight", float)
 
         if total_weight < 0:
             msg = f"total_weight can not be smaller than 0. Got {total_weight}."
@@ -1239,9 +1242,9 @@ class Weaning:
         s = ""
         if self.__farrowing is not None:
             s = "\n".join([
-                f"耳號 id: {self.__farrowing.get_sow().get_id()}", 
-                f"生日 birthday: {str(self.__farrowing.get_sow().get_birthday())}", 
-                f"牧場 farm: {self.__farrowing.get_sow().get_farm()}"
+                f"耳號 id: {self.__farrowing.get_estrus().get_sow().get_id()}", 
+                f"生日 birthday: {str(self.__farrowing.get_estrus().get_sow().get_birthday())}", 
+                f"牧場 farm: {self.__farrowing.get_estrus().get_sow().get_farm()}"
             ])
 
         s = "\n".join([
@@ -1260,21 +1263,22 @@ class Weaning:
             return False
         
         if not isinstance(__value, Weaning):
-            msg = f"Can not compare Farrowing to {type(__value)}."
+            msg = f"Can not compare Weaning to {type(__value)}."
             logging.error(msg)
             raise TypeError(msg)
         
         # Compare estrus
+        result = True
         if self.__farrowing is None and __value.get_farrowing() is None:
             pass
         elif self.__farrowing is None or __value.get_farrowing() is None:
             return False
         else:
             result = result \
-                and (self.__farrowing.get_sow().get_id() == __value.get_farrowing().get_sow().get_id())\
-                and (self.__farrowing.get_sow().get_birthday() == __value.get_farrowing().get_sow().get_birthday())\
-                and (self.__farrowing.get_sow().get_farm() == __value.get_farrowing().get_sow().get_farm())\
-                and (self.__farrowing.get_estrus_datetime() == __value.get_farrowing().get_estrus_datetime())
+                and (self.__farrowing.get_estrus().get_sow().get_id() == __value.get_farrowing().get_estrus().get_sow().get_id())\
+                and (self.__farrowing.get_estrus().get_sow().get_birthday() == __value.get_farrowing().get_estrus().get_sow().get_birthday())\
+                and (self.__farrowing.get_estrus().get_sow().get_farm() == __value.get_farrowing().get_estrus().get_sow().get_farm())\
+                and (self.__farrowing.get_estrus().get_estrus_datetime() == __value.get_farrowing().get_estrus().get_estrus_datetime())
         return result \
             and (self.__weaning_date == __value.get_weaning_date()) \
             and (self.__total_nursed_piglets == __value.get_total_nursed_piglets()) \

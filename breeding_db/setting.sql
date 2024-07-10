@@ -59,7 +59,7 @@ CREATE TABLE Farrowings(
     weak tinyint unsigned,
     malformation tinyint unsigned,
     dead tinyint unsigned,
-    total_weight int unsigned,
+    total_weight float unsigned,
     n_of_male tinyint unsigned,
     n_of_female tinyint unsigned, 
     note varchar(20),
@@ -76,7 +76,7 @@ CREATE TABLE Weanings(
     weaning_date date NOT NULL,
     total_nursed_piglets tinyint unsigned, 
     total_weaning_piglets tinyint unsigned, 
-    total_weaning_weight int unsigned,
+    total_weaning_weight float unsigned,
     PRIMARY KEY (id, birthday, farm, estrus_datetime, farrowing_date),
     FOREIGN KEY (id, birthday, farm, estrus_datetime, farrowing_date) REFERENCES Farrowings (id, birthday, farm, estrus_datetime, farrowing_date)
 );

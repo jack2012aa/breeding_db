@@ -4,7 +4,7 @@ import logging
 import pymysql
 
 from breeding_db.general import type_check
-from breeding_db.data_structures import Farrowing
+from breeding_db.data_structures import Farrowing, Weaning
 from breeding_db.data_structures import Pig, Estrus, Mating, PregnantStatus
 
 
@@ -131,9 +131,35 @@ class Model():
 
         sql_query = f"SELECT * FROM {table_name} WHERE {' AND '.join(conditions)}"
         if order_by is not None:
-            sql_query = "".join([sql_query, "ORDER BY ", order_by])
+            sql_query = "".join([sql_query, " ORDER BY ", order_by])
         sql_query = "".join([sql_query, ";"])
         return sql_query
+    
+    def __generate_insert_string(
+        self, 
+        attributes: dict, 
+        table_name: str
+    ) -> str:
+        """Generate sql used for new insertion.
+
+        :param attributes: attributes of inserted object.
+        :param table_name: name of the table in the database.
+        :return: sql string.
+        """
+
+        type_check(attributes, "attributes", dict)
+        type_check(table_name, "table_name", str)
+
+        # Pick non-empty attributes.
+        columns = []
+        values = []
+        for key, item in attributes.items():
+            if item is not None:
+                columns.append(key)
+                values.append(f"'{str(item)}'")
+        insert_string = f"INSERT INTO {table_name} "
+        insert_string += f"({', '.join(columns)}) VALUES ({', '.join(values)});"
+        return insert_string
 
     def __get_pig_attributes(self, pig: Pig) -> dict:
         """ Generate a dictionary of non-empty attributes."""
@@ -839,7 +865,7 @@ class Model():
     def update_farrowing(self, farrowing: Farrowing) -> None:
         """ Update attributes of a farrowing in the database.
 
-        :param farrowing: an unique Farrowing instance. attributes except \
+        :param farrowing: an unique Farrowing instance. Attributes except \
             primary keys will be updatad.
         :raises: TypeError, ValueError.
         """
@@ -860,6 +886,182 @@ class Model():
         condition += f"farm='{farrowing.get_estrus().get_sow().get_farm()}' and "
         condition += f"estrus_datetime='{str(farrowing.get_estrus().get_estrus_datetime())}'"
         sql_query = "UPDATE Farrowings SET {setting} WHERE {condition};".format(
+            setting=", ".join(setting),
+            condition=condition
+        )
+
+        self.__query(sql_query)
+
+    def dict_to_weaning(self, weaning_dict: dict) -> Weaning:
+        """Transform a dictionary from query to an unique Weaning instance.
+
+        If the Weaning is not unique, None will be returned. \
+
+        :param weaning_dict: a dictionary contains attributes of Weaning.
+        :raises TypeError: if weaning_dict contains incorrect parameters type.
+        :raises ValueError: if pass in incorrect parameter in weaning_dict.
+        :return: a Farrowing object or None if weaning is not unique.
+        """
+
+        type_check(weaning_dict, "weaning_dict", dict)
+
+        sow = Pig(
+            id=weaning_dict.get("id"), 
+            farm=weaning_dict.get("farm"), 
+            birthday=weaning_dict.get("birthday")
+        )
+        if not sow.is_unique():
+            return None
+        
+        estrus = Estrus(
+            sow=sow, 
+            estrus_datetime=weaning_dict.get("estrus_datetime")
+        )
+        if not estrus.is_unique():
+            return None
+        
+        farrowing = Farrowing(
+            estrus=estrus, 
+            farrowing_date=weaning_dict.get("farrowing_date")
+        )
+        if not farrowing.is_unique():
+            return None
+        
+        weaning = Weaning(
+            farrowing=farrowing, 
+            weaning_date=weaning_dict.get("weaning_date"), 
+            total_nursed_piglets=weaning_dict.get("total_nursed_piglets"), 
+            total_weaning_piglets=weaning_dict.get("total_weaning_piglets"), 
+            total_weaning_weight=weaning_dict.get("total_weaning_weight")    
+        )
+        return weaning
+    
+    def __get_weaning_attributes(self, weaning: Weaning) -> dict:
+        """Get the attributes dictionary of weaning.
+
+        :param weaning: a Weaning object.
+        :raises TypeError: if weaning is not a Weaning.
+        :return: a attributes dictionary of weaning.
+        """
+
+        type_check(weaning, "weaning", Weaning)
+
+        weaning_dict = {
+            "id": None, 
+            "farm": None, 
+            "birthday": None, 
+            "estrus_datetime": None, 
+            "farrowing_date": None, 
+            "weaning_date": weaning.get_weaning_date(), 
+            "total_nursed_piglets": weaning.get_total_nursed_piglets(), 
+            "total_weaning_piglets": weaning.get_total_weaning_piglets(), 
+            "total_weaning_weight": weaning.get_total_weaning_weight()
+        }
+
+        if weaning.is_unique():
+            weaning_dict["id"] = weaning.get_farrowing().get_estrus().get_sow().get_id()
+            weaning_dict["birthday"] = weaning.get_farrowing().get_estrus().get_sow().get_birthday()
+            weaning_dict["farm"] = weaning.get_farrowing().get_estrus().get_sow().get_farm()
+            weaning_dict["estrus_datetime"] = weaning.get_farrowing().get_estrus().get_estrus_datetime()
+            weaning_dict["farrowing_date"] = weaning.get_farrowing().get_farrowing_date()
+        
+        return weaning_dict
+    
+    def insert_weaning(self, weaning: Weaning) -> None:
+        """Insert a new weaning data into database.
+
+        :param weaning: an unique Weaning object.
+        :raises ValueError: if weaning is not unique.
+        :raises KeyError: if weaning.__farrowing not exist in the database.
+        """
+        
+        type_check(weaning, "weaning", Weaning)
+
+        if not weaning.is_unique():
+            msg = f"weaning should be unique. Got {weaning}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        attributes = self.__get_weaning_attributes(weaning)
+        sql_query = self.__generate_insert_string(attributes, "Weanings")
+
+        try:
+            self.__query(sql_query)
+        except pymysql.err.IntegrityError:
+            msg = "Farrowing does not exist in the database."
+            msg += f"\n Get {weaning.get_farrowing()}"
+            raise KeyError(msg)
+        
+    def find_weanings(
+        self,
+        equal: dict = {},
+        larger: dict = {},
+        smaller: dict = {},
+        larger_equal: dict = {},
+        smaller_equal: dict = {},
+        order_by: str = None
+    ) -> list[Weaning]:
+        """ Find all weanings satisfy the conditions. 
+
+        Please make sure:
+        * Keys of the dictionary should be same as attributes.
+        * Different conditions will be connected by AND.
+        * Sow should be listed as id, birthday, ...
+        
+        :param equal: query will be `key`=`value`
+        :param larger: query will be `key`>`value`
+        :param smaller: query will be `key`<`value`
+        :param larger_equal: query will be `key`>=`value`
+        :param smaller_equal: query will be `key`<=`value`
+        :param order_by: `column_name` `ASC|DESC`
+        :raises: TypeError, ValueError.
+        """
+
+        sql_query = self.__generate_qeury_string(
+            table_name="Weanings", 
+            equal=equal, 
+            larger=larger, 
+            smaller=smaller, 
+            larger_equal=larger_equal, 
+            smaller_equal=smaller_equal, 
+            order_by=order_by
+        )
+
+        results = self.__query(sql_query)
+        estrus = []
+        for dictionary in results:
+            estrus.append(self.dict_to_weaning(dictionary))
+
+        return estrus
+    
+    def update_weaning(self, weaning: Weaning) -> None:
+        """ Update attributes of a Weaning in the database.
+
+        :param weaing: an unique Weaning instance. Attributes except \
+            primary keys will be updatad.
+        :raises: TypeError, ValueError.
+        """
+
+        type_check(weaning, "weaning", Weaning)
+        if not weaning.is_unique():
+            msg = f"weaning should be unique. Got {weaning}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        attributes = self.__get_weaning_attributes(weaning)
+        setting = []
+        for key, value in attributes.items():
+            if value is not None:
+                setting.append("{key}='{value}'".format(key=key, value=value))
+        id = weaning.get_farrowing().get_estrus().get_sow().get_id()
+        birthday = weaning.get_farrowing().get_estrus().get_sow().get_birthday()
+        farm = weaning.get_farrowing().get_estrus().get_sow().get_farm()
+        estrus_datetime = weaning.get_farrowing().get_estrus().get_estrus_datetime()
+        farrowing_date = weaning.get_farrowing().get_farrowing_date()
+        condition = f"id='{id}' and birthday='{str(birthday)}' and farm='{farm}' "
+        condition += f"and estrus_datetime='{str(estrus_datetime)}' and "
+        condition += f"farrowing_date='{str(farrowing_date)}'"
+        sql_query = "UPDATE Weanings SET {setting} WHERE {condition};".format(
             setting=", ".join(setting),
             condition=condition
         )

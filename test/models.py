@@ -11,11 +11,37 @@ class ModelTest(unittest.TestCase):
         self.model = Model("test/helper/database_settings.json")
 
     def tearDown(self):
+        self.model._delete_all("Weanings")
         self.model._delete_all("Farrowings")
         self.model._delete_all("Matings")
         self.model._delete_all("Estrus")
         self.model._delete_all("Pigs")
         self.model = None
+
+    def test_generate_query_string(self):
+
+        equal = {"id": "123456"}
+        larger = {"birthday": "1999-05-12"}
+        smaller = {"farrowing_date": "2002-09-03"}
+        smaller_equal = {"estrus_datetime": "2002-09-03 12:00:00"}
+        larger_equal = {"total_weight": 100}
+        
+        got = self.model._Model__generate_qeury_string("Test", equal, larger, smaller, larger_equal, smaller_equal, "birthday DESC")
+        sql_query = "SELECT * FROM Test WHERE id='123456' AND "
+        sql_query += "birthday>'1999-05-12' AND farrowing_date<'2002-09-03' "
+        sql_query += "AND total_weight>='100' AND estrus_datetime<="
+        sql_query += "'2002-09-03 12:00:00' ORDER BY birthday DESC;"
+        self.assertEqual(got, sql_query)
+
+    def test_generate_insert_string(self):
+
+        attributes = {
+            "id": "123456", 
+            "farm": "test farm", 
+            "birthday": date(1999, 5, 12)
+        }
+        got = self.model._Model__generate_insert_string(attributes, "Pigs")
+        self.assertEqual(got, "INSERT INTO Pigs (id, farm, birthday) VALUES ('123456', 'test farm', '1999-05-12');")
 
     def test_connection(self):
         self.model._Model__query("SHOW TABLES;")
@@ -474,7 +500,6 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(len(found), 2)
 
     def test_update_farrowing(self):
-
         
         sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
         self.model.insert_pig(sow)
@@ -512,6 +537,182 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(200, found[0].get_total_weight())
         self.assertRaises(TypeError, self.model.update_farrowing, "123456")
 
+    def test_dict_to_weaning(self):
+
+        weaning_dict = {
+            "id": "123456", 
+            "birthday": "1999-05-12", 
+            "farm": "test farm", 
+            "estrus_datetime": "2000-05-12 12:00:00", 
+            "farrowing_date": "2000-09-03", 
+            "weaning_date": "2000-09-24", 
+            "total_nursed_piglets": 10, 
+            "total_weaning_piglets": 9, 
+            "total_weaning_weight": 100.2
+        }
+        got = self.model.dict_to_weaning(weaning_dict)
+        sow = Pig(
+            id="123456", 
+            birthday="1999-05-12", 
+            farm="test farm"
+        )
+        estrus = Estrus(sow, "2000-05-12 12:00:00")
+        farrowing = Farrowing(estrus, "2000-09-03")
+        weaning = Weaning(
+            farrowing=farrowing, 
+            weaning_date="2000-09-24", 
+            total_nursed_piglets=10, 
+            total_weaning_piglets=9, 
+            total_weaning_weight=100.2
+        )
+        self.assertEqual(weaning, got)
+        self.assertRaises(TypeError, self.model.dict_to_weaning, "No")
+        self.assertIsNone(self.model.dict_to_weaning({"id": "12345"}))
+
+    def test_get_weaning_attributes(self):
+
+        weaning_dict = {
+            "id": "123456", 
+            "birthday": date(1999, 5, 12), 
+            "farm": "test farm", 
+            "estrus_datetime": datetime(2000, 5, 12, 12), 
+            "farrowing_date": date(2000, 9, 3), 
+            "weaning_date": date(2000, 9, 24), 
+            "total_nursed_piglets": 10, 
+            "total_weaning_piglets": 9, 
+            "total_weaning_weight": 100.2
+        }
+        sow = Pig(
+            id="123456", 
+            birthday="1999-05-12", 
+            farm="test farm"
+        )
+        estrus = Estrus(sow, "2000-05-12 12:00:00")
+        farrowing = Farrowing(estrus, "2000-09-03")
+        weaning = Weaning(
+            farrowing=farrowing, 
+            weaning_date="2000-09-24", 
+            total_nursed_piglets=10, 
+            total_weaning_piglets=9, 
+            total_weaning_weight=100.2
+        )
+        got = self.model._Model__get_weaning_attributes(weaning)
+        self.assertEqual(weaning_dict, got)
+        weaning = Weaning(
+            weaning_date="2000-09-24", 
+            total_nursed_piglets=10, 
+            total_weaning_piglets=9, 
+            total_weaning_weight=100.2
+        )
+        weaning_dict = {
+            "id": None, 
+            "birthday": None, 
+            "farm": None, 
+            "estrus_datetime": None, 
+            "farrowing_date": None, 
+            "weaning_date": date(2000, 9, 24), 
+            "total_nursed_piglets": 10, 
+            "total_weaning_piglets": 9, 
+            "total_weaning_weight": 100.2
+        }
+        got = self.model._Model__get_weaning_attributes(weaning)
+        self.assertEqual(weaning_dict, got)
+        self.assertRaises(TypeError, self.model._Model__get_weaning_attributes, None)
+
+    def test_insert_weaning(self):
+
+        sow = Pig(id="123456", birthday="1999-05-12", farm="test farm")
+        self.model.insert_pig(sow)
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2000-09-03")
+        self.model.insert_farrowing(farrowing)
+        weaning = Weaning(
+            farrowing=farrowing, 
+            weaning_date="2000-09-24", 
+            total_nursed_piglets=10, 
+            total_weaning_piglets=9, 
+            total_weaning_weight=100.2
+        )
+        self.model.insert_weaning(weaning)
+
+    def test_find_weaning(self):
+
+        sow = Pig(id="123456", birthday="1999-05-12", farm="test farm")
+        self.model.insert_pig(sow)
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2000-09-03")
+        self.model.insert_farrowing(farrowing)
+        weaning = Weaning(
+            farrowing=farrowing, 
+            weaning_date="2000-09-24", 
+            total_nursed_piglets=10, 
+            total_weaning_piglets=9, 
+            total_weaning_weight=100.2
+        )
+        self.model.insert_weaning(weaning)
+
+        estrus = Estrus(sow=sow, estrus_datetime="2001-05-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2001-09-03")
+        self.model.insert_farrowing(farrowing)
+        weaning = Weaning(
+            farrowing=farrowing, 
+            weaning_date="2001-09-24", 
+            total_nursed_piglets=10, 
+            total_weaning_piglets=9, 
+            total_weaning_weight=100.2
+        )
+        self.model.insert_weaning(weaning)
+
+        found = self.model.find_weanings(equal={"id": "123456"})
+        self.assertEqual(2, len(found))
+        found = self.model.find_weanings(equal={"farrowing_date": "2001-09-03"})
+        self.assertEqual(found[0], weaning)
+
+    def test_update_weaning(self):
+
+        sow = Pig(id="123456", birthday="1999-05-12", farm="test farm")
+        self.model.insert_pig(sow)
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2000-09-03")
+        self.model.insert_farrowing(farrowing)
+        weaning = Weaning(
+            farrowing=farrowing, 
+            weaning_date="2000-09-24", 
+            total_nursed_piglets=10, 
+            total_weaning_piglets=9, 
+            total_weaning_weight=100.2
+        )
+        self.model.insert_weaning(weaning)
+
+        estrus = Estrus(sow=sow, estrus_datetime="2001-05-12 12:00:00")
+        self.model.insert_estrus(estrus)
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2001-09-03")
+        self.model.insert_farrowing(farrowing)
+        weaning = Weaning(
+            farrowing=farrowing, 
+            weaning_date="2001-09-24", 
+            total_nursed_piglets=10, 
+            total_weaning_piglets=9, 
+            total_weaning_weight=100.2
+        )
+        self.model.insert_weaning(weaning)
+
+        weaning = Weaning(
+            farrowing=farrowing, 
+            weaning_date="2001-09-24", 
+            total_nursed_piglets=20, 
+            total_weaning_piglets=9, 
+            total_weaning_weight=100.2
+        )
+        self.model.update_weaning(weaning)
+        found = self.model.find_weanings(equal={"weaning_date": "2000-09-24"})
+        self.assertEqual(10, found[0].get_total_nursed_piglets())
+        found = self.model.find_weanings(equal={"weaning_date": "2001-09-24"})
+        self.assertEqual(20, found[0].get_total_nursed_piglets())
 
 if __name__ == '__main__':
     unittest.main()
