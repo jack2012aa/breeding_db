@@ -19,7 +19,7 @@ from breeding_db.general import type_check, transform_date, add_with_none
 class Pig:
 
     # Define enums.
-    BREED = ("L", "Y", "D") # Acceptable breeds.
+    BREED = ("LY", "YL", "F", "L", "Y", "D", "F") # Acceptable breeds.
     BREED_CHINESE_TO_ENGLISH = {"藍瑞斯":"L","約克夏":"Y","杜洛克":"D"}
     GENDER = {"公":"M", "母":"F", "M":"M", "F":"F", "1":"M", "2":"F"}
     MAX_ID_LENGTH = 20
@@ -34,7 +34,8 @@ class Pig:
         reg_id: str = None, 
         gender: str = None, 
         chinese_name: str = None, 
-        farm: str = None
+        farm: str = None, 
+        litter: int = None
     ):
         """A data class represents a pig.
         
@@ -51,6 +52,7 @@ class Pig:
         :param chinese_name: a Chinese name shorter than 5 characters, defaults \
             to None
         :param farm: farm's name, defaults to None
+        :param litter: the born parity of this pig.
         """
         if breed is not None:
             self.set_breed(breed)
@@ -88,6 +90,10 @@ class Pig:
             self.set_farm(farm)
         else:
             self.__farm: str = None
+        if litter is not None:
+            self.set_litter(litter)
+        else:
+            self.__litter: int = None
 
     def __str__(self):
         s = (
@@ -120,7 +126,8 @@ class Pig:
             and self.__gender == other.get_gender()\
             and self.__chinese_name == other.get_chinese_name()\
             and self.get_dam_id() == other.get_dam_id()\
-            and self.get_sire_id() == other.get_sire_id()
+            and self.get_sire_id() == other.get_sire_id()\
+            and self.get_litter() == other.get_litter()
 
     def __is_valid_id(self, id:str):
         return len(id) > 0 and len(id) < Pig.MAX_ID_LENGTH
@@ -264,6 +271,21 @@ class Pig:
         type_check(farm, "farm", str)
         self.__farm = farm
 
+    def set_litter(self, litter: int) -> None:
+        """ Set litter of this pig, which is the parity which it was born.
+
+        :param litter: parity the pig was born.
+        :raises TypeError: if litter is not an int.
+        :raises ValueError: if litter is not in range [1,12].
+        """
+
+        type_check(litter, "litter", int)
+        if litter not in range(1, 13):
+            msg = f"Litter should be in range [1, 12]. Got {litter}."
+            logging.error(msg)
+            raise ValueError(msg)
+        self.__litter = litter
+
     def get_breed(self):
         return self.__breed
 
@@ -302,6 +324,9 @@ class Pig:
 
     def get_farm(self):
         return self.__farm
+    
+    def get_litter(self):
+        return self.__litter
 
     def is_unique(self):
         ''' Whether this pig has id, birthday and farm.'''

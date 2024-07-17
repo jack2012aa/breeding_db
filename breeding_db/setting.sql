@@ -18,6 +18,7 @@ CREATE TABLE Pigs(
     reg_id char(6) UNIQUE,
     gender char(10),
     chinese_name char(5),
+    litter tinyint unsigned,
     PRIMARY KEY (id, birthday, farm),
     FOREIGN KEY (dam_id, dam_birthday, dam_farm) REFERENCES Pigs(id, birthday, farm),
     FOREIGN KEY (sire_id, sire_birthday, sire_farm) REFERENCES Pigs(id, birthday, farm)

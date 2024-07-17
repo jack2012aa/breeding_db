@@ -77,7 +77,7 @@ class PigTestCase(unittest.TestCase):
         sire = None
         self.assertRaises(TypeError, self.pig.set_sire, sire)
 
-    def test_set_naif_id(self):
+    def test_set_reg_id(self):
 
         self.pig.set_reg_id("123456")
         self.assertEqual("123456", self.pig.get_reg_id())
@@ -103,11 +103,19 @@ class PigTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.pig.set_chinese_name, None)
         self.assertRaises(ValueError, self.pig.set_chinese_name, "你好恭喜發財")
 
-    def set_farm(self):
+    def test_set_farm(self):
 
         self.pig.set_farm("Dong-Ying")
         self.assertEqual("Dong-Ying", self.pig.get_farm())
         self.assertRaises(TypeError, self.pig.set_farm, None)
+
+    def test_set_litter(self):
+
+        self.assertIsNone(self.pig.get_litter())
+        self.pig.set_litter(2)
+        self.assertEqual(self.pig.get_litter(), 2)
+        self.assertRaises(TypeError, self.pig.set_litter, "2")
+        self.assertRaises(ValueError, self.pig.set_litter, 22)
 
     def test_equality(self):
 
