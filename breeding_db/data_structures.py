@@ -343,6 +343,8 @@ class PregnantStatus(Enum):
 
 class Estrus:
 
+    PARITY_UPPER_BOUND = 12
+
     def __init__(
         self, 
         sow: Pig = None, 
@@ -497,7 +499,7 @@ class Estrus:
         """ Set parity. Parity is a non-negative int indicates how many time 
         did the sow being pregnant.
 
-        parity should greater or equal to 0 and less than 12.
+        parity should greater or equal to 1 and less than 12.
 
         :param parity: a non-negative int indicates how many time did the sow \
             being pregnant.
@@ -507,8 +509,8 @@ class Estrus:
         type_check(parity, "parity", int)
 
         # I guess no sow can give birth more than 10 times.        
-        if parity < 0 or parity > 12:
-            msg = f"parity should between 0 to 12. Got {parity}."
+        if parity not in range(1, Estrus.PARITY_UPPER_BOUND):
+            msg = f"parity should between 1 to 12. Got {parity}."
             logging.error(msg)
             raise ValueError(msg)
 
@@ -754,6 +756,10 @@ class Mating:
 
 class Farrowing():
 
+    PREGNANT_LOWER_BOUND = timedelta(100)
+    PREGNANT_UPPER_BOUND = timedelta(130)
+    TOTAL_BORN_UPPER_BOUND = 30
+
     def __init__(
         self, 
         estrus: Estrus = None, 
@@ -896,7 +902,7 @@ class Farrowing():
         :raises ValueError: if total born is larger than 30.
         """
 
-        if self.get_total_born() > 30:
+        if self.get_total_born() > Farrowing.TOTAL_BORN_UPPER_BOUND:
             msg = "total born can not be larger than 30. "
             msg += f"Got {self.get_total_born()}."
             logging.error(msg)
@@ -909,12 +915,12 @@ class Farrowing():
     def set_estrus(self, estrus: Estrus) -> None:
         """Set the estrus which this farrowing record belongs to.
 
-        estrus date must in range [farrowing date - 140, farrowing date - 100].
+        estrus date must in range [farrowing date - 130, farrowing date - 100].
 
         :param estrus: an unique Estrus object.
         :raises TypeError: if pass in incorrect type.
         :raises ValueError: if pass in not unique `estrus`
-        :raises ValueError: if farrowing date - estrus date is larger than 140 \
+        :raises ValueError: if farrowing date - estrus date is larger than 130 \
             days or smaller than 100 days.
         """
 
@@ -927,13 +933,14 @@ class Farrowing():
         
         if self.__farrowing_date is not None:
             estrus_date = estrus.get_estrus_datetime().date()
-            if self.__farrowing_date - estrus_date > timedelta(140):
-                msg = f"Time gap between estrus date is longer than 140 days."
+            farrowing_date = self.__farrowing_date # Make name shorter.
+            if farrowing_date - estrus_date > Farrowing.PREGNANT_UPPER_BOUND:
+                msg = f"Time gap between estrus date is longer than 130 days."
                 msg += f"\nestrus date: {estrus_date}."
                 msg += f"\nfarrowing date: {self.__farrowing_date}."
                 logging.error(msg)
                 raise ValueError(msg)
-            if self.__farrowing_date - estrus_date < timedelta(100):
+            if farrowing_date - estrus_date < Farrowing.PREGNANT_LOWER_BOUND:
                 msg = f"Time gap between estrus date is shorter than 100 days."
                 msg += f"\nestrus date: {estrus_date}."
                 msg += f"\nfarrowing date: {self.__farrowing_date}."
@@ -945,7 +952,7 @@ class Farrowing():
     def set_farrowing_date(self, farrowing_date: str | date) -> None:
         """Set farrowing date.
 
-        farrowing date must in range [estrus date + 100, estrus date + 140]
+        farrowing date must in range [estrus date + 100, estrus date + 130]
 
         :param farrowing_date: a string in ISO date format or a datetime.date \
             object.
@@ -957,13 +964,13 @@ class Farrowing():
         farrowing_date = transform_date(farrowing_date)
         if self.__estrus is not None:
             estrus_date = self.__estrus.get_estrus_datetime().date()
-            if farrowing_date - estrus_date > timedelta(140):
-                msg = f"Time gap between estrus date is longer than 140 days."
+            if farrowing_date - estrus_date > Farrowing.PREGNANT_UPPER_BOUND:
+                msg = f"Time gap between estrus date is longer than 130 days."
                 msg += f"\nestrus date: {estrus_date}."
                 msg += f"\nfarrowing date: {farrowing_date}."
                 logging.error(msg)
                 raise ValueError(msg)
-            if farrowing_date - estrus_date < timedelta(100):
+            if farrowing_date - estrus_date < Farrowing.PREGNANT_LOWER_BOUND:
                 msg = f"Time gap between estrus date is shorter than 100 days."
                 msg += f"\nestrus date: {estrus_date}."
                 msg += f"\nfarrowing date: {farrowing_date}."
@@ -1221,6 +1228,10 @@ class Farrowing():
 
 class Weaning:
 
+    NURSING_DATE_UPPER_BOUND = timedelta(40)
+    NURSING_DATE_LOWER_BOUND = timedelta(14)
+    NURSED_UPPER_BOUND = 30
+
     def __init__(
         self, 
         farrowing: Farrowing = None, 
@@ -1317,7 +1328,7 @@ class Weaning:
     def set_farrowing(self, farrowing: Farrowing) -> None:
         """Set the farrowing which this weaning record belongs to.
 
-        Farrowing date must in range [weaning date - 50, weaning date - 14].
+        Farrowing date must in range [weaning date - 40, weaning date - 14].
 
         :param farrowing: an unique Farrowing object.
         :raises ValueError: if farrowing is not unique.
@@ -1333,14 +1344,15 @@ class Weaning:
 
         farrowing_date = farrowing.get_farrowing_date()
         if self.__weaning_date is not None and farrowing_date is not None:
-            if self.__weaning_date - farrowing_date < timedelta(14):
-                msg = "Time between farrowing and weaning is too short.\n"
+            weaning_date = self.__weaning_date
+            if weaning_date - farrowing_date < Weaning.NURSING_DATE_LOWER_BOUND:
+                msg = "The nursing time is too short.\n"
                 msg += f"Weaning date: {self.__weaning_date}. \n"
                 msg += f"Farrowing date: {farrowing_date}."
                 logging.error(msg)
                 raise ValueError(msg)
-            if self.__weaning_date - farrowing_date > timedelta(50):
-                msg = "Time between farrowing and weaning is too long.\n"
+            if weaning_date - farrowing_date > Weaning.NURSING_DATE_UPPER_BOUND:
+                msg = "The nursing time is too long.\n"
                 msg += f"Weaning date: {self.__weaning_date}. \n"
                 msg += f"Farrowing date: {farrowing_date}."
                 logging.error(msg)
@@ -1351,7 +1363,7 @@ class Weaning:
     def set_weaning_date(self, weaning_date: str | date) -> None:
         """Set weaning date.
 
-        Weaning date must in range [farrowing date + 14, farrowing date + 50].
+        Weaning date must in range [farrowing date + 14, farrowing date + 40].
 
         :param weaning_date: weaning date in ISO format.
         :raises TypeError: if weaning_date is not string or datetime.date.
@@ -1364,14 +1376,14 @@ class Weaning:
         if self.__farrowing is not None:
             farrowing_date = self.__farrowing.get_farrowing_date()
         if farrowing_date is not None:
-            if weaning_date - farrowing_date < timedelta(14):
-                msg = "Time between farrowing and weaning is too short.\n"
+            if weaning_date - farrowing_date < Weaning.NURSING_DATE_LOWER_BOUND:
+                msg = "The nursing time is too short.\n"
                 msg += f"Weaning date: {weaning_date}. \n"
                 msg += f"Farrowing date: {farrowing_date}."
                 logging.error(msg)
                 raise ValueError(msg)
-            if weaning_date - farrowing_date > timedelta(50):
-                msg = "Time between farrowing and weaning is too long.\n"
+            if weaning_date - farrowing_date > Weaning.NURSING_DATE_UPPER_BOUND:
+                msg = "The nursing time is too long.\n"
                 msg += f"Weaning date: {weaning_date}. \n"
                 msg += f"Farrowing date: {farrowing_date}."
                 logging.error(msg)
@@ -1401,7 +1413,7 @@ class Weaning:
             msg += f"Got {total_nursed_piglets}."
             logging.error(msg)
             raise ValueError(msg)
-        if total_nursed_piglets > 30:
+        if total_nursed_piglets > Weaning.NURSED_UPPER_BOUND:
             msg = "total_nursed_piglets must be smaller than 30. "
             msg += f"Got {total_nursed_piglets}."
             logging.error(msg)
@@ -1436,7 +1448,7 @@ class Weaning:
             msg += f"Got {total_weaning_piglets}."
             logging.error(msg)
             raise ValueError(msg)
-        if total_weaning_piglets > 30:
+        if total_weaning_piglets > Weaning.NURSED_UPPER_BOUND:
             msg = "total_weaning_piglets must be smaller or equal to 30. "
             msg += f"Got {total_weaning_piglets}."
             logging.error(msg)

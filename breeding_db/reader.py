@@ -1044,9 +1044,9 @@ class ExcelReader():
             except TypeError:
                 error_messages.append("分娩日期格式錯誤")
             except ValueError as e:
-                if "than 140" in e.args[0]:
+                if "longer than" in e.args[0]:
                     error_messages.append("分娩日期與發情日期間隔過長")
-                elif "than 100" in e.args[0]:
+                elif "shorter than" in e.args[0]:
                     error_messages.append("分娩日期與發情日期間隔過短")
                 else:
                     error_messages.append("分娩日期格式錯誤")
@@ -1081,9 +1081,9 @@ class ExcelReader():
             except TypeError:
                 error_messages.append("耳號格式錯誤")
             except ValueError as e:
-                if "than 140" in e.args[0]:
+                if "longer than" in e.args[0]:
                     error_messages.append("分娩日期與發情日期間隔過長")
-                elif "than 100" in e.args[0]:
+                elif "shorter than" in e.args[0]:
                     error_messages.append("分娩日期與發情日期間隔過短")
                 else:
                     error_messages.append("未知錯誤")

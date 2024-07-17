@@ -201,8 +201,8 @@ class EstrusTestCase(unittest.TestCase):
     def test_parity(self):
 
         # Correct
-        self.estrus.set_parity(0)
-        self.assertEqual(0, self.estrus.get_parity())
+        self.estrus.set_parity(1)
+        self.assertEqual(1, self.estrus.get_parity())
 
         # Out of range
         self.assertRaises(ValueError, self.estrus.set_parity, -1)
@@ -416,19 +416,19 @@ class FarrowingTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.farrowing.set_estrus, "No")
 
         # Set farrowing date.
-        self.farrowing.set_farrowing_date("2000-09-03")
-        self.assertEqual(self.farrowing.get_farrowing_date(), date(2000, 9, 3))
+        self.farrowing.set_farrowing_date("2000-09-19")
+        self.assertEqual(self.farrowing.get_farrowing_date(), date(2000, 9, 19))
         self.assertRaises(TypeError, self.farrowing.set_farrowing_date, None)
         self.assertRaises(ValueError, self.farrowing.set_farrowing_date, "2000/9/12")
         self.assertTrue(self.farrowing.is_unique())
         
         # Incorrect farrowing date and estrus date.
         self.assertRaises(ValueError, self.farrowing.set_farrowing_date, "2000-08-10")
-        self.assertRaises(ValueError, self.farrowing.set_farrowing_date, "2000-10-9")
+        self.assertRaises(ValueError, self.farrowing.set_farrowing_date, "2000-9-20")
         self.farrowing = Farrowing(farrowing_date="2000-08-10")
-        estrus.set_estrus_datetime("2000-05-12 12:00:00")
+        estrus.set_estrus_datetime("2000-05-03 12:00:00")
         self.assertRaises(ValueError, self.farrowing.set_estrus, estrus)
-        estrus.set_estrus_datetime("2000-03-13 12:00:00")
+        estrus.set_estrus_datetime("2000-04-01 12:00:00")
         self.assertRaises(ValueError, self.farrowing.set_estrus, estrus)
 
         # Set crushed.
@@ -498,7 +498,7 @@ class FarrowingTestCase(unittest.TestCase):
 
         self.farrowing = Farrowing(
             estrus=estrus, 
-            farrowing_date="2000-07-05", 
+            farrowing_date="2000-07-24", 
             crushed=1, 
             black=1, 
             weak=1, 
@@ -510,7 +510,7 @@ class FarrowingTestCase(unittest.TestCase):
             note="HI"
         )
         self.assertEqual(self.farrowing.get_estrus(), estrus)
-        self.assertEqual(self.farrowing.get_farrowing_date(), date(2000, 7, 5))
+        self.assertEqual(self.farrowing.get_farrowing_date(), date(2000, 7, 24))
         self.assertEqual(self.farrowing.get_crushed(), 1)
         self.assertEqual(self.farrowing.get_black(), 1)
         self.assertEqual(self.farrowing.get_weak(), 1)
@@ -559,8 +559,11 @@ class WeaningTestCase(unittest.TestCase):
         self.weaning.set_weaning_date("2000-09-04")
         farrowing = Farrowing(estrus, "2000-09-03")
         self.assertRaises(ValueError, self.weaning.set_farrowing, farrowing)
+
         self.weaning = Weaning()
-        self.weaning.set_weaning_date("2000-09-04")
+        self.weaning.set_weaning_date("2000-09-16")
+        self.assertRaises(ValueError, self.weaning.set_farrowing, farrowing)
+        self.weaning.set_weaning_date("2000-09-14")
         self.assertRaises(ValueError, self.weaning.set_farrowing, farrowing)
         self.weaning.set_total_nursed_piglets(10)
         self.assertRaises(ValueError, self.weaning.set_total_weaning_piglets, 11)
