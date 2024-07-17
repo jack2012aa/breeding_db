@@ -172,6 +172,7 @@ class Model():
             "reg_id": pig.get_reg_id(),
             "gender": pig.get_gender(),
             "chinese_name": pig.get_chinese_name(),
+            "litter": pig.get_litter(),
         }
         if pig.get_dam() is not None:
             attributes["dam_id"] = pig.get_dam().get_id()
@@ -240,6 +241,8 @@ class Model():
             pig.set_gender(pig_dict["gender"])
         if pig_dict.get("chinese_name") is not None:
             pig.set_chinese_name(pig_dict["chinese_name"])
+        if pig_dict.get("litter") is not None:
+            pig.set_litter(pig_dict.get("litter"))
         if pig_dict.get("sire_id") is not None:
             sire = Pig()
             sire.set_id(pig_dict["sire_id"])

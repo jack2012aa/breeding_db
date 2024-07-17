@@ -66,6 +66,7 @@ class ModelTest(unittest.TestCase):
         sire.set_farm("test_farm")
         pig.set_dam(dam)
         pig.set_sire(sire)
+        pig.set_litter(10)
         attributes = self.model._Model__get_pig_attributes(pig)
         self.assertEqual("123456", attributes["id"])
         self.assertEqual("1999-05-12", attributes["birthday"])
@@ -80,6 +81,7 @@ class ModelTest(unittest.TestCase):
         self.assertEqual("999999", attributes["sire_id"])
         self.assertEqual("1998-05-12", attributes["sire_birthday"])
         self.assertEqual("test_farm", attributes["sire_farm"])
+        self.assertEqual(10, attributes["litter"])
 
     def test_insert_pig(self):
 
@@ -91,6 +93,7 @@ class ModelTest(unittest.TestCase):
 
         pig.set_farm("test_farm")
         pig.set_reg_id("111111")
+        pig.set_litter(12)
         self.model.insert_pig(pig)
 
     def test_dict_to_pig(self):
@@ -113,6 +116,7 @@ class ModelTest(unittest.TestCase):
         sire.set_farm("test_farm")
         pig.set_dam(dam)
         pig.set_sire(sire)
+        pig.set_litter(10)
         attributes = self.model._Model__get_pig_attributes(pig)
         return_pig = self.model.dict_to_pig(attributes)
         self.assertEqual(pig, return_pig)
@@ -143,8 +147,10 @@ class ModelTest(unittest.TestCase):
         pig.set_id("123456")
         pig.set_birthday("2022-05-12")
         pig.set_farm("test farm")
+        pig.set_litter(10)
         self.model.insert_pig(pig)
         pig.set_gender("F")
+        pig.set_litter(9)
         self.model.update_pig(pig)
         returned_pig = self.model.find_pig(pig)
         self.assertEqual(pig, returned_pig)
