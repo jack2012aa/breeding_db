@@ -905,7 +905,7 @@ class Farrowing():
         
     def is_unique(self) -> bool:
 
-        return self.__estrus is not None and self.__farrowing_date is not None
+        return self.__estrus is not None
 
     def set_estrus(self, estrus: Estrus) -> None:
         """Set the estrus which this farrowing record belongs to.

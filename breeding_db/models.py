@@ -745,14 +745,10 @@ class Model():
             farrowing.set_malformation(farrowing_dict.get("malformation"))
         if farrowing_dict.get("dead") is not None:
             farrowing.set_dead(farrowing_dict.get("dead"))
-        if farrowing_dict.get("total_weight") is not None:
-            farrowing.set_total_weight(farrowing_dict.get("total_weight"))
         if farrowing_dict.get("n_of_male") is not None:
             farrowing.set_n_of_male(farrowing_dict.get("n_of_male"))
         if farrowing_dict.get("n_of_female") is not None:
             farrowing.set_n_of_female(farrowing_dict.get("n_of_female"))
-        if farrowing_dict.get("note") is not None:
-            farrowing.set_note(farrowing_dict.get("note"))
 
         if not farrowing.is_unique():
             return None
@@ -776,10 +772,8 @@ class Model():
             "weak": farrowing.get_weak(),
             "malformation": farrowing.get_malformation(),
             "dead": farrowing.get_dead(),
-            "total_weight": farrowing.get_total_weight(),
             "n_of_male": farrowing.get_n_of_male(),
             "n_of_female": farrowing.get_n_of_female(), 
-            "note": farrowing.get_note()
         }
 
         if farrowing.get_estrus() is not None:
@@ -924,8 +918,7 @@ class Model():
             return None
         
         farrowing = Farrowing(
-            estrus=estrus, 
-            farrowing_date=weaning_dict.get("farrowing_date")
+            estrus=estrus
         )
         if not farrowing.is_unique():
             return None
@@ -935,7 +928,6 @@ class Model():
             weaning_date=weaning_dict.get("weaning_date"), 
             total_nursed_piglets=weaning_dict.get("total_nursed_piglets"), 
             total_weaning_piglets=weaning_dict.get("total_weaning_piglets"), 
-            total_weaning_weight=weaning_dict.get("total_weaning_weight")    
         )
         return weaning
     
@@ -954,11 +946,9 @@ class Model():
             "farm": None, 
             "birthday": None, 
             "estrus_datetime": None, 
-            "farrowing_date": None, 
             "weaning_date": weaning.get_weaning_date(), 
             "total_nursed_piglets": weaning.get_total_nursed_piglets(), 
             "total_weaning_piglets": weaning.get_total_weaning_piglets(), 
-            "total_weaning_weight": weaning.get_total_weaning_weight()
         }
 
         if weaning.is_unique():
@@ -966,7 +956,6 @@ class Model():
             weaning_dict["birthday"] = weaning.get_farrowing().get_estrus().get_sow().get_birthday()
             weaning_dict["farm"] = weaning.get_farrowing().get_estrus().get_sow().get_farm()
             weaning_dict["estrus_datetime"] = weaning.get_farrowing().get_estrus().get_estrus_datetime()
-            weaning_dict["farrowing_date"] = weaning.get_farrowing().get_farrowing_date()
         
         return weaning_dict
     
@@ -1031,11 +1020,11 @@ class Model():
         )
 
         results = self.__query(sql_query)
-        estrus = []
+        weanings = []
         for dictionary in results:
-            estrus.append(self.dict_to_weaning(dictionary))
+            weanings.append(self.dict_to_weaning(dictionary))
 
-        return estrus
+        return weanings
     
     def update_weaning(self, weaning: Weaning) -> None:
         """ Update attributes of a Weaning in the database.
@@ -1060,10 +1049,8 @@ class Model():
         birthday = weaning.get_farrowing().get_estrus().get_sow().get_birthday()
         farm = weaning.get_farrowing().get_estrus().get_sow().get_farm()
         estrus_datetime = weaning.get_farrowing().get_estrus().get_estrus_datetime()
-        farrowing_date = weaning.get_farrowing().get_farrowing_date()
         condition = f"id='{id}' and birthday='{str(birthday)}' and farm='{farm}' "
-        condition += f"and estrus_datetime='{str(estrus_datetime)}' and "
-        condition += f"farrowing_date='{str(farrowing_date)}'"
+        condition += f"and estrus_datetime='{str(estrus_datetime)}' "
         sql_query = "UPDATE Weanings SET {setting} WHERE {condition};".format(
             setting=", ".join(setting),
             condition=condition

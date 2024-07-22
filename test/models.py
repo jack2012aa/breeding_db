@@ -381,10 +381,8 @@ class ModelTest(unittest.TestCase):
             "weak": 1, 
             "malformation": 1, 
             "dead": 1, 
-            "total_weight": 100, 
             "n_of_male": 1, 
             "n_of_female": 1, 
-            "note": "HI"
         }
 
         farrowing = self.model.dict_to_farrowing(farrowing_dict)
@@ -398,10 +396,8 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(1, farrowing.get_weak())
         self.assertEqual(1, farrowing.get_malformation())
         self.assertEqual(1, farrowing.get_dead())
-        self.assertEqual(100, farrowing.get_total_weight())
         self.assertEqual(1, farrowing.get_n_of_male())
         self.assertEqual(1, farrowing.get_n_of_female())
-        self.assertEqual("HI", farrowing.get_note())
 
         farrowing_dict.pop("estrus_datetime")
         self.assertIsNone(self.model.dict_to_farrowing(farrowing_dict))
@@ -420,10 +416,8 @@ class ModelTest(unittest.TestCase):
             weak=1, 
             malformation=1, 
             dead=1, 
-            total_weight=100, 
             n_of_male=1, 
             n_of_female=1, 
-            note="Hi"
         )
         farrowing_dict = self.model._Model__get_farrowing_attributes(farrowing)
         self.assertEqual(farrowing_dict, {
@@ -437,10 +431,8 @@ class ModelTest(unittest.TestCase):
             "weak": 1, 
             "malformation": 1, 
             "dead": 1, 
-            "total_weight": 100, 
             "n_of_male": 1, 
             "n_of_female": 1, 
-            "note": "Hi"
         })
 
     def test_insert_farrowing(self):
@@ -457,10 +449,8 @@ class ModelTest(unittest.TestCase):
             weak=1, 
             malformation=1, 
             dead=1, 
-            total_weight=100, 
             n_of_male=1, 
             n_of_female=1, 
-            note="Hi"            
         )
         self.model.insert_farrowing(farrowing)
 
@@ -478,10 +468,8 @@ class ModelTest(unittest.TestCase):
             weak=1, 
             malformation=1, 
             dead=1, 
-            total_weight=100, 
             n_of_male=1, 
             n_of_female=1, 
-            note="Hi"            
         )
         self.model.insert_farrowing(farrowing)
         estrus = Estrus(sow=sow, estrus_datetime="2001-05-12 12:00:00")
@@ -494,10 +482,8 @@ class ModelTest(unittest.TestCase):
             weak=1, 
             malformation=1, 
             dead=1, 
-            total_weight=100, 
             n_of_male=1, 
             n_of_female=2, 
-            note="Hi"            
         )
         self.model.insert_farrowing(farrowing)
         found = self.model.find_farrowings(equal={"n_of_female": 2})
@@ -519,10 +505,8 @@ class ModelTest(unittest.TestCase):
             weak=1, 
             malformation=1, 
             dead=1, 
-            total_weight=100, 
             n_of_male=1, 
             n_of_female=1, 
-            note="Hi"            
         )
         self.model.insert_farrowing(farrowing)
         farrowing = Farrowing(
@@ -531,16 +515,14 @@ class ModelTest(unittest.TestCase):
             crushed=1, 
             black=1, 
             weak=1, 
-            malformation=1, 
+            malformation=2, 
             dead=1, 
-            total_weight=200, 
             n_of_male=1, 
             n_of_female=1, 
-            note="Hi"            
         )
         self.model.update_farrowing(farrowing)
         found = self.model.find_farrowings(equal={"farm": "test farm"})
-        self.assertEqual(200, found[0].get_total_weight())
+        self.assertEqual(2, found[0].get_malformation())
         self.assertRaises(TypeError, self.model.update_farrowing, "123456")
 
     def test_dict_to_weaning(self):
@@ -554,7 +536,6 @@ class ModelTest(unittest.TestCase):
             "weaning_date": "2000-09-24", 
             "total_nursed_piglets": 10, 
             "total_weaning_piglets": 9, 
-            "total_weaning_weight": 100.2
         }
         got = self.model.dict_to_weaning(weaning_dict)
         sow = Pig(
@@ -569,7 +550,6 @@ class ModelTest(unittest.TestCase):
             weaning_date="2000-09-24", 
             total_nursed_piglets=10, 
             total_weaning_piglets=9, 
-            total_weaning_weight=100.2
         )
         self.assertEqual(weaning, got)
         self.assertRaises(TypeError, self.model.dict_to_weaning, "No")
@@ -582,11 +562,9 @@ class ModelTest(unittest.TestCase):
             "birthday": date(1999, 5, 12), 
             "farm": "test farm", 
             "estrus_datetime": datetime(2000, 5, 12, 12), 
-            "farrowing_date": date(2000, 9, 3), 
             "weaning_date": date(2000, 9, 24), 
             "total_nursed_piglets": 10, 
             "total_weaning_piglets": 9, 
-            "total_weaning_weight": 100.2
         }
         sow = Pig(
             id="123456", 
@@ -600,7 +578,6 @@ class ModelTest(unittest.TestCase):
             weaning_date="2000-09-24", 
             total_nursed_piglets=10, 
             total_weaning_piglets=9, 
-            total_weaning_weight=100.2
         )
         got = self.model._Model__get_weaning_attributes(weaning)
         self.assertEqual(weaning_dict, got)
@@ -608,18 +585,15 @@ class ModelTest(unittest.TestCase):
             weaning_date="2000-09-24", 
             total_nursed_piglets=10, 
             total_weaning_piglets=9, 
-            total_weaning_weight=100.2
         )
         weaning_dict = {
             "id": None, 
             "birthday": None, 
             "farm": None, 
             "estrus_datetime": None, 
-            "farrowing_date": None, 
             "weaning_date": date(2000, 9, 24), 
             "total_nursed_piglets": 10, 
             "total_weaning_piglets": 9, 
-            "total_weaning_weight": 100.2
         }
         got = self.model._Model__get_weaning_attributes(weaning)
         self.assertEqual(weaning_dict, got)
@@ -638,7 +612,6 @@ class ModelTest(unittest.TestCase):
             weaning_date="2000-09-24", 
             total_nursed_piglets=10, 
             total_weaning_piglets=9, 
-            total_weaning_weight=100.2
         )
         self.model.insert_weaning(weaning)
 
@@ -655,7 +628,6 @@ class ModelTest(unittest.TestCase):
             weaning_date="2000-09-24", 
             total_nursed_piglets=10, 
             total_weaning_piglets=9, 
-            total_weaning_weight=100.2
         )
         self.model.insert_weaning(weaning)
 
@@ -668,13 +640,12 @@ class ModelTest(unittest.TestCase):
             weaning_date="2001-09-24", 
             total_nursed_piglets=10, 
             total_weaning_piglets=9, 
-            total_weaning_weight=100.2
         )
         self.model.insert_weaning(weaning)
 
         found = self.model.find_weanings(equal={"id": "123456"})
         self.assertEqual(2, len(found))
-        found = self.model.find_weanings(equal={"farrowing_date": "2001-09-03"})
+        found = self.model.find_weanings(equal={"weaning_date": "2001-09-24"})
         self.assertEqual(found[0], weaning)
 
     def test_update_weaning(self):
@@ -690,7 +661,6 @@ class ModelTest(unittest.TestCase):
             weaning_date="2000-09-24", 
             total_nursed_piglets=10, 
             total_weaning_piglets=9, 
-            total_weaning_weight=100.2
         )
         self.model.insert_weaning(weaning)
 
@@ -703,7 +673,6 @@ class ModelTest(unittest.TestCase):
             weaning_date="2001-09-24", 
             total_nursed_piglets=10, 
             total_weaning_piglets=9, 
-            total_weaning_weight=100.2
         )
         self.model.insert_weaning(weaning)
 
@@ -712,7 +681,6 @@ class ModelTest(unittest.TestCase):
             weaning_date="2001-09-24", 
             total_nursed_piglets=20, 
             total_weaning_piglets=9, 
-            total_weaning_weight=100.2
         )
         self.model.update_weaning(weaning)
         found = self.model.find_weanings(equal={"weaning_date": "2000-09-24"})
