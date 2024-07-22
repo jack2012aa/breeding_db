@@ -4,7 +4,7 @@ import logging
 import pymysql
 
 from breeding_db.general import type_check
-from breeding_db.data_structures import Farrowing, Weaning
+from breeding_db.data_structures import Farrowing, Weaning, Individual
 from breeding_db.data_structures import Pig, Estrus, Mating, PregnantStatus
 
 
@@ -897,7 +897,7 @@ class Model():
         :param weaning_dict: a dictionary contains attributes of Weaning.
         :raises TypeError: if weaning_dict contains incorrect parameters type.
         :raises ValueError: if pass in incorrect parameter in weaning_dict.
-        :return: a Farrowing object or None if weaning is not unique.
+        :return: a Weaning object or None if weaning is not unique.
         """
 
         type_check(weaning_dict, "weaning_dict", dict)
@@ -1052,6 +1052,218 @@ class Model():
         condition = f"id='{id}' and birthday='{str(birthday)}' and farm='{farm}' "
         condition += f"and estrus_datetime='{str(estrus_datetime)}' "
         sql_query = "UPDATE Weanings SET {setting} WHERE {condition};".format(
+            setting=", ".join(setting),
+            condition=condition
+        )
+
+        self.__query(sql_query)
+
+    def dict_to_individual(self, individual_dict: dict) -> Individual:
+        """Transform a dictionary from query to an unique Individual instance.
+
+        If the Individual is not unique, None will be returned.
+
+        
+
+        :param individual_dict: a dictionary contains attributes of Individual.
+        :raises TypeError: if individual_dict contains incorrect parameters type.
+        :raises ValueError: if pass in incorrect parameter in individual_dict.
+        :return: a Individual object or None if weaning is not unique.
+        """
+
+        type_check(individual_dict, "individual_dict", dict)
+
+        individual = Individual(
+            in_litter_id=individual_dict.get("in_litter_id"), 
+            born_weight=individual_dict.get("born_weight"), 
+            weaning_weight=individual_dict.get("weaning_weight")
+        )
+
+        birth_sow = Pig(
+            id=individual_dict.get("birth_sow_id"), 
+            farm=individual_dict.get("birth_sow_farm"), 
+            birthday=individual_dict.get("birth_sow_birthday")
+        )
+        if not birth_sow.is_unique():
+            return None
+        
+        birth_estrus = Estrus(
+            sow=birth_sow, 
+            estrus_datetime=individual_dict.get("birth_estrus_datetime")
+        )
+        if not birth_estrus.is_unique():
+            return None
+        
+        birth_farrowing = Farrowing(
+            estrus=birth_estrus
+        )
+        if not birth_farrowing.is_unique():
+            return None
+        
+        individual.set_birth_litter(birth_farrowing)
+
+        try:
+            nurse_sow = Pig(
+                id=individual_dict.get("nurse_sow_id"), 
+                farm=individual_dict.get("nurse_sow_farm"), 
+                birthday=individual_dict.get("nurse_sow_birthday")
+            )
+            if not nurse_sow.is_unique():
+                raise ZeroDivisionError()
+            nurse_estrus = Estrus(
+                sow=nurse_sow, 
+                estrus_datetime=individual_dict.get("nurse_estrus_datetime")
+            )
+            if not nurse_estrus.is_unique():
+                raise ZeroDivisionError()
+            nurse_weaning = Weaning(farrowing=Farrowing(estrus=nurse_estrus))
+            individual.set_nurse_litter(nurse_weaning)
+        except:
+            pass
+        
+        if individual.is_unique():
+            return individual
+        return None
+    
+    def __get_individual_attributes(self, individual: Individual) -> dict:
+        """Get the attributes dictionary of individual.
+
+        :param individual: an Individual object.
+        :raises TypeError: if individual is not an Individual.
+        :return: a attributes dictionary of individual.
+        """
+
+        type_check(individual, "individual", Individual)
+
+        weaning_dict = {
+            "birth_sow_id": None, 
+            "birth_sow_farm": None, 
+            "birth_sow_birthday": None, 
+            "birth_estrus_datetime": None, 
+            "nurse_sow_id": None, 
+            "nurse_sow_farm": None, 
+            "nurse_sow_birthday": None, 
+            "nurse_estrus_datetime": None,
+            "in_litter_id": individual.get_in_litter_id(), 
+            "born_weight": individual.get_born_weight(), 
+            "weaning_weight": individual.get_weaning_weight()
+        }
+
+        if individual.get_birth_litter() is not None:
+            estrus = individual.get_birth_litter().get_estrus()
+            sow = estrus.get_sow()
+            weaning_dict["birth_sow_id"] = sow.get_id()
+            weaning_dict["birth_sow_birthday"] = sow.get_birthday()
+            weaning_dict["birth_sow_farm"] = sow.get_farm()
+            weaning_dict["birth_estrus_datetime"] = estrus.get_estrus_datetime()
+
+        if individual.get_nurse_litter() is not None:
+            estrus = individual.get_nurse_litter().get_farrowing().get_estrus()
+            sow = estrus.get_sow()
+            weaning_dict["nurse_sow_id"] = sow.get_id()
+            weaning_dict["nurse_sow_birthday"] = sow.get_birthday()
+            weaning_dict["nurse_sow_farm"] = sow.get_farm()
+            weaning_dict["nurse_estrus_datetime"] = estrus.get_estrus_datetime()
+        
+        return weaning_dict
+
+    def insert_individual(self, individual: Individual) -> None:
+        """Insert a new individual data into database.
+
+        :param individual: an unique Individual object.
+        :raises ValueError: if individual is not unique.
+        :raises KeyError: if birth_litter or nurse_litter not exist in the \
+            database.
+        """
+        
+        type_check(individual, "individual", Individual)
+
+        if not individual.is_unique():
+            msg = f"individual should be unique. Got {individual}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        attributes = self.__get_individual_attributes(individual)
+        sql_query = self.__generate_insert_string(attributes, "Individuals")
+
+        try:
+            self.__query(sql_query)
+        except pymysql.err.IntegrityError:
+            msg = "Litter does not exist in the database."
+            raise KeyError(msg)
+        
+    def find_individuals(
+        self,
+        equal: dict = {},
+        larger: dict = {},
+        smaller: dict = {},
+        larger_equal: dict = {},
+        smaller_equal: dict = {},
+        order_by: str = None
+    ) -> list[Individual]:
+        """ Find all individuals satisfy the conditions. 
+
+        Please make sure:
+        * Keys of the dictionary should be same as attributes.
+        * Different conditions will be connected by AND.
+        * Sow should be listed as id, birthday, ...
+        
+        :param equal: query will be `key`=`value`
+        :param larger: query will be `key`>`value`
+        :param smaller: query will be `key`<`value`
+        :param larger_equal: query will be `key`>=`value`
+        :param smaller_equal: query will be `key`<=`value`
+        :param order_by: `column_name` `ASC|DESC`
+        :raises: TypeError, ValueError.
+        """
+
+        sql_query = self.__generate_qeury_string(
+            table_name="Individuals", 
+            equal=equal, 
+            larger=larger, 
+            smaller=smaller, 
+            larger_equal=larger_equal, 
+            smaller_equal=smaller_equal, 
+            order_by=order_by
+        )
+
+        results = self.__query(sql_query)
+        weanings = []
+        for dictionary in results:
+            weanings.append(self.dict_to_individual(dictionary))
+
+        return weanings
+
+    def update_individual(self, individual: Individual) -> None:
+        """ Update attributes of an Individual in the database.
+
+        :param individual: an unique Individual instance. Attributes except \
+            primary keys will be updatad.
+        :raises: TypeError, ValueError.
+        """
+
+        type_check(individual, "individual", Individual)
+        if not individual.is_unique():
+            msg = f"individual should be unique. Got {individual}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        attributes = self.__get_individual_attributes(individual)
+        setting = []
+        for key, value in attributes.items():
+            if value is not None:
+                setting.append("{key}='{value}'".format(key=key, value=value))
+        estrus = individual.get_birth_litter().get_estrus()
+        id = estrus.get_sow().get_id()
+        birthday = estrus.get_sow().get_birthday()
+        farm = estrus.get_sow().get_farm()
+        estrus_datetime = estrus.get_estrus_datetime()
+        in_litter_id = individual.get_in_litter_id()
+        condition = f"birth_sow_id='{id}' and birth_sow_birthday="
+        condition += f"'{str(birthday)}' and birth_sow_farm='{farm}' and "
+        condition += f"birth_estrus_datetime='{str(estrus_datetime)}' and "
+        condition += f"in_litter_id='{in_litter_id}'"
+        sql_query = "UPDATE Individuals SET {setting} WHERE {condition};".format(
             setting=", ".join(setting),
             condition=condition
         )

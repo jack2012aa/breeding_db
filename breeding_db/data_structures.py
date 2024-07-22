@@ -1540,7 +1540,7 @@ class Individual:
             and self.__in_litter_id == individual.get_in_litter_id()
         return False
     
-    def is_unqiue(self) -> bool:
+    def is_unique(self) -> bool:
 
         return self.__birth_litter is not None and self.__in_litter_id is not None
     

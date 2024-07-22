@@ -89,7 +89,7 @@ CREATE TABLE Individuals(
     nurse_sow_birthday date, 
     nurse_sow_farm varchar(20), 
     nurse_estrus_datetime datetime, 
-    in_litter_id tinyint unsigned,
+    in_litter_id varchar(3),
     born_weight float unsigned, 
     weaning_weight float unsigned, 
     PRIMARY KEY (birth_sow_id, birth_sow_birthday, birth_sow_farm, birth_estrus_datetime, in_litter_id), 

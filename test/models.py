@@ -11,6 +11,7 @@ class ModelTest(unittest.TestCase):
         self.model = Model("test/helper/database_settings.json")
 
     def tearDown(self):
+        self.model._delete_all("Individuals")
         self.model._delete_all("Weanings")
         self.model._delete_all("Farrowings")
         self.model._delete_all("Matings")
@@ -687,6 +688,137 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(10, found[0].get_total_nursed_piglets())
         found = self.model.find_weanings(equal={"weaning_date": "2001-09-24"})
         self.assertEqual(20, found[0].get_total_nursed_piglets())
+
+    def test_dict_to_individual(self):
+
+        individual_dict = {
+            "birth_sow_id": "123456", 
+            "birth_sow_farm": "test farm", 
+            "birth_sow_birthday": "1999-05-12", 
+            "birth_estrus_datetime": "2000-05-12 10:00:00", 
+            "nurse_sow_id": "123456", 
+            "nurse_sow_farm": "test farm", 
+            "nurse_sow_birthday": "1999-05-12", 
+            "nurse_estrus_datetime": "2000-05-12 10:00:00", 
+            "in_litter_id": "12", 
+            "born_weight": 1.2, 
+            "weaning_weight": 12
+        }
+        got = self.model.dict_to_individual(individual_dict)
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 10:00:00")
+        farrowing = Farrowing(estrus=estrus)
+        weaning = Weaning(farrowing=farrowing)
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12
+        )
+        self.assertEqual(got, individual)
+
+    def test_get_individual_attributes(self):
+
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 10:00:00")
+        farrowing = Farrowing(estrus=estrus)
+        weaning = Weaning(farrowing=farrowing)
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12
+        )
+        got = self.model._Model__get_individual_attributes(individual)
+        individual_dict = {
+            "birth_sow_id": "123456", 
+            "birth_sow_farm": "test farm", 
+            "birth_sow_birthday": date(1999, 5, 12), 
+            "birth_estrus_datetime": datetime(2000, 5, 12, 10), 
+            "nurse_sow_id": "123456", 
+            "nurse_sow_farm": "test farm", 
+            "nurse_sow_birthday": date(1999, 5, 12), 
+            "nurse_estrus_datetime": datetime(2000, 5, 12, 10), 
+            "in_litter_id": "12", 
+            "born_weight": 1.2, 
+            "weaning_weight": 12
+        }
+        self.assertEqual(got, individual_dict)
+
+    def test_insert_individual(self):
+
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 10:00:00")
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2000-09-03")
+        weaning = Weaning(farrowing=farrowing, weaning_date="2000-09-24")
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12
+        )
+        self.model.insert_pig(sow)
+        self.model.insert_estrus(estrus)
+        self.model.insert_farrowing(farrowing)
+        self.model.insert_weaning(weaning)
+        self.model.insert_individual(individual)
+        self.assertRaises(TypeError, self.model.insert_individual, "HI")
+        self.assertRaises(ValueError, self.model.insert_individual, Individual())
+
+    def test_find_individuals(self):
+
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 10:00:00")
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2000-09-03")
+        weaning = Weaning(farrowing=farrowing, weaning_date="2000-09-24")
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12
+        )
+        self.model.insert_pig(sow)
+        self.model.insert_estrus(estrus)
+        self.model.insert_farrowing(farrowing)
+        self.model.insert_weaning(weaning)
+        self.model.insert_individual(individual)
+        got = self.model.find_individuals(
+            equal={"birth_sow_id": "123456"}, 
+            larger={"birth_estrus_datetime": datetime(2000, 5, 11, 11)},
+            smaller={"nurse_estrus_datetime": datetime(2000, 5, 13)},
+            larger_equal={"in_litter_id": "10"},
+            smaller_equal={"born_weight": 1.8}
+        )
+        self.assertEqual(got[0], individual)
+
+    def test_update_individual(self):
+
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 10:00:00")
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2000-09-03")
+        weaning = Weaning(farrowing=farrowing, weaning_date="2000-09-24")
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12
+        )
+        self.model.insert_pig(sow)
+        self.model.insert_estrus(estrus)
+        self.model.insert_farrowing(farrowing)
+        self.model.insert_weaning(weaning)
+        self.model.insert_individual(individual)
+
+        individual.set_born_weight(0.9)
+        self.model.update_individual(individual)
+        got = self.model.find_individuals(equal={"birth_sow_farm": "test farm"})
+        self.assertEqual(0.9, got[0].get_born_weight())
+
 
 if __name__ == '__main__':
     unittest.main()
