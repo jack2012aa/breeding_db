@@ -1,3 +1,4 @@
+drop table Individuals;
 drop table Weanings;
 drop table Farrowings;
 drop table Matings;
@@ -55,16 +56,15 @@ CREATE TABLE Farrowings(
     farm varchar(20),
     estrus_datetime datetime,
     farrowing_date date NOT NULL,
+    litter_id smallint unsigned, 
     crushed tinyint unsigned,
     black tinyint unsigned,
     weak tinyint unsigned,
     malformation tinyint unsigned,
     dead tinyint unsigned,
-    total_weight float unsigned,
     n_of_male tinyint unsigned,
-    n_of_female tinyint unsigned, 
-    note varchar(20),
-    PRIMARY KEY (id, birthday, farm, estrus_datetime, farrowing_date),
+    n_of_female tinyint unsigned,
+    PRIMARY KEY (id, birthday, farm, estrus_datetime),
     FOREIGN KEY (id, birthday, farm, estrus_datetime) REFERENCES Estrus (id, birthday, farm, estrus_datetime)
 );
 
@@ -73,11 +73,26 @@ CREATE TABLE Weanings(
     birthday date,
     farm varchar(20),
     estrus_datetime datetime,
-    farrowing_date date,
     weaning_date date NOT NULL,
     total_nursed_piglets tinyint unsigned, 
     total_weaning_piglets tinyint unsigned, 
-    total_weaning_weight float unsigned,
-    PRIMARY KEY (id, birthday, farm, estrus_datetime, farrowing_date),
-    FOREIGN KEY (id, birthday, farm, estrus_datetime, farrowing_date) REFERENCES Farrowings (id, birthday, farm, estrus_datetime, farrowing_date)
+    PRIMARY KEY (id, birthday, farm, estrus_datetime),
+    FOREIGN KEY (id, birthday, farm, estrus_datetime) REFERENCES Farrowings (id, birthday, farm, estrus_datetime)
+);
+
+CREATE TABLE Individuals(
+    birth_sow_id varchar(20), 
+    birth_sow_birthday date, 
+    birth_sow_farm varchar(20), 
+    birth_estrus_datetime datetime,
+    nurse_sow_id varchar(20), 
+    nurse_sow_birthday date, 
+    nurse_sow_farm varchar(20), 
+    nurse_estrus_datetime datetime, 
+    in_litter_id tinyint unsigned,
+    born_weight float unsigned, 
+    weaning_weight float unsigned, 
+    PRIMARY KEY (birth_sow_id, birth_sow_birthday, birth_sow_farm, birth_estrus_datetime, in_litter_id), 
+    FOREIGN KEY (birth_sow_id, birth_sow_birthday, birth_sow_farm, birth_estrus_datetime) REFERENCES Farrowings (id, birthday, farm, estrus_datetime), 
+    FOREIGN KEY (nurse_sow_id, nurse_sow_birthday, nurse_sow_farm, nurse_estrus_datetime) REFERENCES Weanings (id, birthday, farm, estrus_datetime)
 );

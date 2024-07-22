@@ -763,37 +763,37 @@ class Farrowing():
     def __init__(
         self, 
         estrus: Estrus = None, 
-        farrowing_date: str | date = None, 
+        farrowing_date: str | date = None,
+        litter_id: str = None,  
         crushed: int = None, 
         black: int = None, 
         weak: int = None, 
         malformation: int = None,
         dead: int = None,
-        total_weight: int = None,
         n_of_male: int = None,
         n_of_female: int = None,
-        note: str = None
     ) -> None:
         """A class represent a farrowing record.
 
         :param estrus: which estrus record is this farrowing record belongs.
         :param farrowing_date: date of farrowing, should be in ISO format.
+        :param litter_id: litter id in the farm of this birth, should be a \
+            numeric in range [1, 9999].
         :param crushed: number of piglets killed by being crushed by the sow.
         :param black: number of piglets born as black dead bodies.
         :param weak: number of piglets die because of weakness.
         :param malformation: number of piglets born as malformation dead bodies.
         :param dead: number of piglets born as dead bodies which have no \
             symptoms.
-        :param total_weight: total weight of alive piglets.
         :param n_of_male: total number of alive male piglets.
         :param n_of_female: total number of alive female piglets.
-        :param note: farm's note.
         :raises TypeError: if pass in wrong arguments type.
         :raises ValueError: if pass in incorrect arguments.
         """
         
         self.__estrus: Estrus = None
         self.__farrowing_date: date = None
+        self.__litter_id: str = None
         self.__crushed: int = None
         self.__black: int = None
         self.__weak: int = None
@@ -808,6 +808,8 @@ class Farrowing():
             self.set_estrus(estrus)
         if farrowing_date is not None:
             self.set_farrowing_date(farrowing_date)
+        if litter_id is not None:
+            self.set_litter_id(litter_id)
         if crushed is not None:
             self.set_crushed(crushed)
         if black is not None:
@@ -818,14 +820,10 @@ class Farrowing():
             self.set_malformation(malformation)
         if dead is not None:
             self.set_dead(dead)
-        if total_weight is not None:
-            self.set_total_weight(total_weight)
         if n_of_male is not None:
             self.set_n_of_male(n_of_male)
         if n_of_female is not None:
             self.set_n_of_female(n_of_female)
-        if note is not None:
-            self.set_note(note)
 
     def __str__(self) -> str:
         
@@ -854,10 +852,8 @@ class Farrowing():
             "總仔數 total_born：{total_born}".format(total_born=str(self.get_total_born())),
             "活仔數 born_alive：{born_alive}".format(born_alive=str(self.get_born_alive())),
             "死仔數 born_dead：{born_dead}".format(born_dead=str(self.get_born_dead())),
-            "窩重 total_weight：{weight}".format(weight=str(self.__total_weight)),
             "公豬數 n_of_male：{male}".format(male=str(self.__n_of_male)),
             "母豬數 n_of_female：{female}".format(female=str(self.__n_of_female)),
-            "備註 note：{note}".format(note=str(self.__note))
         ])
 
         return s
@@ -891,7 +887,6 @@ class Farrowing():
             and (self.__weak == __value.get_weak()) \
             and (self.__malformation == __value.get_malformation()) \
             and (self.__dead == __value.get_dead())\
-            and (self.__total_weight == __value.get_total_weight()) \
             and (self.__n_of_male == __value.get_n_of_male()) \
             and (self.__n_of_female == __value.get_n_of_female())
     
@@ -979,6 +974,33 @@ class Farrowing():
             
         self.__farrowing_date = farrowing_date
   
+    def set_litter_id(self, litter_id: str) -> None:
+        """Set the litter id in the farm of this birth.
+
+        The id can include leading zero and those zeros will be remained.
+        
+        :param litter_id: litter id in the farm of this birth, should be a \
+            numeric in range [1,9999].
+        :raises TypeError: if litter_id is not a string.
+        :raises ValueError: if litter_id is not a numeric.
+        :raises ValueError: if int(litter_id) is not in range [1, 9999].
+        """
+
+        type_check(litter_id, "litter_id", str)
+
+        if not litter_id.isnumeric():
+            msg = f"litter_id must be a numeric. Got {litter_id}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        litter_num = int(litter_id)
+        if litter_num not in range(1, 10000):
+            msg = f"litter_id must be in range [1, 9999]. Got {litter_id}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        self.__litter_id = litter_id
+    
     def set_crushed(self, crushed: int) -> None:
         """Set the number of piglets killed by being crushed by the sow.
 
@@ -1147,41 +1169,14 @@ class Farrowing():
             self.__n_of_female = old
             raise e
 
-    def set_total_weight(self, total_weight: float) -> None:
-        """Set the total weight of alive piglets.
-
-        :param total_weight: total weight of alive piglets.
-        :raises TypeError: if pass in incorrect argument type.
-        :raises ValueError: if total_weight is smaller than 0.
-        """
-
-        if isinstance(total_weight, int):
-            total_weight = float(total_weight)
-            
-        type_check(total_weight, "total_weight", float)
-
-        if total_weight < 0:
-            msg = f"total_weight can not be smaller than 0. Got {total_weight}."
-            logging.error(msg)
-            raise ValueError(msg)
-
-        self.__total_weight = total_weight
-
-    def set_note(self, note: str) -> None:
-        """Set farm note.
-
-        :param note: a string note.
-        :raises TypeError: if pass in incorrect argument type.
-        """
-
-        type_check(note, "note", str)
-        self.__note = note
-
     def get_estrus(self) -> Estrus:
         return self.__estrus
     
     def get_farrowing_date(self) -> date:
         return self.__farrowing_date
+    
+    def get_litter_id(self) -> str:
+        return self.__litter_id
     
     def get_crushed(self) -> int:
         return self.__crushed
@@ -1219,12 +1214,6 @@ class Farrowing():
     def get_total_born(self) -> int:
         return self.get_born_alive() + self.get_born_dead()
     
-    def get_total_weight(self) -> int:
-        return self.__total_weight
-    
-    def get_note(self) -> int:
-        return self.__note
-    
 
 class Weaning:
 
@@ -1238,7 +1227,6 @@ class Weaning:
         weaning_date: str | date = None, 
         total_nursed_piglets: int = None, 
         total_weaning_piglets: int = None, 
-        total_weaning_weight: int = None
     ) -> None:
         """A class represents a weaning record.
 
@@ -1251,7 +1239,6 @@ class Weaning:
             of nursing, which should equal to total born alive + number of \
             fosterred piglets.
         :param total_weaning_piglets: number of alive piglets when weaning. 
-        :param total_weaning_weight: weight of alive piglets when weaning in kg.
         :raises TypeError: if pass in wrong arguments type.
         :raises ValueError: if pass in incorrect arguments.
         """
@@ -1260,7 +1247,6 @@ class Weaning:
         self.__weaning_date: date = None
         self.__total_nursed_piglets: int = None
         self.__total_weaning_piglets: int = None
-        self.__total_weaning_weight: float = None
 
         if farrowing is not None:
             self.set_farrowing(farrowing)
@@ -1270,8 +1256,6 @@ class Weaning:
             self.set_total_nursed_piglets(total_nursed_piglets)
         if total_weaning_piglets is not None:
             self.set_total_weaning_piglets(total_weaning_piglets)
-        if total_weaning_weight is not None:
-            self.set_total_weaning_weight(total_weaning_weight)
 
     def __str__(self) -> str:
 
@@ -1287,8 +1271,7 @@ class Weaning:
             s, 
             f"離乳日 weaning_date: {self.__weaning_date}",
             f"哺乳數 total_nursed_piglets: {self.__total_weaning_piglets}", 
-            f"離乳數 total_weaning_piglets: {self.__total_weaning_piglets}", 
-            f"離乳窩重(kg) total_weaning_weight: {self.__total_weaning_weight}"
+            f"離乳數 total_weaning_piglets: {self.__total_weaning_piglets}"
         ])
 
         return s
@@ -1318,8 +1301,7 @@ class Weaning:
         return result \
             and (self.__weaning_date == __value.get_weaning_date()) \
             and (self.__total_nursed_piglets == __value.get_total_nursed_piglets()) \
-            and (self.__total_weaning_piglets == __value.get_total_weaning_piglets()) \
-            and (self.__total_weaning_weight == __value.get_total_weaning_weight())
+            and (self.__total_weaning_piglets == __value.get_total_weaning_piglets())
     
     def is_unique(self) -> bool:
         
@@ -1464,20 +1446,6 @@ class Weaning:
 
         self.__total_weaning_piglets = total_weaning_piglets
         
-    def set_total_weaning_weight(self, total_weaning_weight: float) -> None:
-
-        if isinstance(total_weaning_weight, int):
-            total_weaning_weight = float(total_weaning_weight)
-        type_check(total_weaning_weight, "total_weaning_weight", float)
-
-        if total_weaning_weight < 0:
-            msg = "total_weaning_weight must be greater than 0. "
-            msg += f"Got {total_weaning_weight}."
-            logging.error(msg)
-            raise ValueError(msg)
-        
-        self.__total_weaning_weight = total_weaning_weight
-
     def get_farrowing(self) -> Farrowing:
         return self.__farrowing
     
@@ -1489,6 +1457,3 @@ class Weaning:
     
     def get_total_weaning_piglets(self) -> int:
         return self.__total_weaning_piglets
-    
-    def get_total_weaning_weight(self) -> float:
-        return self.__total_weaning_weight

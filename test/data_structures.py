@@ -480,17 +480,6 @@ class FarrowingTestCase(unittest.TestCase):
         self.assertRaises(ValueError, self.farrowing.set_n_of_female, -1)
         self.assertRaises(ValueError, self.farrowing.set_n_of_male, 5)
 
-        # Set n_of_total_weight.
-        self.farrowing.set_total_weight(5)
-        self.assertEqual(5, self.farrowing.get_total_weight())
-        self.assertRaises(TypeError, self.farrowing.set_total_weight, "3")
-        self.assertRaises(ValueError, self.farrowing.set_total_weight, -1)
-
-        # Set note.
-        self.farrowing.set_note("HI")
-        self.assertEqual("HI", self.farrowing.get_note())
-        self.assertRaises(TypeError, self.farrowing.set_note, 12)
-
         # total number dead.
         self.assertEqual(25, self.farrowing.get_born_dead())
         self.assertEqual(2, self.farrowing.get_born_alive())
@@ -506,8 +495,6 @@ class FarrowingTestCase(unittest.TestCase):
             dead=1, 
             n_of_male=1, 
             n_of_female=1, 
-            total_weight=1, 
-            note="HI"
         )
         self.assertEqual(self.farrowing.get_estrus(), estrus)
         self.assertEqual(self.farrowing.get_farrowing_date(), date(2000, 7, 24))
@@ -517,8 +504,6 @@ class FarrowingTestCase(unittest.TestCase):
         self.assertEqual(self.farrowing.get_malformation(), 1)
         self.assertEqual(self.farrowing.get_n_of_male(), 1)
         self.assertEqual(self.farrowing.get_n_of_female(), 1)
-        self.assertEqual(self.farrowing.get_total_weight(), 1)
-        self.assertEqual(self.farrowing.get_note(), "HI")
 
 
 class WeaningTestCase(unittest.TestCase):
@@ -548,8 +533,6 @@ class WeaningTestCase(unittest.TestCase):
         self.assertEqual(10, self.weaning.get_total_nursed_piglets())
         self.weaning.set_total_weaning_piglets(9)
         self.assertEqual(9, self.weaning.get_total_weaning_piglets())
-        self.weaning.set_total_weaning_weight(42.2)
-        self.assertEqual(42.2, self.weaning.get_total_weaning_weight())
         self.weaning = Weaning()
         self.weaning.set_farrowing(farrowing)
         self.assertTrue(self.weaning.is_unique())
@@ -580,8 +563,6 @@ class WeaningTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.weaning.set_total_weaning_piglets, "HI")
         self.assertRaises(ValueError, self.weaning.set_total_weaning_piglets, -1)
         self.assertRaises(ValueError, self.weaning.set_total_weaning_piglets, 31)
-        self.assertRaises(TypeError, self.weaning.set_total_weaning_weight, "HI")
-        self.assertRaises(ValueError, self.weaning.set_total_weaning_weight, -1.0)
 
 
 
