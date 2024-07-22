@@ -6,7 +6,8 @@ __all__ = [
     "Estrus", 
     "Mating", 
     "Farrowing", 
-    "Weaning"
+    "Weaning", 
+    "Individual"
 ]
 
 import logging
@@ -1457,3 +1458,228 @@ class Weaning:
     
     def get_total_weaning_piglets(self) -> int:
         return self.__total_weaning_piglets
+    
+
+class Individual:
+
+    def __init__(
+        self, 
+        birth_litter: Farrowing = None, 
+        nurse_litter: Weaning = None, 
+        in_litter_id: str = None, 
+        born_weight: float = None, 
+        weaning_weight: float = None
+    ) -> None:
+        """The individual info of a piglet.
+        
+        :param birth_litter: the farrowing which the piglet born.
+        :param nurse_litter: the weaning which the piglet was nursed.
+        :param in_litter_id: the piglet id in birth litter.
+        :param born_weight: born weight in kg.
+        :param weaning_weight: weaning weight in kg.
+        :raises TypeError: if pass in incorrect type.
+        """
+        
+        self.__birth_litter: Farrowing = None
+        self.__nurse_litter: Weaning = None
+        self.__in_litter_id: str = None
+        self.__born_weight: float = None
+        self.__weaning_weight: float = None
+
+        if birth_litter is not None:
+            self.set_birth_litter(birth_litter)
+        if nurse_litter is not None:
+            self.set_nurse_litter(nurse_litter)
+        if in_litter_id is not None:
+            self.set_in_litter_id(in_litter_id)
+        if born_weight is not None:
+            self.set_born_weight(born_weight)
+        if weaning_weight is not None:
+            self.set_weaning_weight(weaning_weight)
+    
+    def __str__(self) -> str:
+        
+        descriptions = [
+            "Individual: ", 
+            f"Birth litter: {str(self.__birth_litter)}", 
+            f"Nurse litter: {str(self.__nurse_litter)}",
+            f"In litter id: {str(self.__in_litter_id)}", 
+            f"Born weight: {str(self.__born_weight)}" 
+            f"Weaning weight: {str(self.__weaning_weight)}"
+        ]
+        return "\n".join(descriptions)
+    
+    def __eq__(self, __value: object) -> bool:
+        
+        if __value is None:
+            return False
+        
+        if not isinstance(__value, Individual):
+            msg = f"Can not compare Individual to {type(__value)}."
+            logging.error(msg)
+            raise TypeError(msg)
+        
+        return self.__birth_litter == __value.get_birth_litter()\
+        and self.__nurse_litter == __value.get_nurse_litter()\
+        and self.__in_litter_id == __value.get_in_litter_id()\
+        and self.__born_weight == __value.get_born_weight()\
+        and self.__weaning_weight == __value.get_weaning_weight()
+    
+    def is_unqiue(self) -> bool:
+
+        return self.__birth_litter is not None and self.__in_litter_id is not None
+    
+    def __check_birthdate_and_weaning_date(
+            self, 
+            birthdate: date, 
+            weaning_date: date
+        ) -> None:
+        """Check whether birthdate is earlier than weaning date. 
+        
+        Raise a ValueError if birthdate is later than weaning date.
+        :param birthdate: piglet birthdate.
+        :param weaning_date: piglet weaning date.
+        """
+
+        if weaning_date < birthdate:
+            msg = "Birthdate must be earlier than weaning date. "
+            msg += f"Birthdate: {birthdate}. "
+            msg += f"Weaning date: {weaning_date}."
+            logging.error(msg)
+            raise ValueError(msg)
+    
+    def set_birth_litter(self, birth_litter: Farrowing) -> None:
+        """Set the farrowing which the piglet born.
+        
+        :param birth_litter: the farrowing which the piglet born. Must be an \
+            unqiue Farrowing.
+        :raises TypeError: if birth_litter is not a Farrowing.
+        :raises ValueError: if birth_litter is not unique.
+        :raises ValueError: if weaning date is earlier than birthdate.
+        """
+        
+        type_check(birth_litter, "birth_litter", Farrowing)
+        
+        if not birth_litter.is_unique():
+            msg = f"birth_litter should be unique. \nGot {birth_litter}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        birthdate = birth_litter.get_farrowing_date()
+        weaning_date = None
+        if self.get_nurse_litter() is not None:
+            weaning_date = self.get_nurse_litter().get_weaning_date()
+        if birthdate is not None and weaning_date is not None:
+            self.__check_birthdate_and_weaning_date(birthdate, weaning_date)
+        
+        self.__birth_litter = birth_litter
+
+    def set_nurse_litter(self, nurse_litter: Weaning) -> None:
+        """Set the weaning which the piglet was nursed.
+
+        :param nurse_litter: an unique Weaning.
+        :raises TypeError: if nurse_litter is not a Weaning.
+        :raises ValueError: if nurse_litter is not unique.
+        :raises ValueError: if weaning date is earlier than birthdate.
+        """
+        
+        type_check(nurse_litter, "nurse_litter", Weaning)
+
+        if not nurse_litter.is_unique():
+            msg = f"weaning_litter should be unique. \nGot {nurse_litter}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        if self.__birth_litter is not None\
+        and nurse_litter.get_weaning_date() < \
+        self.__birth_litter.get_farrowing_date():
+            msg = "Birthdate must be earlier than weaning date. "
+            msg += f"Birthdate: {birthdate}. "
+            msg += f"Weaning date: {weaning_date}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        birthdate = None
+        weaning_date = nurse_litter.get_weaning_date()
+        if self.get_birth_litter() is not None:
+            birthdate = self.get_birth_litter().get_farrowing_date()
+        if birthdate is not None and weaning_date is not None:
+            self.__check_birthdate_and_weaning_date(birthdate, weaning_date)
+        
+        self.__nurse_litter = nurse_litter
+        
+    def set_in_litter_id(self, in_litter_id: str) -> None:
+        """Set the piglet id in birth litter.
+
+        :param in_litter_id: the piglet id in birth litter.
+        :raises TypeError: if in_litter_id is not a string.
+        :raises ValueError: if in_litter_id is not a numeric.
+        :raises ValueError: if in_litter_id not in range [1, 30].
+        """
+
+        type_check(in_litter_id, "in_litter_id", str)
+        
+        if not in_litter_id.isnumeric():
+            msg = f"in_litter_id should be a numeric. Got {in_litter_id}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        if int(in_litter_id) not in range(1, 31):
+            msg = f"in_litter_id should be in range [1, 30]. Got {in_litter_id}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        self.__in_litter_id = in_litter_id
+
+    def set_born_weight(self, born_weight: int | float) -> None:
+        """Set the born weight in kg of the piglet.
+
+        :param born_weight: the born weight in kg.
+        :raises TypeError: if born_weight is not an int or a float.
+        :raises ValueError: if born_weight <= 0.
+        """
+
+        if isinstance(born_weight, int):
+            born_weight = float(born_weight)
+        type_check(born_weight, "born_weight", float)
+
+        if born_weight <= 0:
+            msg = f"born_weight must be greater than 0. Got {born_weight}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        self.__born_weight = born_weight
+
+    def set_weaning_weight(self, weaning_weight: float) -> None:
+        """Set the weaning weight in kg of the piglet.
+
+        :param weaning_weight: the weaning weight in kg.
+        :raises TypeError: if weaning_weight is not an int or a float.
+        :raises ValueError: if weaning_weight <= 0.
+        """
+
+        if isinstance(weaning_weight, int):
+            weaning_weight = float(weaning_weight)
+        type_check(weaning_weight, "weaning_weight", float)
+
+        if weaning_weight <= 0:
+            msg = f"weaning_weight must be greater than 0. Got {weaning_weight}."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        self.__weaning_weight = weaning_weight
+
+    def get_birth_litter(self) -> Farrowing:
+        return self.__birth_litter
+    
+    def get_nurse_litter(self) -> Weaning:
+        return self.__nurse_litter
+    
+    def get_in_litter_id(self) -> str:
+        return self.__in_litter_id
+    
+    def get_born_weight(self) -> float:
+        return self.__born_weight
+    
+    def get_weaning_weight(self) -> float:
+        return self.__weaning_weight

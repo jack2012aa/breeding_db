@@ -565,6 +565,115 @@ class WeaningTestCase(unittest.TestCase):
         self.assertRaises(ValueError, self.weaning.set_total_weaning_piglets, 31)
 
 
+class IndividualTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.individual = Individual()
+
+    def tearDown(self) -> None:
+        self.individual = None
+
+    def test_set_up(self) -> None:
+        
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 10:00:00")
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2000-09-03")
+        weaning = Weaning(farrowing=farrowing, weaning_date="2000-09-24")
+        
+        self.individual.set_birth_litter(farrowing)
+        self.assertEqual(self.individual.get_birth_litter(), farrowing)
+        self.individual.set_nurse_litter(weaning)
+        self.assertEqual(self.individual.get_nurse_litter(), weaning)
+        self.individual.set_in_litter_id("10")
+        self.assertEqual(self.individual.get_in_litter_id(), "10")
+        self.individual.set_born_weight(1.2)
+        self.assertEqual(self.individual.get_born_weight(), 1.2)
+        self.individual.set_weaning_weight(12)
+        self.assertEqual(self.individual.get_weaning_weight(), 12.0)
+
+        estrus2 = Estrus(sow=sow, estrus_datetime="2000-05-20 10:00:00")
+        farrowing2 = Farrowing(estrus=estrus2, farrowing_date="2000-09-25")
+        self.assertRaises(ValueError, self.individual.set_birth_litter, farrowing2)
+        self.assertRaises(ValueError, self.individual.set_birth_litter, Farrowing())
+        self.assertRaises(TypeError, self.individual.set_birth_litter, "IH")
+
+        self.assertRaises(ValueError, self.individual.set_in_litter_id, "99")
+        self.assertRaises(ValueError, self.individual.set_in_litter_id, "-1")
+        self.assertRaises(ValueError, self.individual.set_in_litter_id, "string")
+        
+        self.assertRaises(ValueError, self.individual.set_born_weight, -1.0)
+        self.assertRaises(ValueError, self.individual.set_weaning_weight, -1.0)
+
+    def test_equal(self):
+
+        sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
+        estrus = Estrus(sow=sow, estrus_datetime="2000-05-12 10:00:00")
+        farrowing = Farrowing(estrus=estrus, farrowing_date="2000-09-03")
+        weaning = Weaning(farrowing=farrowing, weaning_date="2000-09-24")
+        self.individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12.0
+        )
+
+        self.assertNotEqual(self.individual, None)
+
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12.0
+        )
+        self.assertEqual(self.individual, individual)
+
+        individual = Individual(
+            birth_litter=Farrowing(estrus=estrus, farrowing_date="2000-09-05"), 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12.0
+        )
+        self.assertNotEqual(self.individual, individual)
+
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=Weaning(farrowing=farrowing, weaning_date="2000-09-25"), 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12.0
+        )
+        self.assertNotEqual(self.individual, individual)
+
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="13", 
+            born_weight=1.2, 
+            weaning_weight=12.0
+        )
+        self.assertNotEqual(self.individual, individual)
+
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.22, 
+            weaning_weight=12.0
+        )
+        self.assertNotEqual(self.individual, individual)
+
+        individual = Individual(
+            birth_litter=farrowing, 
+            nurse_litter=weaning, 
+            in_litter_id="12", 
+            born_weight=1.2, 
+            weaning_weight=12.1
+        )
+        self.assertNotEqual(self.individual, individual)
+
 
 if __name__ == '__main__':
     unittest.main()
