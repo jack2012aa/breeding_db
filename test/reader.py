@@ -20,6 +20,8 @@ class MyTestCase(unittest.TestCase):
         self.model._delete_all("Pigs")
         self.model._delete_all("Estrus")
         self.model._delete_all("Matings")
+        self.model._delete_all("Farrowings")
+        self.model._delete_all("Weanings")
         self.model = None
         delete_contents("test/helper/garbage")
 
@@ -188,7 +190,6 @@ class MyTestCase(unittest.TestCase):
             output_filename="output3.csv", 
             output_path="test/helper/garbage"
         )
-        
         found = self.model.find_farrowings(equal={"farm": "test farm"})
         self.assertEqual(49, len(found))
         dataframe = pd.read_csv("test/helper/garbage/output3.csv")
@@ -226,7 +227,7 @@ class MyTestCase(unittest.TestCase):
         found = self.model.find_weanings(equal={"farm": "test farm"})
         self.assertEqual(48, len(found))
         output = pd.read_csv("test/helper/garbage/output4.csv")
-        self.assertEqual(12, output.shape[0])
+        self.assertEqual(10, output.shape[0])
 
 
 if __name__ == '__main__':

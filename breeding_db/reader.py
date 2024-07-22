@@ -1008,13 +1008,12 @@ class ExcelReader():
             "分娩日期": "farrowing_date", 
             "(公) 小豬": "n_of_male", 
             "(母) 小豬": "n_of_female", 
+            "胎號": "litter_id",
             "壓": "crushed", 
             "黑": "black", 
             "弱": "weak", 
             "畸": "malformation", 
             "死": "dead", 
-            "出生窩重": "total_weight", 
-            "備註": "note"
         }
         dataframe = dataframe.rename(columns=rename_dict)
         if not set(rename_dict.values()).issubset(dataframe.columns):
@@ -1088,6 +1087,32 @@ class ExcelReader():
                 else:
                     error_messages.append("未知錯誤")
 
+            # Set litter_id
+            # litter_id is an int in the dataframe. Need type casting.
+            litter_id = str(data_row.get("litter_id"))
+            # Add leading zero to the id.
+            while len(litter_id) < 4:
+                litter_id = "0" + litter_id
+            try:
+                if pd.isna(litter_id) and allow_none:
+                    raise ZeroDivisionError()
+                if pd.isna(litter_id) and not allow_none:
+                    raise SyntaxError()
+                farrowing.set_litter_id(litter_id)
+            except ZeroDivisionError:
+                pass
+            except SyntaxError:
+                error_messages.append("胎號不能為空")
+            except TypeError:
+                error_messages.append("胎號格式錯誤")
+            except ValueError as e:
+                if "numeric" in e.args[0]:
+                    error_messages.append("胎號格式錯誤")
+                elif "in range" in e.args[0]:
+                    error_messages.append("胎號大小錯誤，須介於1000~9999")
+                else:
+                    error_messages.append("未知錯誤")
+
             # Set numeric attributes.
             def set_numeric(arg_name, arg_chinese, setting_func):
                 arg = data_row.get(arg_name)
@@ -1120,14 +1145,6 @@ class ExcelReader():
             set_numeric("dead", "死", farrowing.set_dead)
             set_numeric("n_of_male", "(公)小豬", farrowing.set_n_of_male)
             set_numeric("n_of_female", "(母)小豬", farrowing.set_n_of_female)
-            set_numeric("total_weight", "出生窩重", farrowing.set_total_weight)
-
-            note = data_row.get("note")
-            try:
-                if not pd.isna(note):
-                    farrowing.set_note(note)
-            except TypeError:
-                error_messages.append("備註格式錯誤")
 
             if len(error_messages) > 0:
                 data_dict = data_row.to_dict()
@@ -1227,7 +1244,6 @@ class ExcelReader():
             "離乳日期": "weaning_date", 
             "哺乳數": "total_nursed_piglets", 
             "離乳數": "total_weaning_piglets", 
-            "離乳窩重(kg)": "total_weaning_weight"
         }
         dataframe = dataframe.rename(columns=rename_dict)
         if not set(rename_dict.values()).issubset(dataframe.columns):
@@ -1334,7 +1350,6 @@ class ExcelReader():
 
             set_numeric("total_nursed_piglets", "哺乳數", weaning.set_total_nursed_piglets)
             set_numeric("total_weaning_piglets", "離乳數", weaning.set_total_weaning_piglets)
-            set_numeric("total_weaning_weight", "離乳窩重(kg)", weaning.set_total_weaning_weight)
 
             if len(error_messages) > 0:
                 data_dict = data_row.to_dict()
@@ -1346,12 +1361,10 @@ class ExcelReader():
             id = weaning.get_farrowing().get_estrus().get_sow().get_id()
             birthday = weaning.get_farrowing().get_estrus().get_sow().get_birthday()
             estrus_datetime = weaning.get_farrowing().get_estrus().get_estrus_datetime()
-            farrowing_date = weaning.get_farrowing().get_farrowing_date()
             found = self.model.find_weanings(equal={
                 "id": id, 
                 "birthday": birthday, 
-                "estrus_datetime": estrus_datetime,
-                "farrowing_date": farrowing_date
+                "estrus_datetime": estrus_datetime
             })
 
             if len(found) == 0:
@@ -1359,7 +1372,7 @@ class ExcelReader():
                 continue
             if found[0] == weaning:
                 continue
-
+            
             msg = "遇到重複離乳紀錄，是否更新資料？Y：更新，N：不更新"
             msg += f"\n讀到的離乳紀錄：{weaning}"
             msg += f"\n已有的離乳紀錄：{found[0]}"
