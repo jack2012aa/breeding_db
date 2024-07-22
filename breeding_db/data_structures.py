@@ -408,17 +408,31 @@ class Estrus:
             raise TypeError(msg)
 
         # Deal with the case that self.__sow is None.
-        result = True
-        if (self.__sow is None) ^ (__value.get_sow() is None):
-            return False
-        elif (self.__sow is not None) and (__value.get_sow() is not None):
+        if self.__sow is None and __value.get_sow() is None:
+            result = True
+        elif self.__sow is not None and __value.get_sow() is not None:
             # I do not care other attributes of the sow.
             result = self.__sow.is_identical(__value.get_sow())
+        else:
+            return False
 
         return  result \
             and self.__estrus_datetime == __value.__estrus_datetime \
             and self.__pregnant == __value.get_pregnant() \
             and self.__parity == __value.get_parity()
+    
+    def is_identical(self, estrus: "Estrus") -> bool:
+        """Check whether the primary key of self and estrus are same.
+        
+        :param estrus: an Estrus instance.
+        """
+
+        type_check(estrus, "estrus", Estrus)
+
+        if self.__sow is not None and estrus.get_sow() is not None:
+            return self.__sow.is_identical(estrus.get_sow()) \
+            and self.__estrus_datetime == estrus.get_estrus_datetime()
+        return False
 
     def is_unique(self) -> bool:
 
@@ -601,19 +615,18 @@ class Mating:
             msg = f"Cannot compare Mating with {type(__value)}."
             logging.error(msg)
             raise TypeError(msg)
+        
+        return self.is_identical(__value)\
+        and self.__boar == __value.get_boar()
+    
+    def is_identical(self, mating: "Mating") -> bool:
 
-        # Deal with the case that self.__boar is None
-        result = True
-        if (self.__boar is None) ^ (__value.get_boar() is None):
-            return False
-        elif (self.__boar is not None) and (__value.get_boar() is not None):
-            # I do not care other attributes of the boar.
-            result = self.__boar.is_identical(__value.get_boar())
+        type_check(mating, "mating", Mating)
 
-        return \
-            (self.__estrus == __value.get_estrus()) \
-            and (self.__mating_datetime == __value.get_mating_datetime()) \
-            and result
+        if self.__estrus is not None and mating.get_estrus() is not None:
+            return self.__estrus.is_identical(mating.get_estrus())\
+            and self.__mating_datetime == mating.get_mating_datetime()
+        return False
 
     def is_unique(self) -> bool:
 
@@ -867,21 +880,7 @@ class Farrowing():
         if not isinstance(__value, Farrowing):
             raise TypeError("Can not compare Farrowing with {type_}".format(type_=str(type(__value))))
         
-        result = True
-
-        # Compare estrus
-        if self.__estrus is None and __value.get_estrus() is None:
-            pass
-        elif self.__estrus is None or __value.get_estrus() is None:
-            return False
-        else:
-            result = result \
-                and (self.__estrus.get_sow().get_id() == __value.get_estrus().get_sow().get_id())\
-                and (self.__estrus.get_sow().get_birthday() == __value.get_estrus().get_sow().get_birthday())\
-                and (self.__estrus.get_sow().get_farm() == __value.get_estrus().get_sow().get_farm())\
-                and (self.__estrus.get_estrus_datetime() == __value.get_estrus().get_estrus_datetime())
-            
-        return result \
+        return self.is_identical(__value)\
             and (self.__farrowing_date == __value.get_farrowing_date()) \
             and (self.__crushed == __value.get_crushed()) \
             and (self.__black == __value.get_black()) \
@@ -889,7 +888,8 @@ class Farrowing():
             and (self.__malformation == __value.get_malformation()) \
             and (self.__dead == __value.get_dead())\
             and (self.__n_of_male == __value.get_n_of_male()) \
-            and (self.__n_of_female == __value.get_n_of_female())
+            and (self.__n_of_female == __value.get_n_of_female())\
+            and self.__litter_id == __value.get_litter_id()
     
     def __check_total_born(self) -> None:
         """Check whether total born is smaller or equal to 30.
@@ -903,6 +903,14 @@ class Farrowing():
             msg += f"Got {self.get_total_born()}."
             logging.error(msg)
             raise ValueError(msg)
+        
+    def is_identical(self, farrowing: "Farrowing") -> bool:
+
+        type_check(farrowing, "farrowing", Farrowing)
+
+        if self.__estrus is not None:
+            return self.__estrus.is_identical(farrowing.get_estrus())
+        return False
         
     def is_unique(self) -> bool:
 
@@ -1287,22 +1295,16 @@ class Weaning:
             logging.error(msg)
             raise TypeError(msg)
         
-        # Compare estrus
-        result = True
-        if self.__farrowing is None and __value.get_farrowing() is None:
-            pass
-        elif self.__farrowing is None or __value.get_farrowing() is None:
-            return False
-        else:
-            result = result \
-                and (self.__farrowing.get_estrus().get_sow().get_id() == __value.get_farrowing().get_estrus().get_sow().get_id())\
-                and (self.__farrowing.get_estrus().get_sow().get_birthday() == __value.get_farrowing().get_estrus().get_sow().get_birthday())\
-                and (self.__farrowing.get_estrus().get_sow().get_farm() == __value.get_farrowing().get_estrus().get_sow().get_farm())\
-                and (self.__farrowing.get_estrus().get_estrus_datetime() == __value.get_farrowing().get_estrus().get_estrus_datetime())
-        return result \
+        return self.is_identical(__value) \
             and (self.__weaning_date == __value.get_weaning_date()) \
             and (self.__total_nursed_piglets == __value.get_total_nursed_piglets()) \
             and (self.__total_weaning_piglets == __value.get_total_weaning_piglets())
+    
+    def is_identical(self, weaning: "Weaning") -> bool:
+
+        if self.__farrowing is not None:
+            return self.__farrowing.is_identical(weaning.get_farrowing())
+        return False
     
     def is_unique(self) -> bool:
         
@@ -1519,11 +1521,24 @@ class Individual:
             logging.error(msg)
             raise TypeError(msg)
         
-        return self.__birth_litter == __value.get_birth_litter()\
-        and self.__nurse_litter == __value.get_nurse_litter()\
-        and self.__in_litter_id == __value.get_in_litter_id()\
+        if self.__nurse_litter is not None:
+            result = self.__nurse_litter.is_identical(__value.get_nurse_litter())
+        elif self.__nurse_litter is None and __value.get_nurse_litter() is None:
+            result = True
+        else:
+            return False
+        
+        return self.is_identical(__value)\
+        and result\
         and self.__born_weight == __value.get_born_weight()\
         and self.__weaning_weight == __value.get_weaning_weight()
+    
+    def is_identical(self, individual: "Individual") -> bool:
+
+        if self.__birth_litter is not None:
+            return self.__birth_litter.is_identical(individual.get_birth_litter())\
+            and self.__in_litter_id == individual.get_in_litter_id()
+        return False
     
     def is_unqiue(self) -> bool:
 
@@ -1587,15 +1602,6 @@ class Individual:
 
         if not nurse_litter.is_unique():
             msg = f"weaning_litter should be unique. \nGot {nurse_litter}."
-            logging.error(msg)
-            raise ValueError(msg)
-        
-        if self.__birth_litter is not None\
-        and nurse_litter.get_weaning_date() < \
-        self.__birth_litter.get_farrowing_date():
-            msg = "Birthdate must be earlier than weaning date. "
-            msg += f"Birthdate: {birthdate}. "
-            msg += f"Weaning date: {weaning_date}."
             logging.error(msg)
             raise ValueError(msg)
         

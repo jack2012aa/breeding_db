@@ -630,7 +630,7 @@ class IndividualTestCase(unittest.TestCase):
         self.assertEqual(self.individual, individual)
 
         individual = Individual(
-            birth_litter=Farrowing(estrus=estrus, farrowing_date="2000-09-05"), 
+            birth_litter=Farrowing(estrus=Estrus(sow, "2000-05-12 12:00:01")), 
             nurse_litter=weaning, 
             in_litter_id="12", 
             born_weight=1.2, 
@@ -640,7 +640,7 @@ class IndividualTestCase(unittest.TestCase):
 
         individual = Individual(
             birth_litter=farrowing, 
-            nurse_litter=Weaning(farrowing=farrowing, weaning_date="2000-09-25"), 
+            nurse_litter=Weaning(farrowing=Farrowing(Estrus(sow, "2000-05-12 12:00:01"))), 
             in_litter_id="12", 
             born_weight=1.2, 
             weaning_weight=12.0
