@@ -18,6 +18,14 @@ class MyTestCase(unittest.TestCase):
             output_path="test/helper/garbage", 
             output_filename="output.xlsx"
         )
+
+    def test_transform_chengang(self):
+
+        transform_chengang(
+            input_path="test/helper/chengang.xlsx", 
+            output_path="test/helper/garbage", 
+            output_filename="output.xlsx"
+        )
         input("wait")
 
 
