@@ -184,7 +184,8 @@ class ExcelReader():
             "母畜": "Dam", 
             "登錄號": "reg_id", 
             "中文名": "Chinese_name", 
-            "性別": "Gender"
+            "性別": "Gender", 
+            "出生胎次": "litter"
         })
         required_columns = [
             "Breed", 
@@ -194,7 +195,8 @@ class ExcelReader():
             "Dam", 
             "reg_id", 
             "Chinese_name", 
-            "Gender"
+            "Gender", 
+            "litter"
         ]
         if not set(required_columns).issubset(dataframe.columns):
             msg = "Missing key(s) in source excel or DataFrame."
@@ -373,6 +375,23 @@ class ExcelReader():
                 error_messages.append("資料庫中沒有母畜的資料")
             except ZeroDivisionError:
                 pass
+
+            litter = data_row.get("litter")
+            try:
+                if pd.isna(litter) and allow_none:
+                    raise ZeroDivisionError()
+                if pd.isna(litter) and not allow_none:
+                    raise SyntaxError()
+                litter = int(litter)
+                pig.set_litter(litter)
+            except ZeroDivisionError:
+                pass
+            except SyntaxError:
+                error_messages.append("出生胎次格式錯誤")
+            except TypeError:
+                error_messages.append("出生胎次格式錯誤")
+            except ValueError:
+                error_messages.append("出生胎次數值超出範圍")
 
             # If error then put into report.
             if len(error_messages) > 0:
