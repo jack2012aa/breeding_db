@@ -217,14 +217,7 @@ class ExcelReader():
                 error_messages.append("耳號不可為空")
             else:
                 try:
-                    id = str(id)
-                    new_id = self.__remove_dash_from_id(id)
-                    if new_id == id:
-                        pig.set_id(id)
-                    elif ask(f"是否可以將耳號 {id} 修改為 {new_id}？Y:是，N:否"):
-                        pig.set_id(new_id)
-                    else:
-                        error_messages.append("耳號修改格式錯誤")
+                    pig.set_id(self.__remove_dash_from_id(str(id)))
                 except ValueError:
                     error_messages.append("耳號長度過長")
                 except TypeError:
@@ -238,7 +231,7 @@ class ExcelReader():
             try:
                 if pd.isna(date):
                     raise SyntaxError()
-                pig.set_birthday(date)
+                pig.set_birthday(date.date())
             except ValueError:
                 error_messages.append("生日日期格式錯誤")
             except SyntaxError:
@@ -404,6 +397,7 @@ class ExcelReader():
             found = self.model.find_pig(pig)
             if found is None:
                 self.model.insert_pig(pig)
+                continue
             if found == pig:
                 continue
             msg = "遇到重複豬隻，是否更新資料？Y：更新，N：不更新"
