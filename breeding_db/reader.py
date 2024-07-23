@@ -457,7 +457,7 @@ class ExcelReader():
                 raise FileNotFoundError(msg)
             dataframe = pd.read_excel(
                 io=input_path, 
-                sheet_name="配種資料"
+                sheet_name="發情資料"
             )
 
         if dataframe is not None:
@@ -471,10 +471,12 @@ class ExcelReader():
         # Standardize the dataframe.
         dataframe.dropna(how="all", inplace=True)
         dataframe = dataframe.rename(columns={
-            "生日年品種耳號": "ID", 
+            "出生年品種耳號": "ID", 
             "胎次": "Parity", 
-            "配種日期": "Estrus_date",
-            "配種時間": "Estrus_time"
+            "發情日期": "Estrus_date",
+            "發情時間": "Estrus_time", 
+            "21天測孕": "21th_day_test", 
+            "60天測孕": "60th_day_test"
         })
         required_columns = [
             "ID", 
@@ -617,7 +619,14 @@ class ExcelReader():
                 error_messages.append("胎次超出範圍(1~12)")
 
             # Set pregnant.
-            estrus.set_pregnant(PregnantStatus.UNKNOWN)
+            test_21 = data_row.get("21th_day_test")
+            test_60 = data_row.get("60th_day_test")
+            if str(test_21).lower() == "x":
+                estrus.set_pregnant(PregnantStatus.NO)
+            elif str(test_60).lower() == "x":
+                estrus.set_pregnant(PregnantStatus.ABORTION)
+            else:
+                estrus.set_pregnant(PregnantStatus.UNKNOWN)
 
             # If error then put into report.
             if len(error_messages) > 0:
@@ -658,7 +667,9 @@ class ExcelReader():
             "ID": "生日年品種耳號", 
             "Parity": "胎次", 
             "Estrus_date": "配種日期",
-            "Estrus_time": "配種時間"
+            "Estrus_time": "配種時間",
+            "21th_day_test": "21天測孕", 
+            "60th_day_test": "60天測孕"
         })
         report_dataframe.to_csv(os.path.join(output_path, output_filename))
 
@@ -712,13 +723,11 @@ class ExcelReader():
         # Standardize the dataframe.
         dataframe.dropna(how="all", inplace=True)
         rename_dict = {
-            "生日年品種耳號": "SOW_ID", 
+            "出生年品種耳號": "SOW_ID", 
             "胎次": "Parity", 
             "配種日期": "Estrus_date",
             "配種時間": "Estrus_time", 
-            "與配公豬": "BOAR_ID", 
-            "21天測孕": "21th_day_test", 
-            "60天測孕": "60th_day_test"
+            "與配公豬": "BOAR_ID"
         }
         dataframe = dataframe.rename(columns=rename_dict)
         if not set(rename_dict.values()).issubset(dataframe.columns):
@@ -899,16 +908,6 @@ class ExcelReader():
                 else:
                     error_messages.append("未知錯誤")
 
-            # Update estrus pregnant status.
-            test_21 = data_row.get("21th_day_test")
-            test_60 = data_row.get("60th_day_test")
-            if str(test_21).lower() == "x":
-                estrus.set_pregnant(PregnantStatus.NO)
-                self.model.update_estrus(estrus)
-            if str(test_60).lower() == "x":
-                estrus.set_pregnant(PregnantStatus.ABORTION)
-                self.model.update_estrus(estrus)
-
             if len(error_messages) > 0:
                 data_dict = data_row.to_dict()
                 data_dict["錯誤訊息"] = " ".join(error_messages)
@@ -946,9 +945,7 @@ class ExcelReader():
             "Parity": "胎次", 
             "Estrus_date": "配種日期",
             "Estrus_time": "配種時間", 
-            "BOAR_ID": "與配公豬", 
-            "21th_day_test": "21天測孕", 
-            "60th_day_test": "60天測孕"
+            "BOAR_ID": "與配公豬"
         })
         report_dataframe.to_csv(os.path.join(output_path, output_filename))
 
@@ -1004,7 +1001,7 @@ class ExcelReader():
         # Standardize the dataframe.
         dataframe.dropna(how = 'all', inplace = True)
         rename_dict = {
-            "生日年品種耳號": "birthyear_breed_id", 
+            "出生年品種耳號": "birthyear_breed_id", 
             "分娩日期": "farrowing_date", 
             "(公) 小豬": "n_of_male", 
             "(母) 小豬": "n_of_female", 
@@ -1088,16 +1085,18 @@ class ExcelReader():
                     error_messages.append("未知錯誤")
 
             # Set litter_id
-            # litter_id is an int in the dataframe. Need type casting.
-            litter_id = str(data_row.get("litter_id"))
-            # Add leading zero to the id.
-            while len(litter_id) < 4:
-                litter_id = "0" + litter_id
+            litter_id = data_row.get("litter_id")
+
             try:
                 if pd.isna(litter_id) and allow_none:
                     raise ZeroDivisionError()
                 if pd.isna(litter_id) and not allow_none:
                     raise SyntaxError()
+                # litter_id is a float in the dataframe. Need type casting.
+                litter_id = str(int(litter_id))
+                # Add leading zero to the id.
+                while len(litter_id) < 4:
+                    litter_id = "0" + litter_id
                 farrowing.set_litter_id(litter_id)
             except ZeroDivisionError:
                 pass
@@ -1135,6 +1134,8 @@ class ExcelReader():
                         error_messages.append("總出生數超出上限(30)")
                     elif "than 0" in e.args[0]:
                         error_messages.append(f"{arg_chinese}不能低於0")
+                    elif "litter_id must be" in e.args[0]:
+                        error_messages.append("胎號大小錯誤")
                     else:
                         error_messages.append("未知錯誤")
             
@@ -1145,6 +1146,7 @@ class ExcelReader():
             set_numeric("dead", "死", farrowing.set_dead)
             set_numeric("n_of_male", "(公)小豬", farrowing.set_n_of_male)
             set_numeric("n_of_female", "(母)小豬", farrowing.set_n_of_female)
+            set_numeric("litter_id", "胎號", farrowing.set_litter_id)
 
             if len(error_messages) > 0:
                 data_dict = data_row.to_dict()
@@ -1240,7 +1242,7 @@ class ExcelReader():
         # Standardize the dataframe.
         dataframe.dropna(how = 'all', inplace = True)
         rename_dict = {
-            "生日年品種耳號": "birthyear_breed_id", 
+            "出生年品種耳號": "birthyear_breed_id", 
             "離乳日期": "weaning_date", 
             "哺乳數": "total_nursed_piglets", 
             "離乳數": "total_weaning_piglets", 
@@ -1469,10 +1471,9 @@ class ExcelReader():
             try:
                 if pd.isna(birthyear_breed_id) or pd.isna(birth_litter_id):
                     raise SyntaxError()
+                birth_litter_id = str(int(birth_litter_id))
                 birthyear, breed, id = self.__seperate_year_breed_id(birthyear_breed_id)
                 equal = {"id": id, "litter_id": birth_litter_id, "farm": farm}
-                if breed is not None:
-                    equal["breed"] = breed
                 if birthyear is not None:
                     larger_equal = {"birthday": f"{birthyear}-01-01"}
                     smaller_equal = {"birthday": f"{birthyear}-12-31"}
@@ -1504,10 +1505,9 @@ class ExcelReader():
             try:
                 if pd.isna(birthyear_breed_id) or pd.isna(nurse_litter_id):
                     raise SyntaxError()
+                nurse_litter_id = str(int(nurse_litter_id))
                 birthyear, breed, id = self.__seperate_year_breed_id(birthyear_breed_id)
                 equal = {"id": id, "litter_id": nurse_litter_id, "farm": farm}
-                if breed is not None:
-                    equal["breed"] = breed
                 if birthyear is not None:
                     larger_equal = {"birthday": f"{birthyear}-01-01"}
                     smaller_equal = {"birthday": f"{birthyear}-12-31"}
@@ -1523,7 +1523,7 @@ class ExcelReader():
                 found = self.model.find_weanings(equal={
                     "id": farrowing.get_estrus().get_sow().get_id(), 
                     "farm": farm, 
-                    "birthday": farrowing.get_estrus().get_sow().get_id(), 
+                    "birthday": farrowing.get_estrus().get_sow().get_birthday(), 
                     "estrus_datetime": farrowing.get_estrus().get_estrus_datetime()
                 })
                 if len(found) == 0:
@@ -1547,7 +1547,7 @@ class ExcelReader():
             try:
                 if pd.isna(in_litter_id):
                     raise SyntaxError()
-                individual.set_in_litter_id(in_litter_id)                
+                individual.set_in_litter_id(str(int(in_litter_id)))                
             except SyntaxError:
                 error_messages.append("小豬序號不能為空")
             except TypeError:
@@ -1568,11 +1568,11 @@ class ExcelReader():
                 individual.set_gender(str(gender))
             except ZeroDivisionError:
                 pass
-            except SyntaxError():
+            except SyntaxError:
                 error_messages.append()
-            except TypeError():
+            except TypeError:
                 error_messages.append("性別格式錯誤")
-            except ValueError():
+            except ValueError:
                 error_messages.append("性別未定義")
 
             # Set born weight
@@ -1585,11 +1585,11 @@ class ExcelReader():
                 individual.set_born_weight(float(weight))
             except ZeroDivisionError:
                 pass
-            except SyntaxError():
+            except SyntaxError:
                 error_messages.append()
-            except TypeError():
+            except TypeError:
                 error_messages.append("出生重格式錯誤")
-            except ValueError():
+            except ValueError:
                 error_messages.append("出生重不能小於零")
 
             # Set weaning weight
@@ -1602,11 +1602,11 @@ class ExcelReader():
                 individual.set_weaning_weight(float(weight))
             except ZeroDivisionError:
                 pass
-            except SyntaxError():
+            except SyntaxError:
                 error_messages.append()
-            except TypeError():
+            except TypeError:
                 error_messages.append("離乳重格式錯誤")
-            except ValueError():
+            except ValueError:
                 error_messages.append("離乳重不能小於零")
 
             if len(error_messages) > 0:
@@ -1624,7 +1624,7 @@ class ExcelReader():
                 "birth_sow_birthday": birthday, 
                 "birth_sow_farm": farm, 
                 "birth_estrus_datetime": estrus_datetime, 
-                "in_litter_id": in_litter_id
+                "in_litter_id": str(int(in_litter_id))
             })
 
             if len(found) == 0:
@@ -1641,7 +1641,7 @@ class ExcelReader():
                 data_dict["錯誤訊息"] = "小豬出生資料已存在於資料庫且與資料庫中數據不相符"
                 report_individuals.append(data_dict)
                 continue
-            self.model.update_individual(weaning)
+            self.model.update_individual(individual)
 
         report_dataframe = pd.DataFrame(report_individuals)
         report_dataframe = report_dataframe.rename(columns={

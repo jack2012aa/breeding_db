@@ -22,6 +22,7 @@ class MyTestCase(unittest.TestCase):
         self.model._delete_all("Matings")
         self.model._delete_all("Farrowings")
         self.model._delete_all("Weanings")
+        self.model._delete_all("Individuals")
         self.model = None
         delete_contents("test/helper/garbage")
 
@@ -147,21 +148,6 @@ class MyTestCase(unittest.TestCase):
             output_filename="output3.csv"
         )
 
-        # Test pregnant status
-        found = self.model.find_estrus(equal={
-            "id": "171403", 
-            "birthday": "2018-01-17", 
-            "farm": "test farm", 
-            "estrus_datetime": "2019-01-20 12:00:00"
-        })
-        self.assertEqual(PregnantStatus.NO, found[0].get_pregnant())
-        found = self.model.find_estrus(equal={
-            "id": "158005", 
-            "birthday": "2020-04-27", 
-            "farm": "test farm", 
-            "estrus_datetime": "2020-11-01 12:00:00"
-        })
-        self.assertEqual(PregnantStatus.ABORTION, found[0].get_pregnant())
         found = self.model.find_matings(equal={"sow_farm": "test farm"})
         self.assertEqual(52, len(found))
         dataframe = pd.read_csv("test/helper/garbage/output3.csv")
@@ -228,6 +214,42 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(48, len(found))
         output = pd.read_csv("test/helper/garbage/output4.csv")
         self.assertEqual(10, output.shape[0])
+
+    @patch("breeding_db.reader.ask")
+    def test_read_and_insert_individuals(self, mock_ask):
+
+        mock_ask.return_value = True
+        self.reader.read_and_insert_pigs(
+            farm="test farm", 
+            input_path="test/helper/individual_data/individual_data.xlsx", 
+            output_filename="output1.csv", 
+            output_path="test/helper/garbage", 
+            allow_none=True
+        )
+        self.reader.read_and_insert_estrus(
+            farm="test farm", 
+            input_path="test/helper/individual_data/individual_data.xlsx", 
+            output_filename="output2.csv", 
+            output_path="test/helper/garbage"
+        )
+        self.reader.read_and_insert_farrowings(
+            farm="test farm", 
+            input_path="test/helper/individual_data/individual_data.xlsx", 
+            output_filename="output3.csv", 
+            output_path="test/helper/garbage"
+        )
+        self.reader.read_and_insert_weanings(
+            farm="test farm", 
+            input_path="test/helper/individual_data/individual_data.xlsx", 
+            output_filename="output4.csv", 
+            output_path="test/helper/garbage"
+        )
+        self.reader.read_and_insert_individuals(
+            farm="test farm", 
+            input_path="test/helper/individual_data/individual_data.xlsx", 
+            output_filename="output5.csv", 
+            output_path="test/helper/garbage"
+        )
 
 
 if __name__ == '__main__':

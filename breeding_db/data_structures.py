@@ -995,6 +995,8 @@ class Farrowing():
         :raises ValueError: if int(litter_id) is not in range [1, 9999].
         """
 
+        if isinstance(litter_id, (int, float)):
+            litter_id = str(int(litter_id))
         type_check(litter_id, "litter_id", str)
 
         if not litter_id.isnumeric():

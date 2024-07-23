@@ -749,6 +749,8 @@ class Model():
             farrowing.set_n_of_male(farrowing_dict.get("n_of_male"))
         if farrowing_dict.get("n_of_female") is not None:
             farrowing.set_n_of_female(farrowing_dict.get("n_of_female"))
+        if farrowing_dict.get("litter_id") is not None:
+            farrowing.set_litter_id(farrowing_dict.get("litter_id"))
 
         if not farrowing.is_unique():
             return None
@@ -773,7 +775,8 @@ class Model():
             "malformation": farrowing.get_malformation(),
             "dead": farrowing.get_dead(),
             "n_of_male": farrowing.get_n_of_male(),
-            "n_of_female": farrowing.get_n_of_female(), 
+            "n_of_female": farrowing.get_n_of_female(),
+            "litter_id": farrowing.get_litter_id()
         }
 
         if farrowing.get_estrus() is not None:
