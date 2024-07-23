@@ -9,7 +9,7 @@ import pandas as pd
 
 from breeding_db.general import ask, ask_multiple, type_check
 from breeding_db.models import Model
-from breeding_db.data_structures import Farrowing, Weaning
+from breeding_db.data_structures import Farrowing, Weaning, Individual
 from breeding_db.data_structures import Pig, Estrus, Mating, PregnantStatus
 
 
@@ -1384,6 +1384,266 @@ class ExcelReader():
             self.model.update_weaning(weaning)
 
         report_dataframe = pd.DataFrame(report_weanings)
+        report_dataframe = report_dataframe.rename(columns={
+            value: key for key, value in rename_dict.items()
+        })
+        report_dataframe.to_csv(os.path.join(output_path, output_filename))
+
+    def read_and_insert_individuals(
+                self, 
+        farm: str,
+        input_path: str = None, 
+        dataframe: pd.DataFrame = None,
+        output_path: str = os.path.curdir, 
+        output_filename: str = "output.csv",
+        allow_none: bool = False
+    ) -> None:
+        """Read data from excel or dataframe and insert Individual objects 
+        into database.
+
+        Choose to read data from excel or dataframe by passing in 
+        corresponding arguments.
+
+        :param farm: current farm.
+        :param input_path: path of the source csv, including filename.
+        :param dataframe: the source dataframe.
+        :param output_path: path to save the report.
+        :param output_filename: name of the report.
+        :param allow_none: allow empty non-primary key. 
+        :raises: ValueError, FileNotFoundError, TypeError, KeyError.
+        """
+
+        # Type check.
+        if input_path is None and dataframe is None:
+            msg = "You must choose to read from an excel file or a dataframe."
+            logging.error(msg)
+            raise ValueError(msg)
+        
+        if input_path is not None:
+            type_check(input_path, "input_path", str)
+            if not os.path.isfile(input_path):
+                msg = f"File {input_path} does not exist."
+                logging.error(msg)
+                raise FileNotFoundError(msg)
+            dataframe = pd.read_excel(
+                io=input_path, 
+                sheet_name="小豬出生資料"
+            )
+
+        if dataframe is not None:
+            type_check(dataframe, "dataframe", pd.DataFrame)
+        
+        type_check(farm, "farm", str)
+        type_check(output_path, "output_path", str)
+        type_check(output_filename, "output_filename", str)
+        type_check(allow_none, "allow_none", bool)
+
+        # Standardize the dataframe.
+        dataframe.dropna(how = 'all', inplace = True)
+        rename_dict = {
+            "親生母豬出生年品種耳號": "birth_sow_birthyear_breed_id", 
+            "親生母豬胎號": "birth_litter_id", 
+            "寄養母豬出生年品種耳號": "nurse_sow_birthyear_breed_id", 
+            "寄養母豬胎號": "nurse_litter_id", 
+            "小豬序號": "in_litter_id", 
+            "性別": "gender", 
+            "出生重": "born_weight", 
+            "離乳重": "weaning_weight"
+        }
+        dataframe = dataframe.rename(columns=rename_dict)
+        if not set(rename_dict.values()).issubset(dataframe.columns):
+            msg = "Missing key(s) in source excel or DataFrame."
+            logging.error(msg)
+            raise KeyError(msg)
+        dataframe = dataframe.astype("object")
+
+        # Create individuals.
+        report_individuals = []
+        for _, data_row in dataframe.iterrows():
+            error_messages = []
+            individual = Individual()
+            
+            # Set birth litter.
+            birthyear_breed_id = data_row.get("birth_sow_birthyear_breed_id")
+            birth_litter_id = data_row.get("birth_litter_id")
+            try:
+                if pd.isna(birthyear_breed_id) or pd.isna(birth_litter_id):
+                    raise SyntaxError()
+                birthyear, breed, id = self.__seperate_year_breed_id(birthyear_breed_id)
+                equal = {"id": id, "litter_id": birth_litter_id, "farm": farm}
+                if breed is not None:
+                    equal["breed"] = breed
+                if birthyear is not None:
+                    larger_equal = {"birthday": f"{birthyear}-01-01"}
+                    smaller_equal = {"birthday": f"{birthyear}-12-31"}
+                found = self.model.find_farrowings(
+                    equal=equal, 
+                    larger_equal=larger_equal, 
+                    smaller_equal=smaller_equal, 
+                    order_by="farrowing_date DESC"
+                )
+                if len(found) == 0:
+                    raise KeyError()
+                farrowing = found[0]
+                individual.set_birth_litter(farrowing)
+            except SyntaxError:
+                error_messages.append("親生母豬出生年品種耳號和胎號不能為空")
+            except KeyError:
+                error_messages.append("資料庫中沒有出生時的分娩資料")
+            except TypeError:
+                error_messages.append("搜尋出生胎次時出現未知錯誤")
+            except ValueError as e:
+                if "earlier" in e.args[0]:
+                    error_messages.append("出生胎次與離乳胎次時間配對錯誤")
+                else:
+                    error_messages.append("搜尋出生胎次時出現未知錯誤")
+
+            # Set nurse litter.
+            birthyear_breed_id = data_row.get("nurse_sow_birthyear_breed_id")
+            nurse_litter_id = data_row.get("nurse_litter_id")
+            try:
+                if pd.isna(birthyear_breed_id) or pd.isna(nurse_litter_id):
+                    raise SyntaxError()
+                birthyear, breed, id = self.__seperate_year_breed_id(birthyear_breed_id)
+                equal = {"id": id, "litter_id": nurse_litter_id, "farm": farm}
+                if breed is not None:
+                    equal["breed"] = breed
+                if birthyear is not None:
+                    larger_equal = {"birthday": f"{birthyear}-01-01"}
+                    smaller_equal = {"birthday": f"{birthyear}-12-31"}
+                found = self.model.find_farrowings(
+                    equal=equal, 
+                    larger_equal=larger_equal, 
+                    smaller_equal=smaller_equal, 
+                    order_by="farrowing_date DESC"
+                )
+                if len(found) == 0:
+                    raise KeyError()
+                farrowing = found[0]
+                found = self.model.find_weanings(equal={
+                    "id": farrowing.get_estrus().get_sow().get_id(), 
+                    "farm": farm, 
+                    "birthday": farrowing.get_estrus().get_sow().get_id(), 
+                    "estrus_datetime": farrowing.get_estrus().get_estrus_datetime()
+                })
+                if len(found) == 0:
+                    raise KeyError()
+                weaning = found[0]
+                individual.set_nurse_litter(weaning)
+            except SyntaxError:
+                error_messages.append("寄養母豬出生年品種耳號和胎號不能為空")
+            except KeyError:
+                error_messages.append("資料庫中沒有離乳時的離乳資料")
+            except TypeError:
+                error_messages.append("搜尋離乳胎次時出現未知錯誤")
+            except ValueError as e:
+                if "earlier" in e.args[0]:
+                    error_messages.append("出生胎次與離乳胎次時間配對錯誤")
+                else:
+                    error_messages.append("搜尋離乳胎次時出現未知錯誤")
+
+            # Set in_litter_id
+            in_litter_id = data_row.get("in_litter_id")
+            try:
+                if pd.isna(in_litter_id):
+                    raise SyntaxError()
+                individual.set_in_litter_id(in_litter_id)                
+            except SyntaxError:
+                error_messages.append("小豬序號不能為空")
+            except TypeError:
+                error_messages.append("小豬序號格式錯誤")
+            except ValueError as e:
+                if "numeric" in e.args[0]:
+                    error_messages.append("小豬序號格式錯誤")
+                if "range" in e.args[0]:
+                    error_messages.append("小豬序號數值不在1~30內")
+
+            # Set gender
+            gender = data_row.get("gender")
+            try:
+                if pd.isna(gender) and allow_none:
+                    raise ZeroDivisionError()
+                if pd.isna(gender) and not allow_none:
+                    raise SyntaxError()
+                individual.set_gender(str(gender))
+            except ZeroDivisionError:
+                pass
+            except SyntaxError():
+                error_messages.append()
+            except TypeError():
+                error_messages.append("性別格式錯誤")
+            except ValueError():
+                error_messages.append("性別未定義")
+
+            # Set born weight
+            weight = data_row.get("born_weight")
+            try:
+                if pd.isna(weight) and allow_none:
+                    raise ZeroDivisionError()
+                if pd.isna(weight) and not allow_none:
+                    raise SyntaxError()
+                individual.set_born_weight(float(weight))
+            except ZeroDivisionError:
+                pass
+            except SyntaxError():
+                error_messages.append()
+            except TypeError():
+                error_messages.append("出生重格式錯誤")
+            except ValueError():
+                error_messages.append("出生重不能小於零")
+
+            # Set weaning weight
+            weight = data_row.get("weaning_weight")
+            try:
+                if pd.isna(weight) and allow_none:
+                    raise ZeroDivisionError()
+                if pd.isna(weight) and not allow_none:
+                    raise SyntaxError()
+                individual.set_weaning_weight(float(weight))
+            except ZeroDivisionError:
+                pass
+            except SyntaxError():
+                error_messages.append()
+            except TypeError():
+                error_messages.append("離乳重格式錯誤")
+            except ValueError():
+                error_messages.append("離乳重不能小於零")
+
+            if len(error_messages) > 0:
+                data_dict = data_row.to_dict()
+                data_dict["錯誤訊息"] = " ".join(error_messages)
+                report_individuals.append(data_dict)
+                continue
+
+            # Check duplicate.
+            id = individual.get_birth_litter().get_estrus().get_sow().get_id()
+            birthday = individual.get_birth_litter().get_estrus().get_sow().get_birthday()
+            estrus_datetime = individual.get_birth_litter().get_estrus().get_estrus_datetime()
+            found = self.model.find_individuals(equal={
+                "birth_sow_id": id, 
+                "birth_sow_birthday": birthday, 
+                "birth_sow_farm": farm, 
+                "birth_estrus_datetime": estrus_datetime, 
+                "in_litter_id": in_litter_id
+            })
+
+            if len(found) == 0:
+                self.model.insert_individual(individual)
+                continue
+            if found[0] == individual:
+                continue
+            
+            msg = "遇到重複小豬出生資料，是否更新資料？Y：更新，N：不更新"
+            msg += f"\n讀到的小豬出生資料：{individual}"
+            msg += f"\n已有的小豬出生資料：{found[0]}"
+            if not ask(msg):
+                data_dict = data_row.to_dict()
+                data_dict["錯誤訊息"] = "小豬出生資料已存在於資料庫且與資料庫中數據不相符"
+                report_individuals.append(data_dict)
+                continue
+            self.model.update_individual(weaning)
+
+        report_dataframe = pd.DataFrame(report_individuals)
         report_dataframe = report_dataframe.rename(columns={
             value: key for key, value in rename_dict.items()
         })
