@@ -89,6 +89,7 @@ CREATE TABLE Individuals(
     nurse_sow_birthday date, 
     nurse_sow_farm varchar(20), 
     nurse_estrus_datetime datetime, 
+    gender char(10),
     in_litter_id varchar(3),
     born_weight float unsigned, 
     weaning_weight float unsigned, 

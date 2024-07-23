@@ -590,6 +590,8 @@ class IndividualTestCase(unittest.TestCase):
         self.assertEqual(self.individual.get_born_weight(), 1.2)
         self.individual.set_weaning_weight(12)
         self.assertEqual(self.individual.get_weaning_weight(), 12.0)
+        self.individual.set_gender("1")
+        self.assertEqual(self.individual.get_gender(), "M")
 
         estrus2 = Estrus(sow=sow, estrus_datetime="2000-05-20 10:00:00")
         farrowing2 = Farrowing(estrus=estrus2, farrowing_date="2000-09-25")
@@ -603,6 +605,9 @@ class IndividualTestCase(unittest.TestCase):
         
         self.assertRaises(ValueError, self.individual.set_born_weight, -1.0)
         self.assertRaises(ValueError, self.individual.set_weaning_weight, -1.0)
+
+        self.assertRaises(TypeError, self.individual.set_gender, 1)
+        self.assertRaises(ValueError, self.individual.set_gender, "Boar")
 
     def test_equal(self):
 

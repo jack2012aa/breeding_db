@@ -702,7 +702,8 @@ class ModelTest(unittest.TestCase):
             "nurse_estrus_datetime": "2000-05-12 10:00:00", 
             "in_litter_id": "12", 
             "born_weight": 1.2, 
-            "weaning_weight": 12
+            "weaning_weight": 12, 
+            "gender": "F"
         }
         got = self.model.dict_to_individual(individual_dict)
         sow = Pig(id="123456", farm="test farm", birthday="1999-05-12")
@@ -714,7 +715,8 @@ class ModelTest(unittest.TestCase):
             nurse_litter=weaning, 
             in_litter_id="12", 
             born_weight=1.2, 
-            weaning_weight=12
+            weaning_weight=12, 
+            gender="F"
         )
         self.assertEqual(got, individual)
 
@@ -729,7 +731,8 @@ class ModelTest(unittest.TestCase):
             nurse_litter=weaning, 
             in_litter_id="12", 
             born_weight=1.2, 
-            weaning_weight=12
+            weaning_weight=12, 
+            gender="2"
         )
         got = self.model._Model__get_individual_attributes(individual)
         individual_dict = {
@@ -743,7 +746,8 @@ class ModelTest(unittest.TestCase):
             "nurse_estrus_datetime": datetime(2000, 5, 12, 10), 
             "in_litter_id": "12", 
             "born_weight": 1.2, 
-            "weaning_weight": 12
+            "weaning_weight": 12, 
+            "gender": "F"
         }
         self.assertEqual(got, individual_dict)
 
@@ -758,7 +762,8 @@ class ModelTest(unittest.TestCase):
             nurse_litter=weaning, 
             in_litter_id="12", 
             born_weight=1.2, 
-            weaning_weight=12
+            weaning_weight=12, 
+            gender="F"
         )
         self.model.insert_pig(sow)
         self.model.insert_estrus(estrus)
@@ -779,7 +784,8 @@ class ModelTest(unittest.TestCase):
             nurse_litter=weaning, 
             in_litter_id="12", 
             born_weight=1.2, 
-            weaning_weight=12
+            weaning_weight=12, 
+            gender="F"
         )
         self.model.insert_pig(sow)
         self.model.insert_estrus(estrus)
@@ -806,7 +812,8 @@ class ModelTest(unittest.TestCase):
             nurse_litter=weaning, 
             in_litter_id="12", 
             born_weight=1.2, 
-            weaning_weight=12
+            weaning_weight=12, 
+            gender="F"
         )
         self.model.insert_pig(sow)
         self.model.insert_estrus(estrus)

@@ -1076,7 +1076,8 @@ class Model():
         individual = Individual(
             in_litter_id=individual_dict.get("in_litter_id"), 
             born_weight=individual_dict.get("born_weight"), 
-            weaning_weight=individual_dict.get("weaning_weight")
+            weaning_weight=individual_dict.get("weaning_weight"), 
+            gender=individual_dict.get("gender")
         )
 
         birth_sow = Pig(
@@ -1146,7 +1147,8 @@ class Model():
             "nurse_estrus_datetime": None,
             "in_litter_id": individual.get_in_litter_id(), 
             "born_weight": individual.get_born_weight(), 
-            "weaning_weight": individual.get_weaning_weight()
+            "weaning_weight": individual.get_weaning_weight(), 
+            "gender": individual.get_gender()
         }
 
         if individual.get_birth_litter() is not None:

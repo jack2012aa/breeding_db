@@ -1470,7 +1470,8 @@ class Individual:
         nurse_litter: Weaning = None, 
         in_litter_id: str = None, 
         born_weight: float = None, 
-        weaning_weight: float = None
+        weaning_weight: float = None, 
+        gender: str = None
     ) -> None:
         """The individual info of a piglet.
         
@@ -1479,6 +1480,7 @@ class Individual:
         :param in_litter_id: the piglet id in birth litter.
         :param born_weight: born weight in kg.
         :param weaning_weight: weaning weight in kg.
+        :param gender: gender of the piglet.
         :raises TypeError: if pass in incorrect type.
         """
         
@@ -1487,6 +1489,7 @@ class Individual:
         self.__in_litter_id: str = None
         self.__born_weight: float = None
         self.__weaning_weight: float = None
+        self.__gender: str = None
 
         if birth_litter is not None:
             self.set_birth_litter(birth_litter)
@@ -1498,6 +1501,8 @@ class Individual:
             self.set_born_weight(born_weight)
         if weaning_weight is not None:
             self.set_weaning_weight(weaning_weight)
+        if gender is not None:
+            self.set_gender(gender)
     
     def __str__(self) -> str:
         
@@ -1507,7 +1512,8 @@ class Individual:
             f"Nurse litter: {str(self.__nurse_litter)}",
             f"In litter id: {str(self.__in_litter_id)}", 
             f"Born weight: {str(self.__born_weight)}" 
-            f"Weaning weight: {str(self.__weaning_weight)}"
+            f"Weaning weight: {str(self.__weaning_weight)}", 
+            f"Gender: {self.__gender}"
         ]
         return "\n".join(descriptions)
     
@@ -1531,7 +1537,8 @@ class Individual:
         return self.is_identical(__value)\
         and result\
         and self.__born_weight == __value.get_born_weight()\
-        and self.__weaning_weight == __value.get_weaning_weight()
+        and self.__weaning_weight == __value.get_weaning_weight()\
+        and self.__gender == __value.get_gender()
     
     def is_identical(self, individual: "Individual") -> bool:
 
@@ -1675,6 +1682,21 @@ class Individual:
         
         self.__weaning_weight = weaning_weight
 
+    def set_gender(self, gender: str) -> None:
+        """Set the gender of the piglet.
+        
+        :param gender: gender of the piglet. Must be defined in Pig.BREED.
+        :raises TypeError: if gender is not a string.
+        :raises ValueError: if gender is not defined.
+        """
+        type_check(gender, "gender", str)
+        
+        if gender not in Pig.GENDER:
+            msg = f"Gender '{gender}' is not defined."
+            logging.error(msg)
+            raise ValueError(msg)
+        self.__gender = Pig.GENDER[gender]
+
     def get_birth_litter(self) -> Farrowing:
         return self.__birth_litter
     
@@ -1689,3 +1711,6 @@ class Individual:
     
     def get_weaning_weight(self) -> float:
         return self.__weaning_weight
+    
+    def get_gender(self) -> str:
+        return self.__gender
