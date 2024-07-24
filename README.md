@@ -75,7 +75,7 @@ Foreign keys 是指某個屬性的值必須是在指定 table 中實際出現過
 
 Foreign key 是保證關連式資料庫 relational database 資料正確的重要特性。更詳細的可以看網路上的講解，這邊不贅述。
 
-有些值需要透過 foreign key 搜尋。例如如果我想知道某頭豬父畜的品種，雖然可以先查到父畜的 primary key，也就是 sire_id, sire_farm, sire_birthday，之後再進行查詢，但其實有更好的方式也就是使用 JOIN。
+有些值需要透過 foreign key 搜尋。例如如果我想知道某頭豬父畜的品種，雖然可以先查到父畜的 primary key，也就是 sire_id, sire_farm, sire_birthday，之後再進行查詢，但其實有更好的方式，也就是使用 `JOIN`。`JOIN`的作用是把兩張表透過 foreign key 合併成一張臨時的表，這張表會被 `FROM` 語句使用。
 
 為了更好的體現 JOIN 的萬能之處，假設我們現在要輸出正綱所有分娩+離乳資料的活仔數（分娩資料），哺乳數與離乳數（離乳資料）：
 ```sql
