@@ -1,7 +1,8 @@
 """Transform farm excel to standard form."""
 __all__ = [
     "transform_dongying", 
-    "transform_chengang"
+    "transform_chengang", 
+    "transform_dongting_pigs"
 ]
 
 import os
@@ -35,7 +36,7 @@ def change_column_name_and_type(
 
     if not set(rename_dict.keys()).issubset(dataframe.columns):
         msg = "Missing key(s) in source excel.\n"
-        msg += f"Miss {set(rename_dict.values()) - set(dataframe.columns)}"
+        msg += f"Miss {set(rename_dict.keys()) - set(dataframe.columns)}"
         logging.error(msg)
         raise KeyError(msg)
 
@@ -405,3 +406,109 @@ def transform_chengang(
         mating_frame.fillna("").to_excel(writer, "配種資料", index=False)
         farrowing_frame.fillna("").to_excel(writer, "分娩資料", index=False)
         weaning_frame.fillna("").to_excel(writer, "離乳資料", index=False)
+
+
+def transform_dongting_pigs(
+        input_path: str, 
+        output_path: str, 
+        output_filename: str, 
+    ):
+    """Transform 東盈母豬胎號 to Pig excel file.
+    
+    :param input_path: the path of input excel, including the file name.
+    :param output_path: the path of output excel, excluding the file name.
+    :param output_filename: the name of the output excel.
+    :raises TypeError: if intput_path or output_path is not a string.
+    :raises FileNotFoundError: if input_path doesn't exist.
+    :raises IsADirectoryError: if output_path doesn't exist.
+    """
+
+    type_check(input_path, "input_path", str)
+    type_check(output_path, "output_path", str)
+    type_check(output_filename, "output_filename", str)
+
+    check_path(input_path, output_path)
+    
+    dataframe = pd.read_excel(input_path).iloc[:, :13]
+    dataframe.dropna(how = 'all', inplace = True)
+    rename_dict = {
+        "品種": "breed",
+        "胎號": "litter_id", 
+        "生日": "birthday", 
+        "父畜": "sire", 
+        "母畜": "dam", 
+        "公": "n_of_male", 
+        "母": "n_of_female", 
+        "胎次": "litter"
+    }
+    retype_dict = {
+        "品種": str,
+        "胎號": str, 
+        "生日": date, 
+        "父畜": str, 
+        "母畜": str, 
+        "公": int, 
+        "母": int, 
+        "胎次": int
+    }
+    dataframe = change_column_name_and_type(
+        dataframe, rename_dict, retype_dict)
+
+    pig_dict = {
+        "品種": [], 
+        "耳號": [], 
+        "生日": [],
+        "父畜": [],
+        "母畜": [],
+        "性別": [], 
+        "出生胎次": [], 
+        "登錄號": [], 
+        "中文名": []
+    }   
+
+    for _, data in dataframe.iterrows():
+        breed = data.get("breed")
+        if pd.isna(data.get("litter_id")):
+            continue
+        litter_id = data.get("litter_id")
+        if not pd.isna(data.get("birthday")):
+            birthday = data.get("birthday").date()
+        else:
+            birthday = None
+        dam = data.get("dam")
+        sire = data.get("sire")
+        litter = data.get("litter")
+        if pd.isna(data.get("n_of_male")):
+            n_of_male = 0
+        else:
+            n_of_male = int(data.get("n_of_male"))
+        if pd.isna(data.get("n_of_female")):
+            n_of_female = 0
+        else:
+            n_of_female = int(data.get("n_of_female"))
+
+        for i in range(n_of_male):
+            pig_dict["出生胎次"].append(litter)
+            pig_dict["品種"].append(breed)
+            pig_dict["性別"].append(1)
+            pig_dict["母畜"].append(dam)
+            pig_dict["父畜"].append(sire)
+            pig_dict["生日"].append(birthday)
+            pig_dict["耳號"].append(f"{litter_id}-{i + 1}")
+            pig_dict["登錄號"].append(None)
+            pig_dict["中文名"].append(None)
+        for i in range(n_of_female):
+            pig_dict["出生胎次"].append(litter)
+            pig_dict["品種"].append(breed)
+            pig_dict["性別"].append(2)
+            pig_dict["母畜"].append(dam)
+            pig_dict["父畜"].append(sire)
+            pig_dict["生日"].append(birthday)
+            pig_dict["耳號"].append(f"{litter_id}-{i + n_of_male + 1}")
+            pig_dict["登錄號"].append(None)
+            pig_dict["中文名"].append(None)
+
+    pig_frame = pd.DataFrame(pig_dict)
+
+    with pd.ExcelWriter(os.path.join(output_path, output_filename)) as writer:
+        pig_frame.fillna("").to_excel(writer, "基本資料", index=False)

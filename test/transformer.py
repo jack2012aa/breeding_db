@@ -26,8 +26,15 @@ class MyTestCase(unittest.TestCase):
             output_path="test/helper/garbage", 
             output_filename="output.xlsx"
         )
-        input("wait")
 
+    def test_transform_dongying_pigs(self):
+
+        transform_dongting_pigs(
+            input_path="test/helper/dongying_pigs.xlsx", 
+            output_path="test/helper/garbage", 
+            output_filename="output.xlsx"
+        )
+        input("wait")
 
 
 if __name__ == '__main__':
