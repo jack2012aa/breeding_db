@@ -28,6 +28,11 @@ ECL lab collects reproduction data from Dong-Ying, Chen-Gang and Liu farms. Data
 11. 輸出檔案位置輸入步驟4建立的文件夾名稱或是其他
 12. 如果是讀取資料，選擇要讀取的種類以及是否允許空值
 
+## 注意事項
+
+1. 東盈沒有轉換基本資料的方法。
+2. 正綱轉換出的基本資料是那一胎**選種的小豬**的基本資料而非父母親的基本資料，而且資料中所有**小豬的性別全部為F**。這兩項需要人工驗證。
+
 ## 抓取資料
 可以使用 python 中的 pandas 和 pymysql，可參閱[這篇文章](https://blog.csdn.net/The_Time_Runner/article/details/86601988)。
 

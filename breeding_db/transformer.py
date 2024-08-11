@@ -266,7 +266,9 @@ def transform_chengang(
         "公豬耳號": "boar_id", 
         "離乳日": "weaning_date",
         "哺數": "total_nursed_piglets",
-        "頭數": "total_weaning_piglets"
+        "頭數": "total_weaning_piglets", 
+        "選種耳號": "litter_id", 
+        "選種數": "number_of_chosen_piglets"
     }
     left_retype_dict = {
         "耳號": str, 
@@ -283,7 +285,21 @@ def transform_chengang(
         "公豬耳號": str, 
         "離乳日": date, 
         "哺數": int, 
-        "頭數": int
+        "頭數": int, 
+        "選種耳號": str, 
+        "選種數": "number_of_chosen_piglets"
+    }
+
+    pig_dict = {
+        "品種": [], 
+        "耳號": [], 
+        "生日": [], 
+        "父畜": [], 
+        "母畜": [],
+        "登錄號": [], 
+        "中文名": [], 
+        "性別": [], 
+        "出生胎次": []
     }
 
     estrus_dict = {
@@ -359,6 +375,20 @@ def transform_chengang(
                     # Minus one year.
                     estrus_date = date(
                         estrus_date.year - 1, estrus_date.month, estrus_date.day)
+                    
+            sow_breed = sow_id[2]
+            boar_breed = data.get("boar_id")[0]
+            piglet_breed = sow_breed if sow_breed == boar_breed else sow_breed + boar_breed             
+            for i in range(data.get("number_of_chosen_piglets")):
+                pig_dict["耳號"].append(f"{data.get("litter_id")}-{str(i)}")
+                pig_dict["出生胎次"].append(data.get("parity"))
+                pig_dict["生日"].append(farrowing_date)
+                pig_dict["中文名"].append("")
+                pig_dict["品種"].append(piglet_breed)
+                pig_dict["母畜"].append(sow_id)
+                pig_dict["父畜"].append(data.get("boar_id"))
+                pig_dict["登錄號"].append("")
+                pig_dict["性別"].append("F")
 
             estrus_dict["生日年品種耳號"].append(sow_id)
             estrus_dict["發情日期"].append(estrus_date)
